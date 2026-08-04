@@ -1,0 +1,47 @@
+<nav class="site-breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">Home</a></li>
+    <li><a href="/letters/">Letters</a></li>
+    <li aria-current="page">{{ site.chapterLabel }} {{ chapterNum }}</li>
+  </ol>
+</nav>
+
+{% set toc = collections.letters %}
+{% set chapterCount = toc | length %}
+
+<div class="letter-toolbar">
+  <div class="week-number">{{ site.chapterLabel }} {{ chapterNum }}</div>
+  <button type="button" class="bookmark-btn" data-bookmark-toggle aria-pressed="false">
+    Bookmark
+  </button>
+</div>
+<h1>{{ title }}</h1>
+
+<div class="letter-prose">
+{{ content | safe }}
+</div>
+
+<section class="letter-notes" aria-labelledby="notes-heading">
+  <h2 id="notes-heading" class="section-label">Your notes</h2>
+  <textarea
+    class="notes-textarea"
+    data-notes-input
+    rows="5"
+    placeholder="Write a note for this letter…"
+  ></textarea>
+</section>
+
+<nav class="week-nav-bottom">
+  {% if chapterNum > 1 %}
+    {% set prevItem = toc | letterByNum(chapterNum - 1) %}
+    <a href="{{ prevItem.url }}">&larr; {{ site.chapterLabel }} {{ prevItem.data.chapterNum }}</a>
+  {% else %}
+    <a href="/letters/">&larr; Contents</a>
+  {% endif %}
+  {% if chapterNum < chapterCount %}
+    {% set nextItem = toc | letterByNum(chapterNum + 1) %}
+    <a href="{{ nextItem.url }}">{{ site.chapterLabel }} {{ nextItem.data.chapterNum }} &rarr;</a>
+  {% else %}
+    <a href="/letters/">Back to Contents</a>
+  {% endif %}
+</nav>

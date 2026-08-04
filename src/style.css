@@ -1,0 +1,562 @@
+/* ── Moral Letters – Stylesheet ── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap");
+
+:root {
+  --bg:        #faf8f4;
+  --fg:        #2c2c2c;
+  --accent:    #5b7a5e;
+  --accent-lt: #e8efe9;
+  --muted:     #6b6b6b;
+  --border:    #d4cfc8;
+  --quote-bg:  #f0ede7;
+  --font-serif: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-serif);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.62;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+p {
+  margin: 0.68em 0;
+}
+
+ul {
+  margin: 0.68em 0;
+  margin-left: 1.25em;
+  padding-left: 0.75em;
+}
+
+/* ── Navigation ── */
+nav.week-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+}
+nav.week-nav a {
+  color: var(--accent);
+  text-decoration: none;
+}
+nav.week-nav a:hover { text-decoration: underline; }
+nav.week-nav .nav-center { color: var(--muted); }
+
+/* ── TOC Dropdown ── */
+.toc-dropdown {
+  margin-bottom: 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+}
+.toc-dropdown summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 0.4rem 0;
+  list-style: none;
+}
+.toc-dropdown summary::-webkit-details-marker { display: none; }
+.toc-dropdown[open] summary { margin-bottom: 0.5rem; }
+.toc-dropdown-list {
+  list-style: none;
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.toc-dropdown-list li a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  text-decoration: none;
+  color: var(--fg);
+  transition: background 0.15s;
+}
+.toc-dropdown-list li a:hover { background: var(--accent-lt); }
+.toc-dropdown-list .toc-num {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 1.5rem;
+}
+.toc-dropdown-list .toc-current a {
+  background: var(--accent-lt);
+  font-weight: 600;
+}
+
+/* ── Week Header ── */
+.week-number {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 2rem;
+  color: var(--fg);
+}
+
+h2 {
+  line-height: 1.28;
+  margin-top: 1em;
+}
+
+/* ── This Week's Focus ── */
+.week-focus {
+  background: linear-gradient(135deg, var(--accent-lt), #f0ede7);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+.week-focus p {
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--fg);
+  margin: 0;
+}
+
+/* ── Epictetus Quote Block ── */
+blockquote.epictetus {
+  background: var(--quote-bg);
+  border-left: 4px solid var(--accent);
+  padding: 1.25rem 1.5rem;
+  margin: 0 0 2rem 0;
+  font-style: italic;
+  color: #444;
+  border-radius: 0 6px 6px 0;
+}
+blockquote.epictetus footer {
+  margin-top: 0.75rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--font-sans);
+}
+
+/* ── Moral Letters Quote Block ── */
+.letter-prose blockquote {
+  background: var(--quote-bg);
+  border-left: 4px solid var(--accent);
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  border-radius: 0 6px 6px 0;
+  color: #444;
+}
+.letter-prose blockquote p {
+  margin: 0.5rem 0;
+}
+.letter-prose blockquote p:first-child {
+  margin-top: 0;
+}
+.letter-prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Section Labels ── */
+.section-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+/* ── In a Nutshell ── */
+.nutshell {
+  background: var(--accent-lt);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+/* ── Commentary ── */
+.commentary p {
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* ── Practice Box ── */
+.practice {
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 2.5rem 0 2rem;
+}
+/* ── Journal Prompt ── */
+.journal {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+.journal p {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+/* ── End-of-Week Reflection ── */
+.week-reflection {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 2rem 0;
+  background: var(--quote-bg);
+}
+.week-reflection .reflection-question {
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Footer nav ── */
+nav.week-nav-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+}
+nav.week-nav-bottom a {
+  color: var(--accent);
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+}
+nav.week-nav-bottom a:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Index Page ── */
+.book-header {
+  text-align: center;
+  padding: 3rem 0 2rem;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 2rem;
+}
+.book-header h1 {
+  font-size: 2.4rem;
+  margin-bottom: 0.25rem;
+}
+.book-header .subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.book-header .intro {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+/* Breadcrumbs (book index + chapter pages) */
+nav.site-breadcrumbs {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+}
+nav.site-breadcrumbs ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+}
+nav.site-breadcrumbs li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+nav.site-breadcrumbs li:not(:last-child)::after {
+  content: "/";
+  color: var(--border);
+  font-weight: 400;
+  margin-left: 0.15rem;
+  pointer-events: none;
+}
+nav.site-breadcrumbs a {
+  color: var(--accent);
+  text-decoration: none;
+}
+nav.site-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+nav.site-breadcrumbs li[aria-current="page"] {
+  color: var(--fg);
+  font-weight: 500;
+  max-width: 100%;
+}
+
+ol.toc {
+  list-style: none;
+  padding: 0;
+}
+ol.toc li {
+  border-bottom: 1px solid var(--border);
+}
+ol.toc li a {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.8rem 0.25rem;
+  text-decoration: none;
+  color: var(--fg);
+  transition: background 0.15s;
+}
+ol.toc li a:hover {
+  background: var(--accent-lt);
+}
+ol.toc .toc-num {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 3rem;
+}
+ol.toc .toc-title {
+  font-size: 1.05rem;
+}
+
+ol.toc-books li a {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+ol.toc-books .toc-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+ol.toc-books .toc-sub {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+ol.toc-books .toc-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 36rem;
+}
+
+/* ── Home ── */
+.home-header {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 1rem;
+}
+.home-meta {
+  margin-top: 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 1.5rem 0 2rem;
+}
+.home-cta {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.65rem 1.15rem;
+}
+.home-cta:hover {
+  background: #4a684d;
+  border-color: #4a684d;
+}
+.home-cta-secondary {
+  color: var(--accent);
+  background: transparent;
+}
+.home-cta-secondary:hover {
+  background: var(--accent-lt);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.home-start {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.home-start a {
+  color: var(--accent);
+}
+
+/* ── Letter toolbar + notes ── */
+.letter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+.letter-toolbar .week-number {
+  margin-bottom: 0;
+}
+.bookmark-btn {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+.bookmark-btn:hover,
+.bookmark-btn.is-active {
+  background: var(--accent);
+  color: #fff;
+}
+.letter-notes {
+  margin: 2.5rem 0 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.notes-textarea {
+  width: 100%;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--quote-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  resize: vertical;
+  min-height: 6rem;
+}
+.notes-textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ── Bookmarks page ── */
+.bookmarks-empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+.bookmarks-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2.5rem;
+}
+.bookmarks-list li {
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 0.25rem 1rem;
+}
+.bookmarks-list li a {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  text-decoration: none;
+  color: var(--fg);
+}
+.bookmarks-list li a:hover {
+  background: var(--accent-lt);
+}
+.bookmark-note-preview {
+  margin: 0.5rem 0 0 0;
+  padding-left: calc(3rem + 1rem);
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.data-transfer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.transfer-help {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0.5rem 0 1rem;
+}
+.transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.transfer-btn {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+.transfer-btn-secondary {
+  color: var(--accent);
+  background: transparent;
+  display: inline-block;
+}
+.transfer-btn-secondary:hover {
+  background: var(--accent-lt);
+}
+
+/* ── Print ── */
+@media print {
+  body { max-width: 100%; padding: 1cm; }
+  nav.week-nav, nav.week-nav-bottom,
+  .letter-toolbar, .letter-notes, .data-transfer { display: none; }
+  .practice { border-width: 1px; }
+  blockquote.epictetus { background: #f5f5f5; }
+}

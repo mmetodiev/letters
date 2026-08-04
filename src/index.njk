@@ -1,0 +1,33 @@
+---
+permalink: /index.html
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site.title }}</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="book-header home-header">
+  <h1>{{ site.title }}</h1>
+  <p class="subtitle">{{ site.subtitle }}</p>
+  <p class="intro">{{ site.intro }}</p>
+  <p class="home-meta">{{ collections.letters | length }} letters · modern English</p>
+</div>
+
+<nav class="home-actions" aria-label="Primary">
+  <a class="home-cta" href="/letters/">Read the letters</a>
+  <a class="home-cta home-cta-secondary" href="/bookmarks/">Your bookmarks</a>
+</nav>
+
+<p class="home-start">
+  Or begin with
+  {% set first = collections.letters | letterByNum(1) %}
+  <a href="{{ first.url }}">{{ site.chapterLabel }} 1: {{ first.data.title }}</a>.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "moral-letters",
+  "version": "1.0.0",
+  "description": "Seneca's Moral Letters to Lucilius — modern English, for slow reading",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@11ty/eleventy": "^3.1.2"
+  }
+}

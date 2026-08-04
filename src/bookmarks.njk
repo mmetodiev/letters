@@ -1,0 +1,52 @@
+---
+permalink: /bookmarks/index.html
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmarks – {{ site.title }}</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav class="site-breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">Home</a></li>
+    <li aria-current="page">Bookmarks</li>
+  </ol>
+</nav>
+
+<div class="book-header">
+  <h1>Your bookmarks</h1>
+  <p class="intro">Letters you’ve saved on this device, with any notes you’ve written.</p>
+</div>
+
+<div data-bookmarks-root>
+  <p class="bookmarks-empty" data-bookmarks-empty>No bookmarks yet. Open a letter and tap Bookmark to save it here.</p>
+  <ul class="bookmarks-list" data-bookmarks-list hidden></ul>
+</div>
+
+<section class="data-transfer" aria-labelledby="transfer-heading">
+  <h2 id="transfer-heading" class="section-label">Backup</h2>
+  <p class="transfer-help">Export or import your bookmarks and notes as JSON (stays on your device).</p>
+  <div class="transfer-actions">
+    <button type="button" class="transfer-btn" data-export>Export</button>
+    <label class="transfer-btn transfer-btn-secondary">
+      Import
+      <input type="file" accept="application/json,.json" data-import hidden>
+    </label>
+  </div>
+</section>
+
+<script type="application/json" id="letter-catalog">
+[
+{%- for item in collections.letters -%}
+  {"path":"{{ item.url }}","num":{{ item.data.chapterNum }},"title":{{ item.data.title | dump | safe }}}{% if not loop.last %},{% endif %}
+{%- endfor -%}
+]
+</script>
+<script src="/user-data.js" defer></script>
+</body>
+</html>
