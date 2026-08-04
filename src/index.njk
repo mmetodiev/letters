@@ -14,7 +14,6 @@ permalink: /index.html
 <div class="book-header home-header">
   <h1>{{ site.title }}</h1>
   <p class="subtitle">{{ site.subtitle }}</p>
-  <p class="intro">{{ site.intro }}</p>
   <p class="home-meta">{{ collections.letters | length }} letters · modern English</p>
 </div>
 
@@ -27,6 +26,10 @@ permalink: /index.html
   Or begin with
   {% set first = collections.letters | letterByNum(1) %}
   <a href="{{ first.url }}">{{ site.chapterLabel }} 1: {{ first.data.title }}</a>.
+</p>
+
+<p class="home-about">
+  <a href="/about/">About this project</a>
 </p>
 
 </body>
