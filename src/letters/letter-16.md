@@ -1,56 +1,24 @@
 ---
 chapterNum: 16
-title: "XVI. On Philosophy, the Guide of Life"
+title: "Keep Going"
 ---
 
-### **1. Philosophy is your true refuge**
-Seneca tells Lucilius that philosophy is the one thing that can make a person truly safe.  
-Not safe from external events — those are unpredictable — but safe *within himself*.  
-A person grounded in philosophy doesn’t depend on luck, wealth, or public opinion.  
-He carries his stability with him.
+I won't ask how you're doing. I know how you're doing — I can tell from the way you write. What I want to say is: don't mistake progress for arrival.
 
-### **2. Don’t rely on external protections**
-People try to secure themselves with:
-- wealth  
-- status  
-- political connections  
-- social networks  
+This is the particular danger of the middle stage. At the beginning, you knew you had far to go, and the knowing kept you moving. Now you've come some distance, and the temptation is to settle into what you've already become, to coast on the strength of resolutions already made. But a resolution is not yet a habit, and a habit is not yet character. The work is to keep going until the inclination becomes something more permanent — something that holds without effort, that doesn't require you to remember to maintain it.
 
-But these are fragile.  
-They can be taken away, or they can turn against you.  
-Real security comes from inner strength — the kind that can’t be stolen or shaken.
+So: examine yourself. Not proudly, not anxiously — honestly. Mark whether it is in your philosophy or only in your life that you've made progress. These can drift apart. A person can think correctly about how to live and still live badly; a person can live well from mere habit without having understood why. What you're after is both: the understanding and the life that follows from it.
 
-### **3. Philosophy teaches you what is truly good**
-Most people chase things that look good but aren’t: money, fame, influence, comfort.  
-Philosophy teaches you to distinguish:
-- what is truly good (virtue, integrity, wisdom)  
-- what is indifferent (fortune, reputation, possessions)  
+Philosophy is not performance. It has nothing to do with sounding wise or being seen to pursue wisdom. It sits at the helm. Without it, nothing is done fearlessly or in peace. With it, even the uncertainties of fate and chance and God's arrangement of things can be met steadily — because whatever the governing principle of the universe turns out to be, your own soul remains yours to order.
 
-Once you stop confusing the two, you stop being vulnerable.
+Now the thought I've been carrying today, which belongs to Epicurus but I claim as common property:
 
-### **4. The wise person is self‑sufficient**
-Seneca emphasizes that the wise person:
-- needs little  
-- depends on himself  
-- is content with what he has  
-- is not disturbed by loss  
+> If you live according to nature, you will never be poor. If you live according to opinion, you will never be rich.
 
-This doesn’t mean rejecting society — it means not being *enslaved* by it.  
-Freedom comes from needing less, not from having more.
+The second half is what I keep returning to. Opinion has no boundary. The desires it generates have no stopping point — there is always a further goal visible beyond the one you've reached, always another comparison to make, always someone with more. You can bury the earth in marble and still feel the lack.
 
-### **5. Friendship is valuable — but not for the wrong reasons**
-Seneca praises friendship, but warns against using friends as emotional crutches.  
-A true friend is someone you enjoy, not someone you *need* to survive.  
-If you depend on others for your peace of mind, you’re still fragile.
+But natural desire has a limit. When you reach it, it stops. This is how you test whether what you want is genuine: ask whether it can stop somewhere definite. If you can satisfy it and rest, it was real. If satisfying it only reveals a further wanting, you were never seeking what you thought you were seeking.
 
-### **6. Philosophy strengthens you for life’s challenges**
-Seneca compares philosophy to a fortress built within the soul.  
-When misfortune strikes — illness, poverty, betrayal, exile — the untrained person collapses.  
-The trained person stands firm because he has prepared his mind in advance.
+Recall your steps. Keep going. And know when you've arrived.
 
-### **7. Today’s idea: wisdom makes you free**
-Seneca ends with a powerful thought:  
-**The wise person is free because he depends only on what is in his control.**  
-Everyone else is a slave — not to a master, but to their own fears, desires, and anxieties.
-
-Freedom isn’t granted by society; it’s achieved by mastering yourself.
+Yours, still walking,

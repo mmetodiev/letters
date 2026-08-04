@@ -354,6 +354,22 @@ ol.toc .toc-num {
 }
 ol.toc .toc-title {
   font-size: 1.05rem;
+  flex: 1;
+  min-width: 0;
+}
+ol.toc .toc-bookmark {
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: center;
+  color: var(--accent);
+  line-height: 0;
+}
+ol.toc .toc-bookmark:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+}
+ol.toc .toc-bookmark svg {
+  display: block;
 }
 
 ol.toc-books li a {

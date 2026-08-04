@@ -21,16 +21,22 @@
   <p class="intro">{{ site.intro }}</p>
 </div>
 
-<ol class="toc">
+<ol class="toc" data-toc>
 {% for item in collections.letters %}
   <li>
-    <a href="{{ item.url }}">
+    <a href="{{ item.url }}" data-path="{{ item.url }}">
       <span class="toc-num">{{ site.chapterLabel }} {{ item.data.chapterNum }}</span>
       <span class="toc-title">{{ item.data.title }}</span>
+      <span class="toc-bookmark" hidden title="Bookmarked" aria-label="Bookmarked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M6 2h12a1 1 0 0 1 1 1v19l-7-4-7 4V3a1 1 0 0 1 1-1z"/>
+        </svg>
+      </span>
     </a>
   </li>
 {% endfor %}
 </ol>
 
+<script src="/user-data.js" defer></script>
 </body>
 </html>

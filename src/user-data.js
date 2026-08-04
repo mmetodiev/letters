@@ -196,8 +196,23 @@
     }
   }
 
+  function initTocPage() {
+    const toc = document.querySelector("[data-toc]");
+    if (!toc) return;
+
+    const data = load();
+    const bookmarked = new Set(data.bookmarks);
+
+    toc.querySelectorAll("a[data-path]").forEach((link) => {
+      const path = normalizePath(link.getAttribute("data-path"));
+      const mark = link.querySelector(".toc-bookmark");
+      if (mark) mark.hidden = !bookmarked.has(path);
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initLetterPage();
     initBookmarksPage();
+    initTocPage();
   });
 })();
