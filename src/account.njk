@@ -1,0 +1,89 @@
+---
+permalink: /account/index.html
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account – {{ site.title }}</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav class="site-breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">Home</a></li>
+    <li aria-current="page">Account</li>
+  </ol>
+</nav>
+
+<div class="book-header">
+  <h1>Account</h1>
+  <p class="intro">Sign in to sync bookmarks and notes across your devices.</p>
+</div>
+
+<div class="account-panel" data-account-root>
+  <p class="account-unavailable" data-account-unavailable hidden>
+    Sync isn’t configured for this site yet. Bookmarks still work on this device.
+  </p>
+
+  <div data-account-signed-out>
+    <div data-account-email-step>
+      <form class="account-form" data-account-email-form>
+        <label class="account-label" for="account-email">Email</label>
+        <input
+          id="account-email"
+          class="account-input"
+          type="email"
+          name="email"
+          autocomplete="email"
+          required
+          placeholder="you@example.com"
+          data-account-email
+        >
+        <button type="submit" class="account-btn">Send code</button>
+      </form>
+    </div>
+
+    <div data-account-code-step hidden>
+      <p class="account-help">
+        We sent a code to <strong data-account-sent-email></strong>.
+      </p>
+      <form class="account-form" data-account-code-form>
+        <label class="account-label" for="account-code">Code</label>
+        <input
+          id="account-code"
+          class="account-input"
+          type="text"
+          name="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          required
+          placeholder="123456"
+          data-account-code
+        >
+        <button type="submit" class="account-btn">Sign in</button>
+      </form>
+      <button type="button" class="account-btn account-btn-secondary" data-account-back>
+        Use a different email
+      </button>
+    </div>
+  </div>
+
+  <div data-account-signed-in hidden>
+    <p class="account-signed-in-email">
+      Signed in as <strong data-account-user-email></strong>
+    </p>
+    <button type="button" class="account-btn account-btn-secondary" data-account-sign-out>
+      Sign out
+    </button>
+  </div>
+
+  <p class="account-status" data-account-status hidden></p>
+  <p class="account-error" data-account-error hidden></p>
+</div>
+
+<script src="/user-data.js" defer></script>
+</body>
+</html>

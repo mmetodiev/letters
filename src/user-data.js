@@ -1,6 +1,9896 @@
-(function () {
-  const STORAGE_KEY = "moral-letters-user";
+(() => {
+  var __defProp = Object.defineProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // node_modules/@instantdb/core/dist/esm/utils/weakHash.js
+  function weakHash(input) {
+    const str = stableStringify(input);
+    let h1 = 3735928559 ^ str.length;
+    let h2 = 1103547991 ^ str.length;
+    for (let i2 = 0; i2 < str.length; i2++) {
+      const ch = str.charCodeAt(i2);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507) ^ Math.imul(h2 ^ h2 >>> 13, 3266489909);
+    h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507) ^ Math.imul(h1 ^ h1 >>> 13, 3266489909);
+    return `${(h2 >>> 0).toString(16).padStart(8, "0")}${(h1 >>> 0).toString(16).padStart(8, "0")}`;
+  }
+  function stableStringify(input) {
+    if (input && typeof input.toJSON === "function") {
+      return stableStringify(input.toJSON());
+    }
+    if (Array.isArray(input)) {
+      let out = "[";
+      for (let i2 = 0; i2 < input.length; i2++) {
+        if (i2 > 0)
+          out += ",";
+        out += stableStringify(input[i2]);
+      }
+      return out + "]";
+    }
+    if (input && typeof input === "object") {
+      const keys = Object.keys(input);
+      keys.sort();
+      let out = "{";
+      let first = true;
+      for (let i2 = 0; i2 < keys.length; i2++) {
+        const key = keys[i2];
+        const value = input[key];
+        if (value === void 0)
+          continue;
+        if (!first)
+          out += ",";
+        out += JSON.stringify(key) + ":" + stableStringify(value);
+        first = false;
+      }
+      return out + "}";
+    }
+    if (input === void 0) {
+      return "undefined";
+    }
+    if (typeof input === "bigint") {
+      return `${input}n`;
+    }
+    return JSON.stringify(input) ?? String(input);
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/weakHashLegacy.js
+  function weakHashLegacy(input) {
+    if (typeof input === "number") {
+      return (Math.abs(input * 2654435761) >>> 0).toString(16);
+    }
+    if (typeof input === "boolean")
+      return input ? "1" : "0";
+    if (input === null)
+      return "null";
+    if (input === void 0)
+      return "undefined";
+    if (typeof input === "string") {
+      let hash = 2166136261;
+      for (let i2 = 0; i2 < input.length; i2++) {
+        hash ^= input.charCodeAt(i2);
+        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+        hash = hash >>> 0;
+      }
+      return hash.toString(16);
+    }
+    if (Array.isArray(input)) {
+      let hash = 2166136261;
+      for (let i2 = 0; i2 < input.length; i2++) {
+        hash ^= (i2 + 1) * 2654435761;
+        const elementHash = weakHashLegacy(input[i2]);
+        for (let j = 0; j < elementHash.length; j++) {
+          hash ^= elementHash.charCodeAt(j);
+          hash *= 16777619;
+          hash = hash >>> 0;
+        }
+      }
+      return hash.toString(16);
+    }
+    if (typeof input === "object") {
+      let hash = 2166136261;
+      const keys = Object.keys(input).sort();
+      for (let i2 = 0; i2 < keys.length; i2++) {
+        const key = keys[i2];
+        if (input[key] === void 0) {
+          continue;
+        }
+        const keyHash = weakHashLegacy(key);
+        hash ^= parseInt(keyHash, 16);
+        hash *= 16777619;
+        hash = hash >>> 0;
+        const valueHash = weakHashLegacy(input[key]);
+        hash ^= parseInt(valueHash, 16);
+        hash *= 16777619;
+        hash = hash >>> 0;
+      }
+      return hash.toString(16);
+    }
+    return weakHashLegacy(String(input));
+  }
+
+  // node_modules/mutative/dist/mutative.esm.mjs
+  var Operation = {
+    Remove: "remove",
+    Replace: "replace",
+    Add: "add"
+  };
+  var PROXY_DRAFT = /* @__PURE__ */ Symbol.for("__MUTATIVE_PROXY_DRAFT__");
+  var RAW_RETURN_SYMBOL = /* @__PURE__ */ Symbol("__MUTATIVE_RAW_RETURN_SYMBOL__");
+  var iteratorSymbol = Symbol.iterator;
+  var dataTypes = {
+    mutable: "mutable",
+    immutable: "immutable"
+  };
+  var internal = {};
+  function has(target, key) {
+    return target instanceof Map ? target.has(key) : Object.prototype.hasOwnProperty.call(target, key);
+  }
+  function getDescriptor(target, key) {
+    if (key in target) {
+      let prototype = Reflect.getPrototypeOf(target);
+      while (prototype) {
+        const descriptor = Reflect.getOwnPropertyDescriptor(prototype, key);
+        if (descriptor)
+          return descriptor;
+        prototype = Reflect.getPrototypeOf(prototype);
+      }
+    }
+    return;
+  }
+  function isBaseSetInstance(obj) {
+    return Object.getPrototypeOf(obj) === Set.prototype;
+  }
+  function isBaseMapInstance(obj) {
+    return Object.getPrototypeOf(obj) === Map.prototype;
+  }
+  function latest(proxyDraft) {
+    var _a;
+    return (_a = proxyDraft.copy) !== null && _a !== void 0 ? _a : proxyDraft.original;
+  }
+  function isDraft(target) {
+    return !!getProxyDraft(target);
+  }
+  function getProxyDraft(value) {
+    if (typeof value !== "object")
+      return null;
+    return value === null || value === void 0 ? void 0 : value[PROXY_DRAFT];
+  }
+  function getValue(value) {
+    var _a;
+    const proxyDraft = getProxyDraft(value);
+    return proxyDraft ? (_a = proxyDraft.copy) !== null && _a !== void 0 ? _a : proxyDraft.original : value;
+  }
+  function isDraftable(value, options) {
+    if (!value || typeof value !== "object")
+      return false;
+    let markResult;
+    return Object.getPrototypeOf(value) === Object.prototype || Array.isArray(value) || value instanceof Map || value instanceof Set || !!(options === null || options === void 0 ? void 0 : options.mark) && ((markResult = options.mark(value, dataTypes)) === dataTypes.immutable || typeof markResult === "function");
+  }
+  function getPath(target, path = []) {
+    if (Object.hasOwnProperty.call(target, "key")) {
+      const parentCopy = target.parent.copy;
+      const proxyDraft = getProxyDraft(get(parentCopy, target.key));
+      if (proxyDraft !== null && (proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.original) !== target.original) {
+        return null;
+      }
+      const isSet = target.parent.type === 3;
+      const key = isSet ? Array.from(target.parent.setMap.keys()).indexOf(target.key) : target.key;
+      if (!(isSet && parentCopy.size > key || has(parentCopy, key)))
+        return null;
+      path.push(key);
+    }
+    if (target.parent) {
+      return getPath(target.parent, path);
+    }
+    path.reverse();
+    try {
+      resolvePath(target.copy, path);
+    } catch (e) {
+      return null;
+    }
+    return path;
+  }
+  function getType(target) {
+    if (Array.isArray(target))
+      return 1;
+    if (target instanceof Map)
+      return 2;
+    if (target instanceof Set)
+      return 3;
+    return 0;
+  }
+  function get(target, key) {
+    return getType(target) === 2 ? target.get(key) : target[key];
+  }
+  function set(target, key, value) {
+    const type = getType(target);
+    if (type === 2) {
+      target.set(key, value);
+    } else {
+      target[key] = value;
+    }
+  }
+  function peek(target, key) {
+    const state = getProxyDraft(target);
+    const source = state ? latest(state) : target;
+    return source[key];
+  }
+  function isEqual(x, y) {
+    if (x === y) {
+      return x !== 0 || 1 / x === 1 / y;
+    } else {
+      return x !== x && y !== y;
+    }
+  }
+  function revokeProxy(proxyDraft) {
+    if (!proxyDraft)
+      return;
+    while (proxyDraft.finalities.revoke.length > 0) {
+      const revoke = proxyDraft.finalities.revoke.pop();
+      revoke();
+    }
+  }
+  function escapePath(path, pathAsArray) {
+    return pathAsArray ? path : [""].concat(path).map((_item) => {
+      const item = `${_item}`;
+      if (item.indexOf("/") === -1 && item.indexOf("~") === -1)
+        return item;
+      return item.replace(/~/g, "~0").replace(/\//g, "~1");
+    }).join("/");
+  }
+  function resolvePath(base, path) {
+    for (let index = 0; index < path.length - 1; index += 1) {
+      const key = path[index];
+      base = get(getType(base) === 3 ? Array.from(base) : base, key);
+      if (typeof base !== "object") {
+        throw new Error(`Cannot resolve patch at '${path.join("/")}'.`);
+      }
+    }
+    return base;
+  }
+  function strictCopy(target) {
+    const copy = Object.create(Object.getPrototypeOf(target));
+    Reflect.ownKeys(target).forEach((key) => {
+      let desc = Reflect.getOwnPropertyDescriptor(target, key);
+      if (desc.enumerable && desc.configurable && desc.writable) {
+        copy[key] = target[key];
+        return;
+      }
+      if (!desc.writable) {
+        desc.writable = true;
+        desc.configurable = true;
+      }
+      if (desc.get || desc.set)
+        desc = {
+          configurable: true,
+          writable: true,
+          enumerable: desc.enumerable,
+          value: target[key]
+        };
+      Reflect.defineProperty(copy, key, desc);
+    });
+    return copy;
+  }
+  var propIsEnum = Object.prototype.propertyIsEnumerable;
+  function shallowCopy(original, options) {
+    let markResult;
+    if (Array.isArray(original)) {
+      return Array.prototype.concat.call(original);
+    } else if (original instanceof Set) {
+      if (!isBaseSetInstance(original)) {
+        const SubClass = Object.getPrototypeOf(original).constructor;
+        return new SubClass(original.values());
+      }
+      return Set.prototype.difference ? Set.prototype.difference.call(original, /* @__PURE__ */ new Set()) : new Set(original.values());
+    } else if (original instanceof Map) {
+      if (!isBaseMapInstance(original)) {
+        const SubClass = Object.getPrototypeOf(original).constructor;
+        return new SubClass(original);
+      }
+      return new Map(original);
+    } else if ((options === null || options === void 0 ? void 0 : options.mark) && (markResult = options.mark(original, dataTypes), markResult !== void 0) && markResult !== dataTypes.mutable) {
+      if (markResult === dataTypes.immutable) {
+        return strictCopy(original);
+      } else if (typeof markResult === "function") {
+        if (options.enablePatches || options.enableAutoFreeze) {
+          throw new Error(`You can't use mark and patches or auto freeze together.`);
+        }
+        return markResult();
+      }
+      throw new Error(`Unsupported mark result: ${markResult}`);
+    } else if (typeof original === "object" && Object.getPrototypeOf(original) === Object.prototype) {
+      const copy = {};
+      Object.keys(original).forEach((key) => {
+        copy[key] = original[key];
+      });
+      Object.getOwnPropertySymbols(original).forEach((key) => {
+        if (propIsEnum.call(original, key)) {
+          copy[key] = original[key];
+        }
+      });
+      return copy;
+    } else {
+      throw new Error(`Please check mark() to ensure that it is a stable marker draftable function.`);
+    }
+  }
+  function ensureShallowCopy(target) {
+    if (target.copy)
+      return;
+    target.copy = shallowCopy(target.original, target.options);
+  }
+  function deepClone(target) {
+    if (!isDraftable(target))
+      return getValue(target);
+    if (Array.isArray(target))
+      return target.map(deepClone);
+    if (target instanceof Map) {
+      const iterable = Array.from(target.entries()).map(([k, v]) => [
+        k,
+        deepClone(v)
+      ]);
+      if (!isBaseMapInstance(target)) {
+        const SubClass = Object.getPrototypeOf(target).constructor;
+        return new SubClass(iterable);
+      }
+      return new Map(iterable);
+    }
+    if (target instanceof Set) {
+      const iterable = Array.from(target).map(deepClone);
+      if (!isBaseSetInstance(target)) {
+        const SubClass = Object.getPrototypeOf(target).constructor;
+        return new SubClass(iterable);
+      }
+      return new Set(iterable);
+    }
+    const copy = Object.create(Object.getPrototypeOf(target));
+    for (const key in target)
+      copy[key] = deepClone(target[key]);
+    return copy;
+  }
+  function cloneIfNeeded(target) {
+    return isDraft(target) ? deepClone(target) : target;
+  }
+  function markChanged(proxyDraft) {
+    var _a;
+    proxyDraft.assignedMap = (_a = proxyDraft.assignedMap) !== null && _a !== void 0 ? _a : /* @__PURE__ */ new Map();
+    if (!proxyDraft.operated) {
+      proxyDraft.operated = true;
+      if (proxyDraft.parent) {
+        markChanged(proxyDraft.parent);
+      }
+    }
+  }
+  function throwFrozenError() {
+    throw new Error("Cannot modify frozen object");
+  }
+  function deepFreeze(target, subKey, updatedValues, stack, keys) {
+    {
+      updatedValues = updatedValues !== null && updatedValues !== void 0 ? updatedValues : /* @__PURE__ */ new WeakMap();
+      stack = stack !== null && stack !== void 0 ? stack : [];
+      keys = keys !== null && keys !== void 0 ? keys : [];
+      const value = updatedValues.has(target) ? updatedValues.get(target) : target;
+      if (stack.length > 0) {
+        const index = stack.indexOf(value);
+        if (value && typeof value === "object" && index !== -1) {
+          if (stack[0] === value) {
+            throw new Error(`Forbids circular reference`);
+          }
+          throw new Error(`Forbids circular reference: ~/${keys.slice(0, index).map((key, index2) => {
+            if (typeof key === "symbol")
+              return `[${key.toString()}]`;
+            const parent = stack[index2];
+            if (typeof key === "object" && (parent instanceof Map || parent instanceof Set))
+              return Array.from(parent.keys()).indexOf(key);
+            return key;
+          }).join("/")}`);
+        }
+        stack.push(value);
+        keys.push(subKey);
+      } else {
+        stack.push(value);
+      }
+    }
+    if (Object.isFrozen(target) || isDraft(target)) {
+      {
+        stack.pop();
+        keys.pop();
+      }
+      return;
+    }
+    const type = getType(target);
+    switch (type) {
+      case 2:
+        for (const [key, value] of target) {
+          deepFreeze(key, key, updatedValues, stack, keys);
+          deepFreeze(value, key, updatedValues, stack, keys);
+        }
+        target.set = target.clear = target.delete = throwFrozenError;
+        break;
+      case 3:
+        for (const value of target) {
+          deepFreeze(value, value, updatedValues, stack, keys);
+        }
+        target.add = target.clear = target.delete = throwFrozenError;
+        break;
+      case 1:
+        Object.freeze(target);
+        let index = 0;
+        for (const value of target) {
+          deepFreeze(value, index, updatedValues, stack, keys);
+          index += 1;
+        }
+        break;
+      default:
+        Object.freeze(target);
+        Object.keys(target).forEach((name) => {
+          const value = target[name];
+          deepFreeze(value, name, updatedValues, stack, keys);
+        });
+    }
+    {
+      stack.pop();
+      keys.pop();
+    }
+  }
+  function forEach(target, iter) {
+    const type = getType(target);
+    if (type === 0) {
+      Reflect.ownKeys(target).forEach((key) => {
+        iter(key, target[key], target);
+      });
+    } else if (type === 1) {
+      let index = 0;
+      for (const entry of target) {
+        iter(index, entry, target);
+        index += 1;
+      }
+    } else {
+      target.forEach((entry, index) => iter(index, entry, target));
+    }
+  }
+  function handleValue(target, handledSet, options) {
+    if (isDraft(target) || !isDraftable(target, options) || handledSet.has(target) || Object.isFrozen(target))
+      return;
+    const isSet = target instanceof Set;
+    const setMap = isSet ? /* @__PURE__ */ new Map() : void 0;
+    handledSet.add(target);
+    forEach(target, (key, value) => {
+      var _a;
+      if (isDraft(value)) {
+        const proxyDraft = getProxyDraft(value);
+        ensureShallowCopy(proxyDraft);
+        const updatedValue = ((_a = proxyDraft.assignedMap) === null || _a === void 0 ? void 0 : _a.size) || proxyDraft.operated ? proxyDraft.copy : proxyDraft.original;
+        set(isSet ? setMap : target, key, updatedValue);
+      } else {
+        handleValue(value, handledSet, options);
+      }
+    });
+    if (setMap) {
+      const set2 = target;
+      const values = Array.from(set2);
+      set2.clear();
+      values.forEach((value) => {
+        set2.add(setMap.has(value) ? setMap.get(value) : value);
+      });
+    }
+  }
+  function finalizeAssigned(proxyDraft, key) {
+    const copy = proxyDraft.type === 3 ? proxyDraft.setMap : proxyDraft.copy;
+    if (proxyDraft.finalities.revoke.length > 1 && proxyDraft.assignedMap.get(key) && copy) {
+      handleValue(get(copy, key), proxyDraft.finalities.handledSet, proxyDraft.options);
+    }
+  }
+  function finalizeSetValue(target) {
+    if (target.type === 3 && target.copy) {
+      target.copy.clear();
+      target.setMap.forEach((value) => {
+        target.copy.add(getValue(value));
+      });
+    }
+  }
+  function finalizePatches(target, generatePatches2, patches, inversePatches) {
+    const shouldFinalize = target.operated && target.assignedMap && target.assignedMap.size > 0 && !target.finalized;
+    if (shouldFinalize) {
+      if (patches && inversePatches) {
+        const basePath = getPath(target);
+        if (basePath) {
+          generatePatches2(target, basePath, patches, inversePatches);
+        }
+      }
+      target.finalized = true;
+    }
+  }
+  function markFinalization(target, key, value, generatePatches2) {
+    const proxyDraft = getProxyDraft(value);
+    if (proxyDraft) {
+      if (!proxyDraft.callbacks) {
+        proxyDraft.callbacks = [];
+      }
+      proxyDraft.callbacks.push((patches, inversePatches) => {
+        var _a;
+        const copy = target.type === 3 ? target.setMap : target.copy;
+        if (isEqual(get(copy, key), value)) {
+          let updatedValue = proxyDraft.original;
+          if (proxyDraft.copy) {
+            updatedValue = proxyDraft.copy;
+          }
+          finalizeSetValue(target);
+          finalizePatches(target, generatePatches2, patches, inversePatches);
+          if (target.options.enableAutoFreeze) {
+            target.options.updatedValues = (_a = target.options.updatedValues) !== null && _a !== void 0 ? _a : /* @__PURE__ */ new WeakMap();
+            target.options.updatedValues.set(updatedValue, proxyDraft.original);
+          }
+          set(copy, key, updatedValue);
+        }
+      });
+      if (target.options.enableAutoFreeze) {
+        if (proxyDraft.finalities !== target.finalities) {
+          target.options.enableAutoFreeze = false;
+        }
+      }
+    }
+    if (isDraftable(value, target.options)) {
+      target.finalities.draft.push(() => {
+        const copy = target.type === 3 ? target.setMap : target.copy;
+        if (isEqual(get(copy, key), value)) {
+          finalizeAssigned(target, key);
+        }
+      });
+    }
+  }
+  function generateArrayPatches(proxyState, basePath, patches, inversePatches, pathAsArray) {
+    let { original, assignedMap, options } = proxyState;
+    let copy = proxyState.copy;
+    if (copy.length < original.length) {
+      [original, copy] = [copy, original];
+      [patches, inversePatches] = [inversePatches, patches];
+    }
+    for (let index = 0; index < original.length; index += 1) {
+      if (assignedMap.get(index.toString()) && copy[index] !== original[index]) {
+        const _path = basePath.concat([index]);
+        const path = escapePath(_path, pathAsArray);
+        patches.push({
+          op: Operation.Replace,
+          path,
+          // If it is a draft, it needs to be deep cloned, and it may also be non-draft.
+          value: cloneIfNeeded(copy[index])
+        });
+        inversePatches.push({
+          op: Operation.Replace,
+          path,
+          // If it is a draft, it needs to be deep cloned, and it may also be non-draft.
+          value: cloneIfNeeded(original[index])
+        });
+      }
+    }
+    for (let index = original.length; index < copy.length; index += 1) {
+      const _path = basePath.concat([index]);
+      const path = escapePath(_path, pathAsArray);
+      patches.push({
+        op: Operation.Add,
+        path,
+        // If it is a draft, it needs to be deep cloned, and it may also be non-draft.
+        value: cloneIfNeeded(copy[index])
+      });
+    }
+    if (original.length < copy.length) {
+      const { arrayLengthAssignment = true } = options.enablePatches;
+      if (arrayLengthAssignment) {
+        const _path = basePath.concat(["length"]);
+        const path = escapePath(_path, pathAsArray);
+        inversePatches.push({
+          op: Operation.Replace,
+          path,
+          value: original.length
+        });
+      } else {
+        for (let index = copy.length; original.length < index; index -= 1) {
+          const _path = basePath.concat([index - 1]);
+          const path = escapePath(_path, pathAsArray);
+          inversePatches.push({
+            op: Operation.Remove,
+            path
+          });
+        }
+      }
+    }
+  }
+  function generatePatchesFromAssigned({ original, copy, assignedMap }, basePath, patches, inversePatches, pathAsArray) {
+    assignedMap.forEach((assignedValue, key) => {
+      const originalValue = get(original, key);
+      const value = cloneIfNeeded(get(copy, key));
+      const op = !assignedValue ? Operation.Remove : has(original, key) ? Operation.Replace : Operation.Add;
+      if (isEqual(originalValue, value) && op === Operation.Replace)
+        return;
+      const _path = basePath.concat(key);
+      const path = escapePath(_path, pathAsArray);
+      patches.push(op === Operation.Remove ? { op, path } : { op, path, value });
+      inversePatches.push(op === Operation.Add ? { op: Operation.Remove, path } : op === Operation.Remove ? { op: Operation.Add, path, value: originalValue } : { op: Operation.Replace, path, value: originalValue });
+    });
+  }
+  function generateSetPatches({ original, copy }, basePath, patches, inversePatches, pathAsArray) {
+    let index = 0;
+    original.forEach((value) => {
+      if (!copy.has(value)) {
+        const _path = basePath.concat([index]);
+        const path = escapePath(_path, pathAsArray);
+        patches.push({
+          op: Operation.Remove,
+          path,
+          value
+        });
+        inversePatches.unshift({
+          op: Operation.Add,
+          path,
+          value
+        });
+      }
+      index += 1;
+    });
+    index = 0;
+    copy.forEach((value) => {
+      if (!original.has(value)) {
+        const _path = basePath.concat([index]);
+        const path = escapePath(_path, pathAsArray);
+        patches.push({
+          op: Operation.Add,
+          path,
+          value
+        });
+        inversePatches.unshift({
+          op: Operation.Remove,
+          path,
+          value
+        });
+      }
+      index += 1;
+    });
+  }
+  function generatePatches(proxyState, basePath, patches, inversePatches) {
+    const { pathAsArray = true } = proxyState.options.enablePatches;
+    switch (proxyState.type) {
+      case 0:
+      case 2:
+        return generatePatchesFromAssigned(proxyState, basePath, patches, inversePatches, pathAsArray);
+      case 1:
+        return generateArrayPatches(proxyState, basePath, patches, inversePatches, pathAsArray);
+      case 3:
+        return generateSetPatches(proxyState, basePath, patches, inversePatches, pathAsArray);
+    }
+  }
+  var readable = false;
+  var checkReadable = (value, options, ignoreCheckDraftable = false) => {
+    if (typeof value === "object" && value !== null && (!isDraftable(value, options) || ignoreCheckDraftable) && !readable) {
+      throw new Error(`Strict mode: Mutable data cannot be accessed directly, please use 'unsafe(callback)' wrap.`);
+    }
+  };
+  var mapHandler = {
+    get size() {
+      const current2 = latest(getProxyDraft(this));
+      return current2.size;
+    },
+    has(key) {
+      return latest(getProxyDraft(this)).has(key);
+    },
+    set(key, value) {
+      const target = getProxyDraft(this);
+      const source = latest(target);
+      if (!source.has(key) || !isEqual(source.get(key), value)) {
+        ensureShallowCopy(target);
+        markChanged(target);
+        target.assignedMap.set(key, true);
+        target.copy.set(key, value);
+        markFinalization(target, key, value, generatePatches);
+      }
+      return this;
+    },
+    delete(key) {
+      if (!this.has(key)) {
+        return false;
+      }
+      const target = getProxyDraft(this);
+      ensureShallowCopy(target);
+      markChanged(target);
+      if (target.original.has(key)) {
+        target.assignedMap.set(key, false);
+      } else {
+        target.assignedMap.delete(key);
+      }
+      target.copy.delete(key);
+      return true;
+    },
+    clear() {
+      const target = getProxyDraft(this);
+      if (!this.size)
+        return;
+      ensureShallowCopy(target);
+      markChanged(target);
+      target.assignedMap = /* @__PURE__ */ new Map();
+      for (const [key] of target.original) {
+        target.assignedMap.set(key, false);
+      }
+      target.copy.clear();
+    },
+    forEach(callback, thisArg) {
+      const target = getProxyDraft(this);
+      latest(target).forEach((_value, _key) => {
+        callback.call(thisArg, this.get(_key), _key, this);
+      });
+    },
+    get(key) {
+      var _a, _b;
+      const target = getProxyDraft(this);
+      const value = latest(target).get(key);
+      const mutable = ((_b = (_a = target.options).mark) === null || _b === void 0 ? void 0 : _b.call(_a, value, dataTypes)) === dataTypes.mutable;
+      if (target.options.strict) {
+        checkReadable(value, target.options, mutable);
+      }
+      if (mutable) {
+        return value;
+      }
+      if (target.finalized || !isDraftable(value, target.options)) {
+        return value;
+      }
+      if (value !== target.original.get(key)) {
+        return value;
+      }
+      const draft = internal.createDraft({
+        original: value,
+        parentDraft: target,
+        key,
+        finalities: target.finalities,
+        options: target.options
+      });
+      ensureShallowCopy(target);
+      target.copy.set(key, draft);
+      return draft;
+    },
+    keys() {
+      return latest(getProxyDraft(this)).keys();
+    },
+    values() {
+      const iterator = this.keys();
+      return {
+        [iteratorSymbol]: () => this.values(),
+        next: () => {
+          const result = iterator.next();
+          if (result.done)
+            return result;
+          const value = this.get(result.value);
+          return {
+            done: false,
+            value
+          };
+        }
+      };
+    },
+    entries() {
+      const iterator = this.keys();
+      return {
+        [iteratorSymbol]: () => this.entries(),
+        next: () => {
+          const result = iterator.next();
+          if (result.done)
+            return result;
+          const value = this.get(result.value);
+          return {
+            done: false,
+            value: [result.value, value]
+          };
+        }
+      };
+    },
+    [iteratorSymbol]() {
+      return this.entries();
+    }
+  };
+  var mapHandlerKeys = Reflect.ownKeys(mapHandler);
+  var getNextIterator = (target, iterator, { isValuesIterator }) => () => {
+    var _a, _b;
+    const result = iterator.next();
+    if (result.done)
+      return result;
+    const key = result.value;
+    let value = target.setMap.get(key);
+    const currentDraft = getProxyDraft(value);
+    const mutable = ((_b = (_a = target.options).mark) === null || _b === void 0 ? void 0 : _b.call(_a, value, dataTypes)) === dataTypes.mutable;
+    if (target.options.strict) {
+      checkReadable(key, target.options, mutable);
+    }
+    if (!mutable && !currentDraft && isDraftable(key, target.options) && !target.finalized && target.original.has(key)) {
+      const proxy = internal.createDraft({
+        original: key,
+        parentDraft: target,
+        key,
+        finalities: target.finalities,
+        options: target.options
+      });
+      target.setMap.set(key, proxy);
+      value = proxy;
+    } else if (currentDraft) {
+      value = currentDraft.proxy;
+    }
+    return {
+      done: false,
+      value: isValuesIterator ? value : [value, value]
+    };
+  };
+  var setHandler = {
+    get size() {
+      const target = getProxyDraft(this);
+      return target.setMap.size;
+    },
+    has(value) {
+      const target = getProxyDraft(this);
+      if (target.setMap.has(value))
+        return true;
+      ensureShallowCopy(target);
+      const valueProxyDraft = getProxyDraft(value);
+      if (valueProxyDraft && target.setMap.has(valueProxyDraft.original))
+        return true;
+      return false;
+    },
+    add(value) {
+      const target = getProxyDraft(this);
+      if (!this.has(value)) {
+        ensureShallowCopy(target);
+        markChanged(target);
+        target.assignedMap.set(value, true);
+        target.setMap.set(value, value);
+        markFinalization(target, value, value, generatePatches);
+      }
+      return this;
+    },
+    delete(value) {
+      if (!this.has(value)) {
+        return false;
+      }
+      const target = getProxyDraft(this);
+      ensureShallowCopy(target);
+      markChanged(target);
+      const valueProxyDraft = getProxyDraft(value);
+      if (valueProxyDraft && target.setMap.has(valueProxyDraft.original)) {
+        target.assignedMap.set(valueProxyDraft.original, false);
+        return target.setMap.delete(valueProxyDraft.original);
+      }
+      if (!valueProxyDraft && target.setMap.has(value)) {
+        target.assignedMap.set(value, false);
+      } else {
+        target.assignedMap.delete(value);
+      }
+      return target.setMap.delete(value);
+    },
+    clear() {
+      if (!this.size)
+        return;
+      const target = getProxyDraft(this);
+      ensureShallowCopy(target);
+      markChanged(target);
+      for (const value of target.original) {
+        target.assignedMap.set(value, false);
+      }
+      target.setMap.clear();
+    },
+    values() {
+      const target = getProxyDraft(this);
+      ensureShallowCopy(target);
+      const iterator = target.setMap.keys();
+      return {
+        [Symbol.iterator]: () => this.values(),
+        next: getNextIterator(target, iterator, { isValuesIterator: true })
+      };
+    },
+    entries() {
+      const target = getProxyDraft(this);
+      ensureShallowCopy(target);
+      const iterator = target.setMap.keys();
+      return {
+        [Symbol.iterator]: () => this.entries(),
+        next: getNextIterator(target, iterator, {
+          isValuesIterator: false
+        })
+      };
+    },
+    keys() {
+      return this.values();
+    },
+    [iteratorSymbol]() {
+      return this.values();
+    },
+    forEach(callback, thisArg) {
+      const iterator = this.values();
+      let result = iterator.next();
+      while (!result.done) {
+        callback.call(thisArg, result.value, result.value, this);
+        result = iterator.next();
+      }
+    }
+  };
+  if (Set.prototype.difference) {
+    Object.assign(setHandler, {
+      intersection(other) {
+        return Set.prototype.intersection.call(new Set(this.values()), other);
+      },
+      union(other) {
+        return Set.prototype.union.call(new Set(this.values()), other);
+      },
+      difference(other) {
+        return Set.prototype.difference.call(new Set(this.values()), other);
+      },
+      symmetricDifference(other) {
+        return Set.prototype.symmetricDifference.call(new Set(this.values()), other);
+      },
+      isSubsetOf(other) {
+        return Set.prototype.isSubsetOf.call(new Set(this.values()), other);
+      },
+      isSupersetOf(other) {
+        return Set.prototype.isSupersetOf.call(new Set(this.values()), other);
+      },
+      isDisjointFrom(other) {
+        return Set.prototype.isDisjointFrom.call(new Set(this.values()), other);
+      }
+    });
+  }
+  var setHandlerKeys = Reflect.ownKeys(setHandler);
+  var proxyHandler = {
+    get(target, key, receiver) {
+      var _a, _b;
+      const copy = (_a = target.copy) === null || _a === void 0 ? void 0 : _a[key];
+      if (copy && target.finalities.draftsCache.has(copy)) {
+        return copy;
+      }
+      if (key === PROXY_DRAFT)
+        return target;
+      let markResult;
+      if (target.options.mark) {
+        const value2 = key === "size" && (target.original instanceof Map || target.original instanceof Set) ? Reflect.get(target.original, key) : Reflect.get(target.original, key, receiver);
+        markResult = target.options.mark(value2, dataTypes);
+        if (markResult === dataTypes.mutable) {
+          if (target.options.strict) {
+            checkReadable(value2, target.options, true);
+          }
+          return value2;
+        }
+      }
+      const source = latest(target);
+      if (source instanceof Map && mapHandlerKeys.includes(key)) {
+        if (key === "size") {
+          return Object.getOwnPropertyDescriptor(mapHandler, "size").get.call(target.proxy);
+        }
+        const handle = mapHandler[key];
+        return handle.bind(target.proxy);
+      }
+      if (source instanceof Set && setHandlerKeys.includes(key)) {
+        if (key === "size") {
+          return Object.getOwnPropertyDescriptor(setHandler, "size").get.call(target.proxy);
+        }
+        const handle = setHandler[key];
+        return handle.bind(target.proxy);
+      }
+      if (!has(source, key)) {
+        const desc = getDescriptor(source, key);
+        return desc ? `value` in desc ? desc.value : (
+          // !case: support for getter
+          (_b = desc.get) === null || _b === void 0 ? void 0 : _b.call(target.proxy)
+        ) : void 0;
+      }
+      const value = source[key];
+      if (target.options.strict) {
+        checkReadable(value, target.options);
+      }
+      if (target.finalized || !isDraftable(value, target.options)) {
+        return value;
+      }
+      if (value === peek(target.original, key)) {
+        ensureShallowCopy(target);
+        target.copy[key] = createDraft({
+          original: target.original[key],
+          parentDraft: target,
+          key: target.type === 1 ? Number(key) : key,
+          finalities: target.finalities,
+          options: target.options
+        });
+        if (typeof markResult === "function") {
+          const subProxyDraft = getProxyDraft(target.copy[key]);
+          ensureShallowCopy(subProxyDraft);
+          markChanged(subProxyDraft);
+          return subProxyDraft.copy;
+        }
+        return target.copy[key];
+      }
+      if (isDraft(value)) {
+        target.finalities.draftsCache.add(value);
+      }
+      return value;
+    },
+    set(target, key, value) {
+      var _a;
+      if (target.type === 3 || target.type === 2) {
+        throw new Error(`Map/Set draft does not support any property assignment.`);
+      }
+      let _key;
+      if (target.type === 1 && key !== "length" && !(Number.isInteger(_key = Number(key)) && _key >= 0 && (key === 0 || _key === 0 || String(_key) === String(key)))) {
+        throw new Error(`Only supports setting array indices and the 'length' property.`);
+      }
+      const desc = getDescriptor(latest(target), key);
+      if (desc === null || desc === void 0 ? void 0 : desc.set) {
+        desc.set.call(target.proxy, value);
+        return true;
+      }
+      const current2 = peek(latest(target), key);
+      const currentProxyDraft = getProxyDraft(current2);
+      if (currentProxyDraft && isEqual(currentProxyDraft.original, value)) {
+        target.copy[key] = value;
+        target.assignedMap = (_a = target.assignedMap) !== null && _a !== void 0 ? _a : /* @__PURE__ */ new Map();
+        target.assignedMap.set(key, false);
+        return true;
+      }
+      if (isEqual(value, current2) && (value !== void 0 || has(target.original, key)))
+        return true;
+      ensureShallowCopy(target);
+      markChanged(target);
+      if (has(target.original, key) && isEqual(value, target.original[key])) {
+        target.assignedMap.delete(key);
+      } else {
+        target.assignedMap.set(key, true);
+      }
+      target.copy[key] = value;
+      markFinalization(target, key, value, generatePatches);
+      return true;
+    },
+    has(target, key) {
+      return key in latest(target);
+    },
+    ownKeys(target) {
+      return Reflect.ownKeys(latest(target));
+    },
+    getOwnPropertyDescriptor(target, key) {
+      const source = latest(target);
+      const descriptor = Reflect.getOwnPropertyDescriptor(source, key);
+      if (!descriptor)
+        return descriptor;
+      return {
+        writable: true,
+        configurable: target.type !== 1 || key !== "length",
+        enumerable: descriptor.enumerable,
+        value: source[key]
+      };
+    },
+    getPrototypeOf(target) {
+      return Reflect.getPrototypeOf(target.original);
+    },
+    setPrototypeOf() {
+      throw new Error(`Cannot call 'setPrototypeOf()' on drafts`);
+    },
+    defineProperty() {
+      throw new Error(`Cannot call 'defineProperty()' on drafts`);
+    },
+    deleteProperty(target, key) {
+      var _a;
+      if (target.type === 1) {
+        return proxyHandler.set.call(this, target, key, void 0, target.proxy);
+      }
+      if (peek(target.original, key) !== void 0 || key in target.original) {
+        ensureShallowCopy(target);
+        markChanged(target);
+        target.assignedMap.set(key, false);
+      } else {
+        target.assignedMap = (_a = target.assignedMap) !== null && _a !== void 0 ? _a : /* @__PURE__ */ new Map();
+        target.assignedMap.delete(key);
+      }
+      if (target.copy)
+        delete target.copy[key];
+      return true;
+    }
+  };
+  function createDraft(createDraftOptions) {
+    const { original, parentDraft, key, finalities, options } = createDraftOptions;
+    const type = getType(original);
+    const proxyDraft = {
+      type,
+      finalized: false,
+      parent: parentDraft,
+      original,
+      copy: null,
+      proxy: null,
+      finalities,
+      options,
+      // Mapping of draft Set items to their corresponding draft values.
+      setMap: type === 3 ? new Map(original.entries()) : void 0
+    };
+    if (key || "key" in createDraftOptions) {
+      proxyDraft.key = key;
+    }
+    const { proxy, revoke } = Proxy.revocable(type === 1 ? Object.assign([], proxyDraft) : proxyDraft, proxyHandler);
+    finalities.revoke.push(revoke);
+    proxyDraft.proxy = proxy;
+    if (parentDraft) {
+      const target = parentDraft;
+      target.finalities.draft.push((patches, inversePatches) => {
+        var _a, _b;
+        const oldProxyDraft = getProxyDraft(proxy);
+        let copy = target.type === 3 ? target.setMap : target.copy;
+        const draft = get(copy, key);
+        const proxyDraft2 = getProxyDraft(draft);
+        if (proxyDraft2) {
+          let updatedValue = proxyDraft2.original;
+          if (proxyDraft2.operated) {
+            updatedValue = getValue(draft);
+          }
+          finalizeSetValue(proxyDraft2);
+          finalizePatches(proxyDraft2, generatePatches, patches, inversePatches);
+          if (target.options.enableAutoFreeze) {
+            target.options.updatedValues = (_a = target.options.updatedValues) !== null && _a !== void 0 ? _a : /* @__PURE__ */ new WeakMap();
+            target.options.updatedValues.set(updatedValue, proxyDraft2.original);
+          }
+          set(copy, key, updatedValue);
+        }
+        (_b = oldProxyDraft.callbacks) === null || _b === void 0 ? void 0 : _b.forEach((callback) => {
+          callback(patches, inversePatches);
+        });
+      });
+    } else {
+      const target = getProxyDraft(proxy);
+      target.finalities.draft.push((patches, inversePatches) => {
+        finalizeSetValue(target);
+        finalizePatches(target, generatePatches, patches, inversePatches);
+      });
+    }
+    return proxy;
+  }
+  internal.createDraft = createDraft;
+  function finalizeDraft(result, returnedValue, patches, inversePatches, enableAutoFreeze) {
+    var _a;
+    const proxyDraft = getProxyDraft(result);
+    const original = (_a = proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.original) !== null && _a !== void 0 ? _a : result;
+    const hasReturnedValue = !!returnedValue.length;
+    if (proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.operated) {
+      while (proxyDraft.finalities.draft.length > 0) {
+        const finalize = proxyDraft.finalities.draft.pop();
+        finalize(patches, inversePatches);
+      }
+    }
+    const state = hasReturnedValue ? returnedValue[0] : proxyDraft ? proxyDraft.operated ? proxyDraft.copy : proxyDraft.original : result;
+    if (proxyDraft)
+      revokeProxy(proxyDraft);
+    if (enableAutoFreeze) {
+      deepFreeze(state, state, proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.options.updatedValues);
+    }
+    return [
+      state,
+      patches && hasReturnedValue ? [{ op: Operation.Replace, path: [], value: returnedValue[0] }] : patches,
+      inversePatches && hasReturnedValue ? [{ op: Operation.Replace, path: [], value: original }] : inversePatches
+    ];
+  }
+  function draftify(baseState, options) {
+    var _a;
+    const finalities = {
+      draft: [],
+      revoke: [],
+      handledSet: /* @__PURE__ */ new WeakSet(),
+      draftsCache: /* @__PURE__ */ new WeakSet()
+    };
+    let patches;
+    let inversePatches;
+    if (options.enablePatches) {
+      patches = [];
+      inversePatches = [];
+    }
+    const isMutable = ((_a = options.mark) === null || _a === void 0 ? void 0 : _a.call(options, baseState, dataTypes)) === dataTypes.mutable || !isDraftable(baseState, options);
+    const draft = isMutable ? baseState : createDraft({
+      original: baseState,
+      parentDraft: null,
+      finalities,
+      options
+    });
+    return [
+      draft,
+      (returnedValue = []) => {
+        const [finalizedState, finalizedPatches, finalizedInversePatches] = finalizeDraft(draft, returnedValue, patches, inversePatches, options.enableAutoFreeze);
+        return options.enablePatches ? [finalizedState, finalizedPatches, finalizedInversePatches] : finalizedState;
+      }
+    ];
+  }
+  function handleReturnValue(options) {
+    const { rootDraft, value, useRawReturn = false, isRoot = true } = options;
+    forEach(value, (key, item, source) => {
+      const proxyDraft = getProxyDraft(item);
+      if (proxyDraft && rootDraft && proxyDraft.finalities === rootDraft.finalities) {
+        options.isContainDraft = true;
+        const currentValue = proxyDraft.original;
+        if (source instanceof Set) {
+          const arr = Array.from(source);
+          source.clear();
+          arr.forEach((_item) => source.add(key === _item ? currentValue : _item));
+        } else {
+          set(source, key, currentValue);
+        }
+      } else if (typeof item === "object" && item !== null) {
+        options.value = item;
+        options.isRoot = false;
+        handleReturnValue(options);
+      }
+    });
+    if (isRoot) {
+      if (!options.isContainDraft)
+        console.warn(`The return value does not contain any draft, please use 'rawReturn()' to wrap the return value to improve performance.`);
+      if (useRawReturn) {
+        console.warn(`The return value contains drafts, please don't use 'rawReturn()' to wrap the return value.`);
+      }
+    }
+  }
+  function getCurrent(target) {
+    var _a;
+    const proxyDraft = getProxyDraft(target);
+    if (!isDraftable(target, proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.options))
+      return target;
+    const type = getType(target);
+    if (proxyDraft && !proxyDraft.operated)
+      return proxyDraft.original;
+    let currentValue;
+    function ensureShallowCopy2() {
+      currentValue = type === 2 ? !isBaseMapInstance(target) ? new (Object.getPrototypeOf(target)).constructor(target) : new Map(target) : type === 3 ? Array.from(proxyDraft.setMap.values()) : shallowCopy(target, proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.options);
+    }
+    if (proxyDraft) {
+      proxyDraft.finalized = true;
+      try {
+        ensureShallowCopy2();
+      } finally {
+        proxyDraft.finalized = false;
+      }
+    } else {
+      currentValue = target;
+    }
+    forEach(currentValue, (key, value) => {
+      if (proxyDraft && isEqual(get(proxyDraft.original, key), value))
+        return;
+      const newValue = getCurrent(value);
+      if (newValue !== value) {
+        if (currentValue === target)
+          ensureShallowCopy2();
+        set(currentValue, key, newValue);
+      }
+    });
+    if (type === 3) {
+      const value = (_a = proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.original) !== null && _a !== void 0 ? _a : currentValue;
+      return !isBaseSetInstance(value) ? new (Object.getPrototypeOf(value)).constructor(currentValue) : new Set(currentValue);
+    }
+    return currentValue;
+  }
+  function current(target) {
+    if (!isDraft(target)) {
+      throw new Error(`current() is only used for Draft, parameter: ${target}`);
+    }
+    return getCurrent(target);
+  }
+  var makeCreator = (arg) => {
+    if (arg !== void 0 && Object.prototype.toString.call(arg) !== "[object Object]") {
+      throw new Error(`Invalid options: ${String(arg)}, 'options' should be an object.`);
+    }
+    return function create2(arg0, arg1, arg2) {
+      var _a, _b, _c;
+      if (typeof arg0 === "function" && typeof arg1 !== "function") {
+        return function(base2, ...args) {
+          return create2(base2, (draft2) => arg0.call(this, draft2, ...args), arg1);
+        };
+      }
+      const base = arg0;
+      const mutate = arg1;
+      let options = arg2;
+      if (typeof arg1 !== "function") {
+        options = arg1;
+      }
+      if (options !== void 0 && Object.prototype.toString.call(options) !== "[object Object]") {
+        throw new Error(`Invalid options: ${options}, 'options' should be an object.`);
+      }
+      options = Object.assign(Object.assign({}, arg), options);
+      const state = isDraft(base) ? current(base) : base;
+      const mark = Array.isArray(options.mark) ? ((value, types) => {
+        for (const mark2 of options.mark) {
+          if (typeof mark2 !== "function") {
+            throw new Error(`Invalid mark: ${mark2}, 'mark' should be a function.`);
+          }
+          const result2 = mark2(value, types);
+          if (result2) {
+            return result2;
+          }
+        }
+        return;
+      }) : options.mark;
+      const enablePatches = (_a = options.enablePatches) !== null && _a !== void 0 ? _a : false;
+      const strict = (_b = options.strict) !== null && _b !== void 0 ? _b : false;
+      const enableAutoFreeze = (_c = options.enableAutoFreeze) !== null && _c !== void 0 ? _c : false;
+      const _options = {
+        enableAutoFreeze,
+        mark,
+        strict,
+        enablePatches
+      };
+      if (!isDraftable(state, _options) && typeof state === "object" && state !== null) {
+        throw new Error(`Invalid base state: create() only supports plain objects, arrays, Set, Map or using mark() to mark the state as immutable.`);
+      }
+      const [draft, finalize] = draftify(state, _options);
+      if (typeof arg1 !== "function") {
+        if (!isDraftable(state, _options)) {
+          throw new Error(`Invalid base state: create() only supports plain objects, arrays, Set, Map or using mark() to mark the state as immutable.`);
+        }
+        return [draft, finalize];
+      }
+      let result;
+      try {
+        result = mutate(draft);
+      } catch (error) {
+        revokeProxy(getProxyDraft(draft));
+        throw error;
+      }
+      const returnValue = (value) => {
+        const proxyDraft = getProxyDraft(draft);
+        if (!isDraft(value)) {
+          if (value !== void 0 && !isEqual(value, draft) && (proxyDraft === null || proxyDraft === void 0 ? void 0 : proxyDraft.operated)) {
+            throw new Error(`Either the value is returned as a new non-draft value, or only the draft is modified without returning any value.`);
+          }
+          const rawReturnValue = value === null || value === void 0 ? void 0 : value[RAW_RETURN_SYMBOL];
+          if (rawReturnValue) {
+            const _value = rawReturnValue[0];
+            if (_options.strict && typeof value === "object" && value !== null) {
+              handleReturnValue({
+                rootDraft: proxyDraft,
+                value,
+                useRawReturn: true
+              });
+            }
+            return finalize([_value]);
+          }
+          if (value !== void 0) {
+            if (typeof value === "object" && value !== null) {
+              handleReturnValue({ rootDraft: proxyDraft, value });
+            }
+            return finalize([value]);
+          }
+        }
+        if (value === draft || value === void 0) {
+          return finalize([]);
+        }
+        const returnedProxyDraft = getProxyDraft(value);
+        if (_options === returnedProxyDraft.options) {
+          if (returnedProxyDraft.operated) {
+            throw new Error(`Cannot return a modified child draft.`);
+          }
+          return finalize([current(value)]);
+        }
+        return finalize([value]);
+      };
+      if (result instanceof Promise) {
+        return result.then(returnValue, (error) => {
+          revokeProxy(getProxyDraft(draft));
+          throw error;
+        });
+      }
+      return returnValue(result);
+    };
+  };
+  var create = makeCreator();
+  var constructorString = Object.prototype.constructor.toString();
+
+  // node_modules/@instantdb/core/dist/esm/utils/object.js
+  function areObjectKeysEqual(a, b) {
+    const ak = Object.keys(a);
+    const bk = Object.keys(b);
+    return ak.length === bk.length && Object.keys(a).every((k) => b.hasOwnProperty(k));
+  }
+  function areObjectsShallowEqual(obj1, obj2) {
+    return Object.keys(obj1).length === Object.keys(obj2).length && Object.keys(obj1).every((key) => obj2.hasOwnProperty(key) && obj1[key] === obj2[key]);
+  }
+  function areObjectsDeepEqual(obj1, obj2) {
+    if (typeof obj1 !== "object" || typeof obj2 !== "object" || obj1 === null || obj2 === null) {
+      return obj1 === obj2;
+    }
+    if (!areObjectKeysEqual(obj1, obj2)) {
+      return false;
+    }
+    return Object.keys(obj1).every((key) => areObjectsDeepEqual(obj1[key], obj2[key]));
+  }
+  function immutableRemoveUndefined(obj) {
+    if (!isObject(obj)) {
+      return obj;
+    }
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value === void 0)
+        continue;
+      result[key] = value;
+    }
+    return result;
+  }
+  function immutableDeepMerge(target, source) {
+    if (!isObject(target) || !isObject(source)) {
+      return source;
+    }
+    const result = { ...target };
+    for (const key of Object.keys(source)) {
+      if (source[key] === void 0)
+        continue;
+      if (source[key] === null) {
+        delete result[key];
+        continue;
+      }
+      const areBothObjects = isObject(target[key]) && isObject(source[key]);
+      result[key] = areBothObjects ? immutableDeepMerge(target[key], source[key]) : source[key];
+    }
+    return result;
+  }
+  function isObject(val) {
+    return typeof val === "object" && val !== null && !Array.isArray(val);
+  }
+  function insertInMutative(obj, path, value) {
+    if (!obj) {
+      return;
+    }
+    if (path.length === 0) {
+      return;
+    }
+    let current2 = obj || {};
+    for (let i2 = 0; i2 < path.length - 1; i2++) {
+      const key2 = path[i2];
+      if (!(key2 in current2) || typeof current2[key2] !== "object") {
+        current2[key2] = typeof path[i2 + 1] === "number" ? [] : {};
+      }
+      current2 = current2[key2];
+    }
+    const key = path[path.length - 1];
+    if (Array.isArray(current2) && typeof key === "number") {
+      current2.splice(key, 0, value);
+    } else {
+      current2[key] = value;
+    }
+  }
+  function assocInMutative(obj, path, value) {
+    if (!obj) {
+      return;
+    }
+    if (path.length === 0) {
+      return;
+    }
+    let current2 = obj || {};
+    for (let i2 = 0; i2 < path.length - 1; i2++) {
+      const key = path[i2];
+      if (!(key in current2) || typeof current2[key] !== "object") {
+        current2[key] = typeof path[i2 + 1] === "number" ? [] : {};
+      }
+      current2 = current2[key];
+    }
+    current2[path[path.length - 1]] = value;
+  }
+  function dissocInMutative(obj, path) {
+    if (!obj) {
+      return;
+    }
+    if (path.length === 0) {
+      return;
+    }
+    const [key, ...restPath] = path;
+    if (!(key in obj)) {
+      return;
+    }
+    if (restPath.length === 0) {
+      if (Array.isArray(obj)) {
+        obj.splice(key, 1);
+      } else {
+        delete obj[key];
+      }
+      return;
+    }
+    dissocInMutative(obj[key], restPath);
+    if (isEmpty(obj[key])) {
+      delete obj[key];
+    }
+  }
+  function isEmpty(obj) {
+    return obj && Object.keys(obj).length === 0;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/pgtime.js
+  var pgTimezoneMatch = /ZULU|YEKT|YEKST|YAPT|YAKT|YAKST|XJT|WGT|WGST|WFT|WETDST|WET|WDT|WAT|WAST|WAKT|WADT|VUT|VOLT|VLAT|VLAST|VET|UZT|UZST|UYT|UYST|UTC|UT|ULAT|ULAST|UCT|TVT|TRUT|TOT|TMT|TKT|TJT|TFT|TAHT|SGT|SCT|SAST|SADT|RET|PYT|PYST|PWT|PST|PONT|PMST|PMDT|PKT|PKST|PHT|PGT|PETT|PETST|PET|PDT|OMST|OMSST|NZT|NZST|NZDT|NUT|NST|NPT|NOVT|NOVST|NFT|NDT|MYT|MVT|MUT|MUST|MST|MSK|MSD|MPT|MMT|MHT|MEZ|METDST|MET|MESZ|MEST|MDT|MAWT|MART|MAGT|MAGST|LKT|LINT|LIGT|LHST|LHDT|KST|KRAT|KRAST|KOST|KGT|KGST|KDT|JST|JAYT|IST|IRT|IRKT|IRKST|IOT|IDT|ICT|HST|HKT|GYT|GMT|GILT|GFT|GET|GEST|GAMT|GALT|FNT|FNST|FKT|FKST|FJT|FJST|FET|EST|EGT|EGST|EETDST|EET|EEST|EDT|EAT|EAST|EASST|DDUT|DAVT|CXT|CST|COT|CLT|CLST|CKT|CHUT|CHAST|CHADT|CETDST|CET|CEST|CDT|CCT|CAST|CADT|BTT|BST|BRT|BRST|BRA|BOT|BORT|BNT|BDT|BDST|AZT|AZST|AZOT|AZOST|AWST|AWSST|AST|ART|ARST|ANAT|ANAST|AMT|AMST|ALMT|ALMST|AKST|AKDT|AFT|AEST|AESST|AEDT|ADT|ACWST|ACT|ACST|ACSST|ACDT$/;
+  var pgTimezoneAbbrevs = {
+    ZULU: 0,
+    YEKT: 18e3,
+    YEKST: 21600,
+    YAPT: 36e3,
+    YAKT: 32400,
+    YAKST: 32400,
+    XJT: 21600,
+    WGT: -10800,
+    WGST: -7200,
+    WFT: 43200,
+    WETDST: 3600,
+    WET: 0,
+    WDT: 32400,
+    WAT: 3600,
+    WAST: 25200,
+    WAKT: 43200,
+    WADT: 28800,
+    VUT: 39600,
+    VOLT: 10800,
+    VLAT: 36e3,
+    VLAST: 36e3,
+    VET: -14400,
+    UZT: 18e3,
+    UZST: 21600,
+    UYT: -10800,
+    UYST: -7200,
+    UTC: 0,
+    UT: 0,
+    ULAT: 28800,
+    ULAST: 32400,
+    UCT: 0,
+    TVT: 43200,
+    TRUT: 36e3,
+    TOT: 46800,
+    TMT: 18e3,
+    TKT: 46800,
+    TJT: 18e3,
+    TFT: 18e3,
+    TAHT: -36e3,
+    SGT: 28800,
+    SCT: 14400,
+    SAST: 7200,
+    SADT: 37800,
+    RET: 14400,
+    PYT: -14400,
+    PYST: -10800,
+    PWT: 32400,
+    PST: -28800,
+    PONT: 39600,
+    PMST: -10800,
+    PMDT: -7200,
+    PKT: 18e3,
+    PKST: 21600,
+    PHT: 28800,
+    PGT: 36e3,
+    PETT: 43200,
+    PETST: 43200,
+    PET: -18e3,
+    PDT: -25200,
+    OMST: 21600,
+    OMSST: 21600,
+    NZT: 43200,
+    NZST: 43200,
+    NZDT: 46800,
+    NUT: -39600,
+    NST: -12600,
+    NPT: 20700,
+    NOVT: 25200,
+    NOVST: 25200,
+    NFT: -12600,
+    NDT: -9e3,
+    MYT: 28800,
+    MVT: 18e3,
+    MUT: 14400,
+    MUST: 18e3,
+    MST: -25200,
+    MSK: 10800,
+    MSD: 14400,
+    MPT: 36e3,
+    MMT: 23400,
+    MHT: 43200,
+    MEZ: 3600,
+    METDST: 7200,
+    MET: 3600,
+    MESZ: 7200,
+    MEST: 7200,
+    MDT: -21600,
+    MAWT: 18e3,
+    MART: -34200,
+    MAGT: 39600,
+    MAGST: 39600,
+    LKT: 19800,
+    LINT: 50400,
+    LIGT: 36e3,
+    LHST: 37800,
+    LHDT: 37800,
+    KST: 32400,
+    KRAT: 25200,
+    KRAST: 25200,
+    KOST: 39600,
+    KGT: 21600,
+    KGST: 21600,
+    KDT: 36e3,
+    JST: 32400,
+    JAYT: 32400,
+    IST: 7200,
+    IRT: 12600,
+    IRKT: 28800,
+    IRKST: 28800,
+    IOT: 21600,
+    IDT: 10800,
+    ICT: 25200,
+    HST: -36e3,
+    HKT: 28800,
+    GYT: -14400,
+    GMT: 0,
+    GILT: 43200,
+    GFT: -10800,
+    GET: 14400,
+    GEST: 14400,
+    GAMT: -32400,
+    GALT: -21600,
+    FNT: -7200,
+    FNST: -3600,
+    FKT: -10800,
+    FKST: -10800,
+    FJT: 43200,
+    FJST: 46800,
+    FET: 10800,
+    EST: -18e3,
+    EGT: -3600,
+    EGST: 0,
+    EETDST: 10800,
+    EET: 7200,
+    EEST: 10800,
+    EDT: -14400,
+    EAT: 10800,
+    EAST: -21600,
+    EASST: -21600,
+    DDUT: 36e3,
+    DAVT: 25200,
+    CXT: 25200,
+    CST: -21600,
+    COT: -18e3,
+    CLT: -14400,
+    CLST: -10800,
+    CKT: -36e3,
+    CHUT: 36e3,
+    CHAST: 45900,
+    CHADT: 49500,
+    CETDST: 7200,
+    CET: 3600,
+    CEST: 7200,
+    CDT: -18e3,
+    CCT: 28800,
+    CAST: 34200,
+    CADT: 37800,
+    BTT: 21600,
+    BST: 3600,
+    BRT: -10800,
+    BRST: -7200,
+    BRA: -10800,
+    BOT: -14400,
+    BORT: 28800,
+    BNT: 28800,
+    BDT: 21600,
+    BDST: 7200,
+    AZT: 14400,
+    AZST: 14400,
+    AZOT: -3600,
+    AZOST: 0,
+    AWST: 28800,
+    AWSST: 32400,
+    AST: -14400,
+    ART: -10800,
+    ARST: -10800,
+    ANAT: 43200,
+    ANAST: 43200,
+    AMT: -14400,
+    AMST: 14400,
+    ALMT: 21600,
+    ALMST: 25200,
+    AKST: -32400,
+    AKDT: -28800,
+    AFT: 16200,
+    AEST: 36e3,
+    AESST: 39600,
+    AEDT: 39600,
+    ADT: -10800,
+    ACWST: 31500,
+    ACT: -18e3,
+    ACST: 34200,
+    ACSST: 37800,
+    ACDT: 37800
+  };
+
+  // node_modules/@instantdb/core/dist/esm/utils/dates.js
+  function zonedDateTimeStrToInstant(s) {
+    return new Date(s);
+  }
+  function localDateTimeStrToInstant(s) {
+    return /* @__PURE__ */ new Date(s + "Z");
+  }
+  var localDateStrRe = /^(\d+)[\./-](\d+)[\./-](\d+)$/;
+  function localDateStrToInstant(s) {
+    const match = s.match(localDateStrRe);
+    if (!match) {
+      return null;
+    }
+    const [_, part1, part2, part3] = match;
+    if (part1 <= 0 || part2 <= 0 || part3 <= 0) {
+      return null;
+    }
+    if (part1 > 999) {
+      return new Date(Date.UTC(part1, part2 - 1, part3, 0, 0, 0, 0));
+    }
+    return new Date(Date.UTC(part3, part1 - 1, part2, 0, 0, 0, 0));
+  }
+  function offioDateStrToInstant(s) {
+    const [datePart, timePart] = s.split(" ");
+    return /* @__PURE__ */ new Date(datePart + "T" + timePart + "Z");
+  }
+  function zenecaDateStrToInstant(s) {
+    const [datePart, timeWithNanos] = s.split(" ");
+    return /* @__PURE__ */ new Date(datePart + "T" + timeWithNanos + "Z");
+  }
+  function rfc1123ToInstant(s) {
+    return new Date(s);
+  }
+  function dowMonDayYearStrToInstant(s) {
+    const regex = /^(\w{3}) (\w{3}) (\d{2}) (\d{4})$/;
+    const match = s.match(regex);
+    if (!match) {
+      throw new Error(`Unable to parse \`${s}\` as a date.`);
+    }
+    const date = /* @__PURE__ */ new Date(s + " UTC");
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+  }
+  function iso8601IncompleteOffsetToInstant(s) {
+    const regex = /^(.+T.+)([+-])(\d{2})$/;
+    const match = s.match(regex);
+    if (match) {
+      const [, dateTimePart, sign, hours] = match;
+      const correctedString = `${dateTimePart}${sign}${hours}:00`;
+      return new Date(correctedString);
+    }
+    return null;
+  }
+  function iso8601SingleDigitToInstant(s) {
+    const regex = /^(\d+)-(\d{1,2})-(\d{1,2})([ T])(\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?(.*)$/;
+    const match = s.match(regex);
+    if (match) {
+      const [, year, month, day, _separator, hours, minutes, seconds, rest] = match;
+      const paddedMonth = month.padStart(2, "0");
+      const paddedDay = day.padStart(2, "0");
+      let timeStr = hours.padStart(2, "0");
+      if (minutes !== void 0) {
+        timeStr += `:${minutes.padStart(2, "0")}`;
+      }
+      if (seconds !== void 0) {
+        timeStr += `:${seconds.padStart(2, "0")}`;
+      }
+      const correctedString = `${year}-${paddedMonth}-${paddedDay}T${timeStr}${rest}`;
+      return new Date(correctedString);
+    }
+    return null;
+  }
+  function usDateTimeStrToInstant(s) {
+    const [datePart, timePart] = s.split(", ");
+    const [month, day, year] = datePart.split("/").map(Number);
+    const timeMatch = timePart.match(/(\d{1,2}):(\d{2}):(\d{2}) (AM|PM)/);
+    if (!timeMatch) {
+      throw new Error(`Unable to parse time from: ${s}`);
+    }
+    let [, hours, minutes, seconds, ampm] = timeMatch;
+    hours = Number(hours);
+    minutes = Number(minutes);
+    seconds = Number(seconds);
+    if (ampm === "PM" && hours !== 12) {
+      hours += 12;
+    } else if (ampm === "AM" && hours === 12) {
+      hours = 0;
+    }
+    return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+  }
+  function specialStrToInstant(s) {
+    switch (s) {
+      case "epoch":
+        return /* @__PURE__ */ new Date(0);
+      // These are not implemented yet because we need some way for the
+      // client and server to aggree on the values
+      case "infinity":
+      case "-infinity":
+      case "today":
+      case "tomorrow":
+      case "yesterday":
+        return null;
+    }
+  }
+  function pgTimezoneStrToInstant(s) {
+    const match = s.match(pgTimezoneMatch);
+    if (!match) {
+      return null;
+    }
+    const [tz] = match;
+    const offset = pgTimezoneAbbrevs[tz];
+    const baseDate = new Date(s.replace(pgTimezoneMatch, "Z"));
+    return new Date(baseDate.getTime() - offset * 1e3);
+  }
+  var dateParsers = [
+    localDateStrToInstant,
+    zenecaDateStrToInstant,
+    dowMonDayYearStrToInstant,
+    usDateTimeStrToInstant,
+    localDateTimeStrToInstant,
+    iso8601IncompleteOffsetToInstant,
+    offioDateStrToInstant,
+    zonedDateTimeStrToInstant,
+    specialStrToInstant,
+    pgTimezoneStrToInstant,
+    iso8601SingleDigitToInstant,
+    rfc1123ToInstant
+  ];
+  function tryParseDateString(parser, s) {
+    try {
+      const result = parser(s);
+      if (result instanceof Date && !isNaN(result.getTime())) {
+        return result;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function dateStrToInstant(s) {
+    for (const parser of dateParsers) {
+      const instant = tryParseDateString(parser, s);
+      if (instant) {
+        return instant;
+      }
+    }
+    return null;
+  }
+  function jsonStrToInstant(maybeJson) {
+    try {
+      const s = JSON.parse(maybeJson);
+      if (typeof s === "string") {
+        return dateStrToInstant(s);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function coerceToDate(x) {
+    if (x === void 0) {
+      return void 0;
+    }
+    if (x === null) {
+      return null;
+    }
+    if (x instanceof Date) {
+      return x;
+    }
+    if (typeof x === "string") {
+      const result = dateStrToInstant(x) || jsonStrToInstant(x) || dateStrToInstant(x.trim());
+      if (!result) {
+        throw new Error(`Unable to parse \`${x}\` as a date.`);
+      }
+      return result;
+    } else if (typeof x === "number") {
+      return new Date(x);
+    }
+    throw new Error(`Invalid date value \`${x}\`. Expected a date, number, or string, got type ${typeof x}.`);
+  }
+
+  // node_modules/@instantdb/core/dist/esm/store.js
+  var AttrsStoreClass = class {
+    constructor(attrs, linkIndex) {
+      __publicField(this, "attrs");
+      __publicField(this, "linkIndex");
+      __publicField(this, "_blobAttrs", null);
+      __publicField(this, "_primaryKeys", null);
+      __publicField(this, "_forwardIdents", null);
+      __publicField(this, "_revIdents", null);
+      this.attrs = attrs;
+      this.linkIndex = linkIndex;
+    }
+    resetAttrIndexes() {
+      this._blobAttrs = null;
+      this._primaryKeys = null;
+      this._forwardIdents = null;
+      this._revIdents = null;
+    }
+    addAttr(attr) {
+      this.attrs[attr.id] = attr;
+      this.resetAttrIndexes();
+    }
+    deleteAttr(attrId) {
+      delete this.attrs[attrId];
+      this.resetAttrIndexes();
+    }
+    updateAttr(partialAttr) {
+      const attr = this.attrs[partialAttr.id];
+      if (!attr)
+        return;
+      this.attrs[partialAttr.id] = { ...attr, ...partialAttr };
+      this.resetAttrIndexes();
+    }
+    getAttr(id2) {
+      return this.attrs[id2];
+    }
+    get blobAttrs() {
+      if (this._blobAttrs) {
+        return this._blobAttrs;
+      }
+      this._blobAttrs = /* @__PURE__ */ new Map();
+      for (const attr of Object.values(this.attrs)) {
+        if (isBlob(attr)) {
+          const [_, fwdEtype, fwdLabel] = attr["forward-identity"];
+          setInMap(this.blobAttrs, [fwdEtype, fwdLabel], attr);
+        }
+      }
+      return this._blobAttrs;
+    }
+    get primaryKeys() {
+      if (this._primaryKeys) {
+        return this._primaryKeys;
+      }
+      this._primaryKeys = /* @__PURE__ */ new Map();
+      for (const attr of Object.values(this.attrs)) {
+        if (attr["primary?"]) {
+          const [_, fwdEtype] = attr["forward-identity"];
+          setInMap(this._primaryKeys, [fwdEtype], attr);
+        }
+      }
+      return this._primaryKeys;
+    }
+    get forwardIdents() {
+      if (this._forwardIdents) {
+        return this._forwardIdents;
+      }
+      this._forwardIdents = /* @__PURE__ */ new Map();
+      for (const attr of Object.values(this.attrs)) {
+        const fwdIdent = attr["forward-identity"];
+        const [_, fwdEtype, fwdLabel] = fwdIdent;
+        setInMap(this._forwardIdents, [fwdEtype, fwdLabel], attr);
+      }
+      return this._forwardIdents;
+    }
+    get revIdents() {
+      if (this._revIdents) {
+        return this._revIdents;
+      }
+      this._revIdents = /* @__PURE__ */ new Map();
+      for (const attr of Object.values(this.attrs)) {
+        const revIdent = attr["reverse-identity"];
+        if (revIdent) {
+          const [_, revEtype, revLabel] = revIdent;
+          setInMap(this._revIdents, [revEtype, revLabel], attr);
+        }
+      }
+      return this._revIdents;
+    }
+    toJSON() {
+      return { attrs: this.attrs, linkIndex: this.linkIndex };
+    }
+  };
+  function hasEA(attr) {
+    return attr["cardinality"] === "one";
+  }
+  function isRef(attr) {
+    return attr["value-type"] === "ref";
+  }
+  function isBlob(attr) {
+    return attr["value-type"] === "blob";
+  }
+  function getInMap(obj, path) {
+    return path.reduce((acc, key) => acc && acc.get(key), obj);
+  }
+  function deleteInMap(m, path) {
+    if (path.length === 0)
+      throw new Error("path must have at least one element");
+    if (path.length === 1) {
+      m.delete(path[0]);
+      return;
+    }
+    const [head, ...tail] = path;
+    if (!m.has(head))
+      return;
+    deleteInMap(m.get(head), tail);
+  }
+  function setInMap(m, path, value) {
+    let current2 = m;
+    const lastI = path.length - 1;
+    for (let i2 = 0; i2 < lastI; i2++) {
+      const part = path[i2];
+      let nextMap = current2.get(part);
+      if (nextMap === void 0) {
+        nextMap = /* @__PURE__ */ new Map();
+        current2.set(part, nextMap);
+      }
+      current2 = nextMap;
+    }
+    if (lastI > -1) {
+      current2.set(path[lastI], value);
+    }
+  }
+  function createTripleIndexes(attrsStore, triples, useDateObjects) {
+    const eav = /* @__PURE__ */ new Map();
+    const aev = /* @__PURE__ */ new Map();
+    const vae = /* @__PURE__ */ new Map();
+    for (const triple of triples) {
+      let [eid, aid, v] = triple;
+      const attr = attrsStore.getAttr(aid);
+      if (!attr) {
+        console.warn("no such attr", aid, eid);
+        continue;
+      }
+      if (attr["checked-data-type"] === "date" && useDateObjects) {
+        v = coerceToDate(v);
+        triple[2] = v;
+      }
+      if (isRef(attr)) {
+        setInMap(vae, [v, aid, eid], triple);
+      }
+      setInMap(eav, [eid, aid, v], triple);
+      setInMap(aev, [aid, eid, v], triple);
+    }
+    return { eav, aev, vae };
+  }
+  function toJSON(store) {
+    return {
+      triples: allMapValues(store.eav, 3),
+      cardinalityInference: store.cardinalityInference,
+      useDateObjects: store.useDateObjects,
+      version: 1
+    };
+  }
+  function fromJSON(attrsStore, storeJSON) {
+    return createStore(attrsStore, storeJSON.triples, storeJSON.cardinalityInference, storeJSON.useDateObjects);
+  }
+  function attrsStoreFromJSON(attrsStoreJSON, storeJSON) {
+    if (attrsStoreJSON) {
+      return new AttrsStoreClass(attrsStoreJSON.attrs, attrsStoreJSON.linkIndex);
+    }
+    if (storeJSON && "__type" in storeJSON) {
+      return new AttrsStoreClass(storeJSON.attrs, storeJSON.linkIndex);
+    }
+  }
+  function hasEntity(store, e) {
+    return getInMap(store.eav, [e]) !== void 0;
+  }
+  function createStore(attrsStore, triples, enableCardinalityInference, useDateObjects) {
+    const store = createTripleIndexes(attrsStore, triples, useDateObjects);
+    store.cardinalityInference = enableCardinalityInference;
+    store.useDateObjects = useDateObjects;
+    return store;
+  }
+  function resolveLookupRefs(store, triple) {
+    let eid;
+    if (Array.isArray(triple[0])) {
+      const [a, v] = triple[0];
+      const eMaps = store.aev.get(a);
+      if (!eMaps) {
+        return null;
+      }
+      const triples = allMapValues(eMaps, 2);
+      eid = triples.find((x) => x[2] === v)?.[0];
+    } else {
+      eid = triple[0];
+    }
+    if (!eid) {
+      return null;
+    }
+    const lookupV = triple[2];
+    if (Array.isArray(lookupV) && lookupV.length === 2 && store.aev.get(lookupV[0])) {
+      const [a, v] = lookupV;
+      const eMaps = store.aev.get(a);
+      if (!eMaps) {
+        return null;
+      }
+      const triples = allMapValues(eMaps, 2);
+      const value = triples.find((x) => x[2] === v)?.[0];
+      if (!value) {
+        return null;
+      }
+      const [_e, aid, _v, ...rest] = triple;
+      return [eid, aid, value, ...rest];
+    } else {
+      const [_, ...rest] = triple;
+      return [eid, ...rest];
+    }
+  }
+  function retractTriple(store, attrsStore, rawTriple) {
+    const triple = resolveLookupRefs(store, rawTriple);
+    if (!triple) {
+      return;
+    }
+    const [eid, aid, v] = triple;
+    const attr = attrsStore.getAttr(aid);
+    if (!attr) {
+      return;
+    }
+    deleteInMap(store.eav, [eid, aid, v]);
+    deleteInMap(store.aev, [aid, eid, v]);
+    if (isRef(attr)) {
+      deleteInMap(store.vae, [v, aid, eid]);
+    }
+  }
+  var _seed = 0;
+  function getCreatedAt(store, attr, triple) {
+    const [eid, aid, v] = triple;
+    let createdAt;
+    const t = getInMap(store.eav, [eid, aid, v]);
+    if (t) {
+      createdAt = t[3];
+    }
+    return createdAt || Date.now() * 10 + _seed++;
+  }
+  function addTriple(store, attrsStore, rawTriple) {
+    const triple = resolveLookupRefs(store, rawTriple);
+    if (!triple) {
+      return;
+    }
+    let [eid, aid, v] = triple;
+    const attr = attrsStore.getAttr(aid);
+    if (!attr) {
+      return;
+    }
+    if (attr["checked-data-type"] === "date" && store.useDateObjects) {
+      v = coerceToDate(v);
+    }
+    const existingTriple = getInMap(store.eav, [eid, aid, v]);
+    const t = existingTriple?.[3] ?? getCreatedAt(store, attr, triple);
+    const enhancedTriple = [eid, aid, v, t];
+    if (hasEA(attr)) {
+      setInMap(store.eav, [eid, aid], /* @__PURE__ */ new Map([[v, enhancedTriple]]));
+      setInMap(store.aev, [aid, eid], /* @__PURE__ */ new Map([[v, enhancedTriple]]));
+    } else {
+      setInMap(store.eav, [eid, aid, v], enhancedTriple);
+      setInMap(store.aev, [aid, eid, v], enhancedTriple);
+    }
+    if (isRef(attr)) {
+      setInMap(store.vae, [v, aid, eid], enhancedTriple);
+    }
+  }
+  function mergeTriple(store, attrsStore, rawTriple) {
+    const triple = resolveLookupRefs(store, rawTriple);
+    if (!triple) {
+      return;
+    }
+    const [eid, aid, update] = triple;
+    const attr = attrsStore.getAttr(aid);
+    if (!attr)
+      return;
+    if (!isBlob(attr))
+      throw new Error("merge operation is not supported for links");
+    const eavValuesMap = getInMap(store.eav, [eid, aid]);
+    if (!eavValuesMap)
+      return;
+    const currentTriple = eavValuesMap.values().next()?.value;
+    if (!currentTriple)
+      return;
+    const currentValue = currentTriple[2];
+    const updatedValue = immutableDeepMerge(currentValue, update);
+    const enhancedTriple = [
+      eid,
+      aid,
+      updatedValue,
+      getCreatedAt(store, attr, currentTriple)
+    ];
+    setInMap(store.eav, [eid, aid], /* @__PURE__ */ new Map([[updatedValue, enhancedTriple]]));
+    setInMap(store.aev, [aid, eid], /* @__PURE__ */ new Map([[updatedValue, enhancedTriple]]));
+  }
+  function deleteEntity(store, attrsStore, args) {
+    const [lookup2, etype] = args;
+    const triple = resolveLookupRefs(store, [lookup2]);
+    if (!triple) {
+      return;
+    }
+    const [id2] = triple;
+    const eMap = store.eav.get(id2);
+    if (eMap) {
+      for (const a of eMap.keys()) {
+        const attr = attrsStore.getAttr(a);
+        if (attr && attr["on-delete-reverse"] === "cascade") {
+          allMapValues(eMap.get(a), 1).forEach(([e, a2, v]) => deleteEntity(store, attrsStore, [v, attr["reverse-identity"]?.[1]]));
+        }
+        if (
+          // Fall back to deleting everything if we've rehydrated tx-steps from
+          // the store that didn't set `etype` in deleteEntity
+          !etype || // If we don't know about the attr, let's just get rid of it
+          !attr || // Make sure it matches the etype
+          attr["forward-identity"]?.[1] === etype
+        ) {
+          deleteInMap(store.aev, [a, id2]);
+          deleteInMap(store.eav, [id2, a]);
+        }
+      }
+      if (eMap.size === 0) {
+        deleteInMap(store.eav, [id2]);
+      }
+    }
+    const vaeTriples = store.vae.get(id2) && allMapValues(store.vae.get(id2), 2);
+    if (vaeTriples) {
+      vaeTriples.forEach((triple2) => {
+        const [e, a, v] = triple2;
+        const attr = attrsStore.getAttr(a);
+        if (!etype || !attr || attr["reverse-identity"]?.[1] === etype) {
+          deleteInMap(store.eav, [e, a, v]);
+          deleteInMap(store.aev, [a, e, v]);
+          deleteInMap(store.vae, [v, a, e]);
+        }
+        if (attr && attr["on-delete"] === "cascade" && attr["reverse-identity"]?.[1] === etype) {
+          deleteEntity(store, attrsStore, [e, attr["forward-identity"]?.[1]]);
+        }
+      });
+    }
+    if (store.vae.get(id2)?.size === 0) {
+      deleteInMap(store.vae, [id2]);
+    }
+  }
+  function resetIndexMap(store, attrsStore, newTriples) {
+    const newIndexMap = createTripleIndexes(attrsStore, newTriples, store.useDateObjects);
+    Object.keys(newIndexMap).forEach((key) => {
+      store[key] = newIndexMap[key];
+    });
+  }
+  function addAttr(attrsStore, [attr]) {
+    attrsStore.addAttr(attr);
+  }
+  function getAllTriples(store) {
+    return allMapValues(store.eav, 3);
+  }
+  function deleteAttr(store, attrsStore, [id2]) {
+    if (!attrsStore.getAttr(id2))
+      return;
+    const newTriples = getAllTriples(store).filter(([_, aid]) => aid !== id2);
+    attrsStore.deleteAttr(id2);
+    resetIndexMap(store, attrsStore, newTriples);
+  }
+  function updateAttr(store, attrsStore, [partialAttr]) {
+    const attr = attrsStore.getAttr(partialAttr.id);
+    if (!attr)
+      return;
+    attrsStore.updateAttr(partialAttr);
+    resetIndexMap(store, attrsStore, getAllTriples(store));
+  }
+  function applyTxStep(store, attrsStore, txStep) {
+    const [action, ...args] = txStep;
+    switch (action) {
+      case "add-triple":
+        addTriple(store, attrsStore, args);
+        break;
+      case "deep-merge-triple":
+        mergeTriple(store, attrsStore, args);
+        break;
+      case "retract-triple":
+        retractTriple(store, attrsStore, args);
+        break;
+      case "delete-entity":
+        deleteEntity(store, attrsStore, args);
+        break;
+      case "add-attr":
+        addAttr(attrsStore, args);
+        break;
+      case "delete-attr":
+        deleteAttr(store, attrsStore, args);
+        break;
+      case "update-attr":
+        updateAttr(store, attrsStore, args);
+        break;
+      case "restore-attr":
+        break;
+      case "rule-params":
+        break;
+      default:
+        throw new Error(`unhandled transaction action: ${action}`);
+    }
+  }
+  function allMapValues(m, level, res = []) {
+    if (!m) {
+      return res;
+    }
+    if (level === 0) {
+      return res;
+    }
+    if (level === 1) {
+      for (const v of m.values()) {
+        res.push(v);
+      }
+      return res;
+    }
+    for (const v of m.values()) {
+      allMapValues(v, level - 1, res);
+    }
+    return res;
+  }
+  function triplesByValue(store, m, v) {
+    const res = [];
+    if (v?.hasOwnProperty("$not")) {
+      for (const candidate of m.keys()) {
+        if (v.$not !== candidate) {
+          res.push(m.get(candidate));
+        }
+      }
+      return res;
+    }
+    if (v?.hasOwnProperty("$isNull")) {
+      const { attrId, isNull, reverse } = v.$isNull;
+      if (reverse) {
+        for (const candidate of m.keys()) {
+          const vMap = store.vae.get(candidate);
+          const isValNull = !vMap || !vMap.get(attrId);
+          if (isNull ? isValNull : !isValNull) {
+            res.push(m.get(candidate));
+          }
+        }
+      } else {
+        const aMap = store.aev.get(attrId);
+        for (const candidate of m.keys()) {
+          const isValNull = !aMap || aMap.get(candidate)?.get(null) || !aMap.get(candidate);
+          if (isNull ? isValNull : !isValNull) {
+            res.push(m.get(candidate));
+          }
+        }
+      }
+      return res;
+    }
+    if (v?.$comparator) {
+      return allMapValues(m, 1).filter(v.$op);
+    }
+    const values = v.in || v.$in || [v];
+    for (const value of values) {
+      const triple = m.get(value);
+      if (triple) {
+        res.push(triple);
+      }
+    }
+    return res;
+  }
+  function whichIdx(e, a, v) {
+    let res = "";
+    if (e !== void 0) {
+      res += "e";
+    }
+    if (a !== void 0) {
+      res += "a";
+    }
+    if (v !== void 0) {
+      res += "v";
+    }
+    return res;
+  }
+  function getTriples(store, [e, a, v]) {
+    const idx = whichIdx(e, a, v);
+    switch (idx) {
+      case "e": {
+        const eMap = store.eav.get(e);
+        return allMapValues(eMap, 2);
+      }
+      case "ea": {
+        const aMap = store.eav.get(e)?.get(a);
+        return allMapValues(aMap, 1);
+      }
+      case "eav": {
+        const aMap = store.eav.get(e)?.get(a);
+        if (!aMap) {
+          return [];
+        }
+        return triplesByValue(store, aMap, v);
+      }
+      case "ev": {
+        const eMap = store.eav.get(e);
+        if (!eMap) {
+          return [];
+        }
+        const res = [];
+        for (const aMap of eMap.values()) {
+          res.push(...triplesByValue(store, aMap, v));
+        }
+        return res;
+      }
+      case "a": {
+        const aMap = store.aev.get(a);
+        return allMapValues(aMap, 2);
+      }
+      case "av": {
+        const aMap = store.aev.get(a);
+        if (!aMap) {
+          return [];
+        }
+        const res = [];
+        for (const eMap of aMap.values()) {
+          res.push(...triplesByValue(store, eMap, v));
+        }
+        return res;
+      }
+      case "v": {
+        const res = [];
+        for (const eMap of store.eav.values()) {
+          for (const aMap of eMap.values()) {
+            res.push(...triplesByValue(store, aMap, v));
+          }
+        }
+        return res;
+      }
+      default: {
+        return allMapValues(store.eav, 3);
+      }
+    }
+  }
+  function getAsObject(store, attrs, e) {
+    const obj = {};
+    if (!attrs) {
+      return obj;
+    }
+    for (const [label, attr] of attrs.entries()) {
+      const aMap = store.eav.get(e)?.get(attr.id);
+      const triples = allMapValues(aMap, 1);
+      for (const triple of triples) {
+        obj[label] = triple[2];
+      }
+    }
+    return obj;
+  }
+  function getAttrByFwdIdentName(attrsStore, inputEtype, inputLabel) {
+    return attrsStore.forwardIdents.get(inputEtype)?.get(inputLabel);
+  }
+  function getAttrByReverseIdentName(attrsStore, inputEtype, inputLabel) {
+    return attrsStore.revIdents.get(inputEtype)?.get(inputLabel);
+  }
+  function getBlobAttrs(attrsStore, etype) {
+    return attrsStore.blobAttrs.get(etype);
+  }
+  function getPrimaryKeyAttr(attrsStore, etype) {
+    const fromPrimary = attrsStore.primaryKeys.get(etype);
+    if (fromPrimary) {
+      return fromPrimary;
+    }
+    return attrsStore.forwardIdents.get(etype)?.get("id");
+  }
+  function findTriple(store, attrsStore, rawTriple) {
+    const triple = resolveLookupRefs(store, rawTriple);
+    if (!triple) {
+      return;
+    }
+    const [eid, aid, v] = triple;
+    const attr = attrsStore.getAttr(aid);
+    if (!attr) {
+      return;
+    }
+    return getInMap(store.eav, [eid, aid]);
+  }
+  function transact(store, attrsStore, txSteps) {
+    const txStepsFiltered = txSteps.filter(([action, eid, attrId, value, opts]) => {
+      if (action !== "add-triple" && action !== "deep-merge-triple") {
+        return true;
+      }
+      const mode = opts?.mode;
+      if (mode !== "create" && mode !== "update") {
+        return true;
+      }
+      let exists = false;
+      const attr = attrsStore.getAttr(attrId);
+      if (attr) {
+        const idAttr2 = getPrimaryKeyAttr(attrsStore, attr["forward-identity"][1]);
+        exists = !!findTriple(store, attrsStore, [
+          eid,
+          idAttr2?.id,
+          eid
+        ]);
+      }
+      if (mode === "create" && exists) {
+        return false;
+      }
+      if (mode === "update" && !exists) {
+        return false;
+      }
+      return true;
+    });
+    return create({ store, attrsStore }, (draft) => {
+      txStepsFiltered.forEach((txStep) => {
+        applyTxStep(draft.store, draft.attrsStore, txStep);
+      });
+    }, {
+      mark: (target) => {
+        if (target instanceof AttrsStoreClass) {
+          return "immutable";
+        }
+      }
+    });
+  }
+
+  // node_modules/@instantdb/core/dist/esm/datalog.js
+  function isVariable(x) {
+    return typeof x === "string" && x.startsWith("?");
+  }
+  function matchVariable(variable, triplePart, context) {
+    if (context.hasOwnProperty(variable)) {
+      const bound = context[variable];
+      return matchPart(bound, triplePart, context);
+    }
+    return { ...context, [variable]: triplePart };
+  }
+  function matchExact(patternPart, triplePart, context) {
+    return patternPart === triplePart ? context : null;
+  }
+  function matcherForPatternPart(patternPart) {
+    switch (typeof patternPart) {
+      case "string":
+        return patternPart.startsWith("?") ? matchVariable : matchExact;
+      default:
+        return matchExact;
+    }
+  }
+  var validArgMapProps = [
+    "in",
+    "$in",
+    "$not",
+    "$isNull",
+    "$comparator"
+    // covers all of $gt, $lt, etc.
+  ];
+  function isArgsMap(patternPart) {
+    for (const prop of validArgMapProps) {
+      if (patternPart.hasOwnProperty(prop)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function matchPart(patternPart, triplePart, context) {
+    if (!context)
+      return null;
+    if (typeof patternPart === "object") {
+      if (isArgsMap(patternPart)) {
+        return context;
+      }
+      return null;
+    }
+    const matcher = matcherForPatternPart(patternPart);
+    return matcher(patternPart, triplePart, context);
+  }
+  function matchPattern(pattern, triple, context) {
+    return pattern.reduce((context2, patternPart, idx) => {
+      const triplePart = triple[idx];
+      return matchPart(patternPart, triplePart, context2);
+    }, context);
+  }
+  function querySingle(store, pattern, context) {
+    return relevantTriples(store, pattern, context).map((triple) => matchPattern(pattern, triple, context)).filter((x) => x);
+  }
+  function queryPattern(store, pattern, contexts) {
+    if (pattern.or) {
+      return pattern.or.patterns.flatMap((patterns) => {
+        return queryWhere(store, patterns, contexts);
+      });
+    }
+    if (pattern.and) {
+      return pattern.and.patterns.reduce((contexts2, patterns) => {
+        return queryWhere(store, patterns, contexts2);
+      }, contexts);
+    }
+    return contexts.flatMap((context) => querySingle(store, pattern, context));
+  }
+  function queryWhere(store, patterns, contexts = [{}]) {
+    return patterns.reduce((contexts2, pattern) => {
+      return queryPattern(store, pattern, contexts2);
+    }, contexts);
+  }
+  function actualize(context, find) {
+    if (Array.isArray(find)) {
+      return find.map((findPart) => actualize(context, findPart));
+    }
+    return isVariable(find) ? context[find] : find;
+  }
+  function query(store, { find, where }) {
+    const contexts = queryWhere(store, where);
+    return contexts.map((context) => actualize(context, find));
+  }
+  function relevantTriples(store, pattern, context) {
+    return getTriples(store, actualize(context, pattern));
+  }
+
+  // node_modules/uuid/dist/esm-browser/regex.js
+  var regex_default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
+
+  // node_modules/uuid/dist/esm-browser/validate.js
+  function validate(uuid) {
+    return typeof uuid === "string" && regex_default.test(uuid);
+  }
+  var validate_default = validate;
+
+  // node_modules/uuid/dist/esm-browser/stringify.js
+  var byteToHex = [];
+  for (let i2 = 0; i2 < 256; ++i2) {
+    byteToHex.push((i2 + 256).toString(16).slice(1));
+  }
+  function unsafeStringify(arr, offset = 0) {
+    return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+  }
+
+  // node_modules/uuid/dist/esm-browser/rng.js
+  var getRandomValues;
+  var rnds8 = new Uint8Array(16);
+  function rng() {
+    if (!getRandomValues) {
+      if (typeof crypto === "undefined" || !crypto.getRandomValues) {
+        throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+      }
+      getRandomValues = crypto.getRandomValues.bind(crypto);
+    }
+    return getRandomValues(rnds8);
+  }
+
+  // node_modules/uuid/dist/esm-browser/native.js
+  var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+  var native_default = { randomUUID };
+
+  // node_modules/uuid/dist/esm-browser/v4.js
+  function v4(options, buf, offset) {
+    if (native_default.randomUUID && !buf && !options) {
+      return native_default.randomUUID();
+    }
+    options = options || {};
+    const rnds = options.random ?? options.rng?.() ?? rng();
+    if (rnds.length < 16) {
+      throw new Error("Random bytes length must be >= 16");
+    }
+    rnds[6] = rnds[6] & 15 | 64;
+    rnds[8] = rnds[8] & 63 | 128;
+    if (buf) {
+      offset = offset || 0;
+      if (offset < 0 || offset + 16 > buf.length) {
+        throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
+      }
+      for (let i2 = 0; i2 < 16; ++i2) {
+        buf[offset + i2] = rnds[i2];
+      }
+      return buf;
+    }
+    return unsafeStringify(rnds);
+  }
+  var v4_default = v4;
+
+  // node_modules/@instantdb/core/dist/esm/utils/id.js
+  function uuidToByteArray(uuid) {
+    const hex = uuid.replace(/-/g, "");
+    const bytes = [];
+    for (let i2 = 0; i2 < hex.length; i2 += 2) {
+      bytes.push(parseInt(hex.substring(i2, i2 + 2), 16));
+    }
+    return bytes;
+  }
+  function compareByteArrays(a, b) {
+    for (let i2 = 0; i2 < a.length; i2++) {
+      if (a[i2] < b[i2])
+        return -1;
+      if (a[i2] > b[i2])
+        return 1;
+    }
+    return 0;
+  }
+  function uuidCompare(uuid_a, uuid_b) {
+    return compareByteArrays(uuidToByteArray(uuid_a), uuidToByteArray(uuid_b));
+  }
+  function id() {
+    return v4_default();
+  }
+  var id_default = id;
+
+  // node_modules/@instantdb/core/dist/esm/utils/strings.js
+  function fallbackCompareStrings(a, b) {
+    return a.localeCompare(b);
+  }
+  function makeCompareStringsFn() {
+    let compareStrings = fallbackCompareStrings;
+    if (typeof Intl === "object" && Intl.hasOwnProperty("Collator")) {
+      try {
+        const collator = Intl.Collator("en-US");
+        compareStrings = collator.compare;
+      } catch (_e) {
+      }
+    }
+    return compareStrings;
+  }
+  var stringCompare = makeCompareStringsFn();
+
+  // node_modules/@instantdb/core/dist/esm/warningToggle.js
+  var warningEnabled = true;
+
+  // node_modules/@instantdb/core/dist/esm/instaql.js
+  var _seed2 = 0;
+  function wildcard(friendlyName) {
+    return makeVarImpl(`_${friendlyName}`, _seed2++);
+  }
+  function makeVarImpl(x, level) {
+    return `?${x}-${level}`;
+  }
+  var AttrNotFoundError = class extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "AttrNotFoundError";
+    }
+  };
+  function idAttr(attrsStore, ns) {
+    const attr = getPrimaryKeyAttr(attrsStore, ns);
+    if (!attr) {
+      throw new AttrNotFoundError(`Could not find id attr for ${ns}`);
+    }
+    return attr;
+  }
+  function defaultWhere(makeVar, attrsStore, etype, level) {
+    return [eidWhere(makeVar, attrsStore, etype, level)];
+  }
+  function eidWhere(makeVar, attrsStore, etype, level) {
+    return [
+      makeVar(etype, level),
+      idAttr(attrsStore, etype).id,
+      makeVar(etype, level),
+      makeVar("time", level)
+    ];
+  }
+  function replaceInAttrPat(attrPat, needle, v) {
+    return attrPat.map((x) => x === needle ? v : x);
+  }
+  function refAttrPat(makeVar, attrsStore, etype, level, label) {
+    const fwdAttr = getAttrByFwdIdentName(attrsStore, etype, label);
+    const revAttr = getAttrByReverseIdentName(attrsStore, etype, label);
+    const attr = fwdAttr || revAttr;
+    if (!attr) {
+      throw new AttrNotFoundError(`Could not find attr for ${[etype, label]}`);
+    }
+    if (attr["value-type"] !== "ref") {
+      throw new Error(`Attr ${attr.id} is not a ref`);
+    }
+    const [_f, fwdEtype] = attr["forward-identity"];
+    const [_r, revEtype] = attr["reverse-identity"];
+    const nextLevel = level + 1;
+    const attrPat = fwdAttr ? [
+      makeVar(fwdEtype, level),
+      attr.id,
+      makeVar(revEtype, nextLevel),
+      wildcard("time")
+    ] : [
+      makeVar(fwdEtype, nextLevel),
+      attr.id,
+      makeVar(revEtype, level),
+      wildcard("time")
+    ];
+    const nextEtype = fwdAttr ? revEtype : fwdEtype;
+    const isForward = Boolean(fwdAttr);
+    return [nextEtype, nextLevel, attrPat, attr, isForward];
+  }
+  function makeLikeMatcher(caseSensitive, pattern) {
+    if (typeof pattern !== "string") {
+      return function likeMatcher(_value) {
+        return false;
+      };
+    }
+    const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regexPattern = escapedPattern.replace(/%/g, ".*").replace(/_/g, ".");
+    const regex = new RegExp(`^${regexPattern}$`, caseSensitive ? "s" : "is");
+    return function likeMatcher(value) {
+      if (typeof value !== "string") {
+        return false;
+      }
+      return regex.test(value);
+    };
+  }
+  function parseValue(attr, v) {
+    if (typeof v !== "object" || v.hasOwnProperty("$in") || v.hasOwnProperty("in")) {
+      return v;
+    }
+    const isDate = attr["checked-data-type"] === "date";
+    if (v.hasOwnProperty("$gt")) {
+      return {
+        $comparator: true,
+        $op: isDate ? function gtDate(triple) {
+          return new Date(triple[2]) > new Date(v.$gt);
+        } : function gt(triple) {
+          return triple[2] > v.$gt;
+        }
+      };
+    }
+    if (v.hasOwnProperty("$gte")) {
+      return {
+        $comparator: true,
+        $op: isDate ? function gteDate(triple) {
+          return new Date(triple[2]) >= new Date(v.$gte);
+        } : function gte(triple) {
+          return triple[2] >= v.$gte;
+        }
+      };
+    }
+    if (v.hasOwnProperty("$lt")) {
+      return {
+        $comparator: true,
+        $op: isDate ? function ltDate(triple) {
+          return new Date(triple[2]) < new Date(v.$lt);
+        } : function lt(triple) {
+          return triple[2] < v.$lt;
+        }
+      };
+    }
+    if (v.hasOwnProperty("$lte")) {
+      return {
+        $comparator: true,
+        $op: isDate ? function lteDate(triple) {
+          return new Date(triple[2]) <= new Date(v.$lte);
+        } : function lte(triple) {
+          return triple[2] <= v.$lte;
+        }
+      };
+    }
+    if (v.hasOwnProperty("$like")) {
+      const matcher = makeLikeMatcher(true, v.$like);
+      return {
+        $comparator: true,
+        $op: function like(triple) {
+          return matcher(triple[2]);
+        }
+      };
+    }
+    if (v.hasOwnProperty("$ilike")) {
+      const matcher = makeLikeMatcher(false, v.$ilike);
+      return {
+        $comparator: true,
+        $op: function ilike(triple) {
+          return matcher(triple[2]);
+        }
+      };
+    }
+    return v;
+  }
+  function valueAttrPat(makeVar, attrsStore, valueEtype, valueLevel, valueLabel, v) {
+    const fwdAttr = getAttrByFwdIdentName(attrsStore, valueEtype, valueLabel);
+    const revAttr = getAttrByReverseIdentName(attrsStore, valueEtype, valueLabel);
+    const attr = fwdAttr || revAttr;
+    if (!attr) {
+      throw new AttrNotFoundError(`No attr for etype = ${valueEtype} label = ${valueLabel}`);
+    }
+    if (v?.hasOwnProperty("$isNull")) {
+      const idAttr2 = getAttrByFwdIdentName(attrsStore, valueEtype, "id");
+      if (!idAttr2) {
+        throw new AttrNotFoundError(`No attr for etype = ${valueEtype} label = id`);
+      }
+      return [
+        makeVar(valueEtype, valueLevel),
+        idAttr2.id,
+        { $isNull: { attrId: attr.id, isNull: v.$isNull, reverse: !fwdAttr } },
+        wildcard("time")
+      ];
+    }
+    if (fwdAttr) {
+      return [
+        makeVar(valueEtype, valueLevel),
+        attr.id,
+        parseValue(attr, v),
+        wildcard("time")
+      ];
+    }
+    return [v, attr.id, makeVar(valueEtype, valueLevel), wildcard("time")];
+  }
+  function refAttrPats(makeVar, attrsStore, etype, level, refsPath) {
+    const [lastEtype, lastLevel, attrPats] = refsPath.reduce((acc, label) => {
+      const [etype2, level2, attrPats2] = acc;
+      const [nextEtype, nextLevel, attrPat] = refAttrPat(makeVar, attrsStore, etype2, level2, label);
+      return [nextEtype, nextLevel, [...attrPats2, attrPat]];
+    }, [etype, level, []]);
+    return [lastEtype, lastLevel, attrPats];
+  }
+  function whereCondAttrPats(makeVar, attrsStore, etype, level, path, v) {
+    const refsPath = path.slice(0, path.length - 1);
+    const valueLabel = path[path.length - 1];
+    const [lastEtype, lastLevel, refPats] = refAttrPats(makeVar, attrsStore, etype, level, refsPath);
+    const valuePat = valueAttrPat(makeVar, attrsStore, lastEtype, lastLevel, valueLabel, v);
+    return refPats.concat([valuePat]);
+  }
+  function withJoin(where, join) {
+    return join ? [join].concat(where) : where;
+  }
+  function isOrClauses([k, v]) {
+    return k === "or" && Array.isArray(v);
+  }
+  function isAndClauses([k, v]) {
+    return k === "and" && Array.isArray(v);
+  }
+  function genMakeVar(baseMakeVar, joinSym, orIdx) {
+    return (x, lvl) => {
+      const base = baseMakeVar(x, lvl);
+      if (joinSym == base) {
+        return base;
+      }
+      return `${base}-${orIdx}`;
+    };
+  }
+  function parseWhereClauses(makeVar, clauseType, attrsStore, etype, level, whereValue) {
+    const joinSym = makeVar(etype, level);
+    const patterns = whereValue.map((w, i2) => {
+      const makeNamespacedVar = genMakeVar(makeVar, joinSym, i2);
+      return parseWhere(makeNamespacedVar, attrsStore, etype, level, w);
+    });
+    return { [clauseType]: { patterns, joinSym } };
+  }
+  function growPath(path) {
+    const ret = [];
+    for (let i2 = 1; i2 <= path.length; i2++) {
+      ret.push(path.slice(0, i2));
+    }
+    return ret;
+  }
+  function whereCondAttrPatsForNullIsTrue(makeVar, attrsStore, etype, level, path) {
+    return growPath(path).map((path2) => whereCondAttrPats(makeVar, attrsStore, etype, level, path2, {
+      $isNull: true
+    }));
+  }
+  function parseWhere(makeVar, attrsStore, etype, level, where) {
+    return Object.entries(where).flatMap(([k, v]) => {
+      if (isOrClauses([k, v])) {
+        return parseWhereClauses(makeVar, "or", attrsStore, etype, level, v);
+      }
+      if (isAndClauses([k, v])) {
+        return parseWhereClauses(makeVar, "and", attrsStore, etype, level, v);
+      }
+      if (k === "$entityIdStartsWith") {
+        return [];
+      }
+      const path = k.split(".");
+      if (v?.hasOwnProperty("$ne")) {
+        v = { ...v, $not: v.$ne };
+        delete v.$ne;
+      }
+      if (v?.hasOwnProperty("$not")) {
+        const notPats = whereCondAttrPats(makeVar, attrsStore, etype, level, path, v);
+        const nilPats = whereCondAttrPatsForNullIsTrue(makeVar, attrsStore, etype, level, path);
+        return [
+          {
+            or: {
+              patterns: [notPats, ...nilPats],
+              joinSym: makeVar(etype, level)
+            }
+          }
+        ];
+      }
+      if (v?.hasOwnProperty("$isNull") && v.$isNull === true && path.length > 1) {
+        return [
+          {
+            or: {
+              patterns: whereCondAttrPatsForNullIsTrue(makeVar, attrsStore, etype, level, path),
+              joinSym: makeVar(etype, level)
+            }
+          }
+        ];
+      }
+      return whereCondAttrPats(makeVar, attrsStore, etype, level, path, v);
+    });
+  }
+  function makeWhere(attrsStore, etype, level, where) {
+    const makeVar = makeVarImpl;
+    if (!where) {
+      return defaultWhere(makeVar, attrsStore, etype, level);
+    }
+    const parsedWhere = parseWhere(makeVar, attrsStore, etype, level, where);
+    return parsedWhere.concat(defaultWhere(makeVar, attrsStore, etype, level));
+  }
+  function makeFind(makeVar, etype, level) {
+    return [makeVar(etype, level), makeVar("time", level)];
+  }
+  function makeJoin(makeVar, attrsStore, etype, level, label, eid) {
+    const [nextEtype, nextLevel, pat, attr, isForward] = refAttrPat(makeVar, attrsStore, etype, level, label);
+    const actualized = replaceInAttrPat(pat, makeVar(etype, level), eid);
+    return [nextEtype, nextLevel, actualized, attr, isForward];
+  }
+  function extendObjects(makeVar, store, attrsStore, { etype, level, form }, objects) {
+    const childQueries = Object.keys(form).filter((c) => c !== "$");
+    if (!childQueries.length) {
+      return Object.values(objects);
+    }
+    return Object.entries(objects).map(function extendChildren([eid, parent]) {
+      const childResults = childQueries.map(function getChildResult(label) {
+        const isSingular = Boolean(store.cardinalityInference && attrsStore.linkIndex?.[etype]?.[label]?.isSingular);
+        try {
+          const [nextEtype, nextLevel, join] = makeJoin(makeVar, attrsStore, etype, level, label, eid);
+          const childrenArray = queryOne(store, attrsStore, {
+            etype: nextEtype,
+            level: nextLevel,
+            form: form[label],
+            join
+          });
+          const childOrChildren = isSingular ? childrenArray[0] : childrenArray;
+          return { [label]: childOrChildren };
+        } catch (e) {
+          if (e instanceof AttrNotFoundError) {
+            return { [label]: isSingular ? void 0 : [] };
+          }
+          throw e;
+        }
+      });
+      return childResults.reduce(function reduceChildren(parent2, child) {
+        return { ...parent2, ...child };
+      }, parent);
+    });
+  }
+  function compareDisparateValues(a, b, dataType) {
+    if (dataType === "string") {
+      return stringCompare(a, b);
+    }
+    if (a > b) {
+      return 1;
+    }
+    return -1;
+  }
+  function compareOrder(id_a, v_a, id_b, v_b, dataType) {
+    if (v_a === v_b || v_a == null && v_b == null) {
+      return uuidCompare(id_a, id_b);
+    }
+    if (v_b == null) {
+      return 1;
+    }
+    if (v_a == null) {
+      return -1;
+    }
+    return compareDisparateValues(v_a, v_b, dataType);
+  }
+  function compareOrderTriples([id_a, v_a], [id_b, v_b], dataType) {
+    return compareOrder(id_a, v_a, id_b, v_b, dataType);
+  }
+  function comparableDate(x) {
+    if (x == null) {
+      return x;
+    }
+    return new Date(x).getTime();
+  }
+  function compareToCursor(cursor, orderAttr, idVec) {
+    const [c_e, _c_a, c_v, c_t] = cursor;
+    if (orderAttr["forward-identity"]?.[2] === "id") {
+      return compareOrderTriples(idVec, [c_e, c_t], null);
+    }
+    const [e, v] = idVec;
+    const dataType = orderAttr["checked-data-type"];
+    const v_new = dataType === "date" ? comparableDate(v) : v;
+    const c_v_new = dataType === "date" ? comparableDate(c_v) : c_v;
+    return compareOrderTriples([e, v_new], [c_e, c_v_new], dataType);
+  }
+  function isBefore(startCursor, orderAttr, direction, idVec) {
+    const cmp = compareToCursor(startCursor, orderAttr, idVec);
+    return direction === "desc" ? cmp > 0 : cmp < 0;
+  }
+  function isAfter(endCursor, orderAttr, direction, idVec) {
+    const cmp = compareToCursor(endCursor, orderAttr, idVec);
+    return direction === "desc" ? cmp < 0 : cmp > 0;
+  }
+  function orderAttrFromCursor(attrsStore, cursor) {
+    const cursorAttrId = cursor[1];
+    return attrsStore.getAttr(cursorAttrId);
+  }
+  function orderAttrFromOrder(attrsStore, etype, order) {
+    const label = Object.keys(order)[0];
+    return getAttrByFwdIdentName(attrsStore, etype, label);
+  }
+  function getOrderAttr(attrsStore, etype, cursor, order) {
+    if (cursor) {
+      return orderAttrFromCursor(attrsStore, cursor);
+    }
+    if (order) {
+      return orderAttrFromOrder(attrsStore, etype, order);
+    }
+  }
+  function objectAttrs(attrsStore, etype, dq) {
+    if (!Array.isArray(dq.fields)) {
+      return getBlobAttrs(attrsStore, etype);
+    }
+    const attrs = /* @__PURE__ */ new Map();
+    for (const field of dq.fields) {
+      const attr = getAttrByFwdIdentName(attrsStore, etype, field);
+      const label = attr?.["forward-identity"]?.[2];
+      if (label && isBlob(attr)) {
+        attrs.set(label, attr);
+      }
+    }
+    if (!attrs.has("id")) {
+      const attr = getAttrByFwdIdentName(attrsStore, etype, "id");
+      const label = attr?.["forward-identity"]?.[2];
+      if (label) {
+        attrs.set(label, attr);
+      }
+    }
+    return attrs;
+  }
+  function runDataloadAndReturnObjects(store, attrsStore, { etype, pageInfo, dq, form }) {
+    const order = form?.$?.order;
+    const isLeadingQuery = isLeading(form);
+    const direction = determineDirection(form);
+    let idVecs = query(store, dq);
+    const startCursor = pageInfo?.["start-cursor"];
+    const endCursor = pageInfo?.["end-cursor"];
+    const orderAttr = getOrderAttr(attrsStore, etype, startCursor, order);
+    if (orderAttr && orderAttr?.["forward-identity"]?.[2] !== "id") {
+      const isDate = orderAttr["checked-data-type"] === "date";
+      const a = orderAttr.id;
+      idVecs = idVecs.map(([id2]) => {
+        let v = store.eav.get(id2)?.get(a)?.values()?.next()?.value?.[2];
+        if (isDate) {
+          v = comparableDate(v);
+        }
+        return [id2, v];
+      });
+    }
+    idVecs.sort(direction === "asc" ? function compareIdVecs(a, b) {
+      return compareOrderTriples(a, b, orderAttr?.["checked-data-type"]);
+    } : function compareIdVecs(a, b) {
+      return compareOrderTriples(b, a, orderAttr?.["checked-data-type"]);
+    });
+    let objects = {};
+    const attrs = objectAttrs(attrsStore, etype, dq);
+    for (const idVec of idVecs) {
+      const [id2] = idVec;
+      if (objects[id2]) {
+        continue;
+      }
+      if (!isLeadingQuery && startCursor && orderAttr && isBefore(startCursor, orderAttr, direction, idVec)) {
+        continue;
+      }
+      if (!isLeadingQuery && endCursor && orderAttr && isAfter(endCursor, orderAttr, direction, idVec)) {
+        continue;
+      }
+      const obj = getAsObject(store, attrs, id2);
+      if (obj) {
+        objects[id2] = obj;
+      }
+    }
+    return objects;
+  }
+  function determineDirection(form) {
+    const orderOpts = form.$?.order;
+    if (!orderOpts) {
+      return "asc";
+    }
+    return orderOpts[Object.keys(orderOpts)[0]] || "asc";
+  }
+  function isLeading(form) {
+    const offset = form.$?.offset;
+    const before = form.$?.before;
+    const after = form.$?.after;
+    return !offset && !before && !after;
+  }
+  function resolveObjects(store, attrsStore, { etype, level, form, join, pageInfo }) {
+    if (!isLeading(form) && (!pageInfo || !pageInfo["start-cursor"])) {
+      return [];
+    }
+    const where = withJoin(makeWhere(attrsStore, etype, level, form.$?.where), join);
+    const find = makeFind(makeVarImpl, etype, level);
+    const fields = form.$?.fields;
+    const objs = runDataloadAndReturnObjects(store, attrsStore, {
+      etype,
+      pageInfo,
+      form,
+      dq: { where, find, fields }
+    });
+    const limit = form.$?.limit || form.$?.first || form.$?.last;
+    if (limit != null) {
+      if (level > 0 && warningEnabled) {
+        console.warn("WARNING: Limits in child queries are only run client-side. Data returned from the server will not have a limit.");
+      }
+      const entries = Object.entries(objs);
+      if (entries.length <= limit) {
+        return objs;
+      }
+      return Object.fromEntries(entries.slice(0, limit));
+    }
+    return objs;
+  }
+  function guardedResolveObjects(store, attrsStore, opts) {
+    try {
+      return resolveObjects(store, attrsStore, opts);
+    } catch (e) {
+      if (e instanceof AttrNotFoundError) {
+        return {};
+      }
+      throw e;
+    }
+  }
+  function queryOne(store, attrsStore, opts) {
+    const objects = guardedResolveObjects(store, attrsStore, opts);
+    return extendObjects(makeVarImpl, store, attrsStore, opts, objects);
+  }
+  function formatPageInfo(pageInfo) {
+    const res = {};
+    for (const [k, v] of Object.entries(pageInfo)) {
+      res[k] = {
+        startCursor: v["start-cursor"],
+        endCursor: v["end-cursor"],
+        hasNextPage: v["has-next-page?"],
+        hasPreviousPage: v["has-previous-page?"]
+      };
+    }
+    return res;
+  }
+  function query2({ store, attrsStore, pageInfo, aggregate }, q) {
+    const data = Object.keys(q).reduce(function reduceResult(res, k) {
+      if (aggregate?.[k] || "$$ruleParams" === k) {
+        return res;
+      }
+      res[k] = queryOne(store, attrsStore, {
+        etype: k,
+        form: q[k],
+        level: 0,
+        pageInfo: pageInfo?.[k]
+      });
+      return res;
+    }, {});
+    const result = { data };
+    if (pageInfo) {
+      result.pageInfo = formatPageInfo(pageInfo);
+    }
+    if (aggregate) {
+      result.aggregate = aggregate;
+    }
+    return result;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/instatx.js
+  function getAllTransactionChunkKeys() {
+    const v = 1;
+    const _dummy = {
+      __etype: v,
+      __ops: v,
+      create: v,
+      update: v,
+      link: v,
+      unlink: v,
+      delete: v,
+      merge: v,
+      ruleParams: v
+    };
+    return new Set(Object.keys(_dummy));
+  }
+  var allTransactionChunkKeys = getAllTransactionChunkKeys();
+  function transactionChunk(etype, id2, prevOps) {
+    const target = {
+      __etype: etype,
+      __ops: prevOps
+    };
+    return new Proxy(target, {
+      get: (_target, cmd) => {
+        if (cmd === "__ops")
+          return prevOps;
+        if (cmd === "__etype")
+          return etype;
+        if (!allTransactionChunkKeys.has(cmd)) {
+          return void 0;
+        }
+        return (args, opts) => {
+          return transactionChunk(etype, id2, [
+            ...prevOps,
+            opts ? [cmd, etype, id2, args, opts] : [cmd, etype, id2, args]
+          ]);
+        };
+      }
+    });
+  }
+  function lookup(attribute, value) {
+    return `lookup__${attribute}__${JSON.stringify(value)}`;
+  }
+  function isLookup(k) {
+    return k.startsWith("lookup__");
+  }
+  function parseLookup(k) {
+    const [_, attribute, ...vJSON] = k.split("__");
+    return [attribute, JSON.parse(vJSON.join("__"))];
+  }
+  function etypeChunk(etype) {
+    return new Proxy({
+      __etype: etype
+    }, {
+      get(_target, cmd) {
+        if (cmd === "lookup") {
+          return (attrName, value) => transactionChunk(etype, parseLookup(lookup(attrName, value)), []);
+        }
+        if (cmd === "__etype")
+          return etype;
+        const id2 = cmd;
+        if (isLookup(id2)) {
+          return transactionChunk(etype, parseLookup(id2), []);
+        }
+        return transactionChunk(etype, id2, []);
+      }
+    });
+  }
+  function txInit() {
+    return new Proxy({}, {
+      get(_target, ns) {
+        return etypeChunk(ns);
+      }
+    });
+  }
+  var tx = txInit();
+  function getOps(x) {
+    return x.__ops;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/instaml.js
+  function rewriteStep(attrMapping, txStep) {
+    const { attrIdMap, refSwapAttrIds } = attrMapping;
+    const rewritten = [];
+    for (const part of txStep) {
+      const newValue = attrIdMap[part];
+      if (newValue) {
+        rewritten.push(newValue);
+      } else if (Array.isArray(part) && part.length == 2 && attrIdMap[part[0]]) {
+        const [aid, value] = part;
+        rewritten.push([attrIdMap[aid], value]);
+      } else {
+        rewritten.push(part);
+      }
+    }
+    const [action] = txStep;
+    if ((action === "add-triple" || action === "retract-triple") && refSwapAttrIds.has(txStep[2])) {
+      const tmp = rewritten[1];
+      rewritten[1] = rewritten[3];
+      rewritten[3] = tmp;
+    }
+    return rewritten;
+  }
+  function explodeLookupRef(eid) {
+    if (Array.isArray(eid)) {
+      return eid;
+    }
+    const entries = Object.entries(eid);
+    if (entries.length !== 1) {
+      throw new Error("lookup must be an object with a single unique attr and value.");
+    }
+    return entries[0];
+  }
+  function isRefLookupIdent(attrs, etype, identName) {
+    return identName.indexOf(".") !== -1 && // attr names can have `.` in them, so use the attr we find with a `.`
+    // before assuming it's a ref lookup.
+    !getAttrByFwdIdentName(attrs, etype, identName);
+  }
+  function extractRefLookupFwdName(identName) {
+    const [fwdName, idIdent, ...rest] = identName.split(".");
+    if (rest.length > 0 || idIdent !== "id") {
+      throw new Error(`${identName} is not a valid lookup attribute.`);
+    }
+    return fwdName;
+  }
+  function lookupIdentToAttr(attrs, etype, identName) {
+    if (!isRefLookupIdent(attrs, etype, identName)) {
+      return getAttrByFwdIdentName(attrs, etype, identName);
+    }
+    const fwdName = extractRefLookupFwdName(identName);
+    const refAttr = getAttrByFwdIdentName(attrs, etype, fwdName) || getAttrByReverseIdentName(attrs, etype, fwdName);
+    if (refAttr && refAttr["value-type"] !== "ref") {
+      throw new Error(`${identName} does not reference a valid link attribute.`);
+    }
+    return refAttr;
+  }
+  function lookupPairOfEid(eid) {
+    if (typeof eid === "string" && !isLookup(eid)) {
+      return null;
+    }
+    return typeof eid === "string" && isLookup(eid) ? parseLookup(eid) : explodeLookupRef(eid);
+  }
+  function extractLookup(attrs, etype, eid) {
+    const lookupPair = lookupPairOfEid(eid);
+    if (lookupPair === null) {
+      return eid;
+    }
+    const [identName, value] = lookupPair;
+    const attr = lookupIdentToAttr(attrs, etype, identName);
+    if (!attr || !attr["unique?"]) {
+      throw new Error(`${identName} is not a unique attribute.`);
+    }
+    return [attr.id, value];
+  }
+  function withIdAttrForLookup(attrs, etype, eidA, txSteps) {
+    const lookup2 = extractLookup(attrs, etype, eidA);
+    if (!Array.isArray(lookup2)) {
+      return txSteps;
+    }
+    const idTuple = [
+      "add-triple",
+      lookup2,
+      getAttrByFwdIdentName(attrs, etype, "id")?.id,
+      lookup2
+    ];
+    return [idTuple].concat(txSteps);
+  }
+  function expandLink({ attrsStore }, [etype, eidA, obj]) {
+    const addTriples = Object.entries(obj).flatMap(([label, eidOrEids]) => {
+      const eids = Array.isArray(eidOrEids) ? eidOrEids : [eidOrEids];
+      const fwdAttr = getAttrByFwdIdentName(attrsStore, etype, label);
+      const revAttr = getAttrByReverseIdentName(attrsStore, etype, label);
+      return eids.map((eidB) => {
+        const txStep = fwdAttr ? [
+          "add-triple",
+          extractLookup(attrsStore, etype, eidA),
+          fwdAttr.id,
+          // Uses `!` because if we get here, we should have created the attr if it doesn't
+          // already exist
+          extractLookup(attrsStore, fwdAttr["reverse-identity"][1], eidB)
+        ] : [
+          "add-triple",
+          // Uses `!` because if we get here, we should have created the attr if it doesn't
+          // already exist
+          extractLookup(attrsStore, revAttr["forward-identity"][1], eidB),
+          revAttr?.id,
+          extractLookup(attrsStore, etype, eidA)
+        ];
+        return txStep;
+      });
+    });
+    return withIdAttrForLookup(attrsStore, etype, eidA, addTriples);
+  }
+  function expandUnlink({ attrsStore }, [etype, eidA, obj]) {
+    const retractTriples = Object.entries(obj).flatMap(([label, eidOrEids]) => {
+      const eids = Array.isArray(eidOrEids) ? eidOrEids : [eidOrEids];
+      const fwdAttr = getAttrByFwdIdentName(attrsStore, etype, label);
+      const revAttr = getAttrByReverseIdentName(attrsStore, etype, label);
+      return eids.map((eidB) => {
+        const txStep = fwdAttr ? [
+          "retract-triple",
+          extractLookup(attrsStore, etype, eidA),
+          fwdAttr.id,
+          // Uses `!` because if we get here, we should have created the attr if it doesn't
+          // already exist
+          extractLookup(attrsStore, fwdAttr["reverse-identity"][1], eidB)
+        ] : [
+          "retract-triple",
+          // Uses `!` because if we get here, we should have created the attr if it doesn't
+          // already exist
+          extractLookup(attrsStore, revAttr["forward-identity"][1], eidB),
+          revAttr.id,
+          extractLookup(attrsStore, etype, eidA)
+        ];
+        return txStep;
+      });
+    });
+    return withIdAttrForLookup(attrsStore, etype, eidA, retractTriples);
+  }
+  function checkEntityExists(stores, attrsStore, etype, eid) {
+    if (Array.isArray(eid)) {
+      const [entity_a, entity_v] = eid;
+      for (const store of stores || []) {
+        const ev = store?.aev.get(entity_a);
+        if (ev) {
+          for (const [_e, _a, v] of allMapValues(ev, 2)) {
+            if (v === entity_v) {
+              return true;
+            }
+          }
+        }
+      }
+    } else {
+      for (const store of stores || []) {
+        const av = store?.eav.get(eid);
+        if (av) {
+          for (const attr_id of av.keys()) {
+            if (attrsStore.getAttr(attr_id)?.["forward-identity"][1] == etype) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+  function convertOpts({ stores, attrsStore }, [etype, eid, obj_, opts]) {
+    return opts?.upsert === false ? { mode: "update" } : opts?.upsert === true ? null : checkEntityExists(stores, attrsStore, etype, eid) ? { mode: "update" } : null;
+  }
+  function expandCreate(ctx, step) {
+    const { attrsStore } = ctx;
+    const [etype, eid, obj_, opts] = step;
+    const obj = immutableRemoveUndefined(obj_);
+    const lookup2 = extractLookup(attrsStore, etype, eid);
+    const attrTuples = [["id", lookup2]].concat(Object.entries(obj)).map(([identName, value]) => {
+      const attr = getAttrByFwdIdentName(attrsStore, etype, identName);
+      if (attr["checked-data-type"] === "date" && ctx.useDateObjects) {
+        value = coerceToDate(value);
+      }
+      return ["add-triple", lookup2, attr.id, value, { mode: "create" }];
+    });
+    return attrTuples;
+  }
+  function expandUpdate(ctx, step) {
+    const { attrsStore } = ctx;
+    const [etype, eid, obj_, opts] = step;
+    const obj = immutableRemoveUndefined(obj_);
+    const lookup2 = extractLookup(attrsStore, etype, eid);
+    const serverOpts = convertOpts(ctx, [etype, lookup2, obj_, opts]);
+    const attrTuples = [["id", lookup2]].concat(Object.entries(obj)).map(([identName, value]) => {
+      const attr = getAttrByFwdIdentName(attrsStore, etype, identName);
+      if (attr["checked-data-type"] === "date" && ctx.useDateObjects) {
+        value = coerceToDate(value);
+      }
+      return [
+        "add-triple",
+        lookup2,
+        attr.id,
+        value,
+        ...serverOpts ? [serverOpts] : []
+      ];
+    });
+    return attrTuples;
+  }
+  function expandDelete({ attrsStore }, [etype, eid]) {
+    const lookup2 = extractLookup(attrsStore, etype, eid);
+    return [["delete-entity", lookup2, etype]];
+  }
+  function expandDeepMerge(ctx, step) {
+    const { attrsStore } = ctx;
+    const [etype, eid, obj_, opts] = step;
+    const obj = immutableRemoveUndefined(obj_);
+    const lookup2 = extractLookup(attrsStore, etype, eid);
+    const serverOpts = convertOpts(ctx, [etype, lookup2, obj_, opts]);
+    const attrTuples = Object.entries(obj).map(([identName, value]) => {
+      const attr = getAttrByFwdIdentName(attrsStore, etype, identName);
+      return [
+        "deep-merge-triple",
+        lookup2,
+        attr.id,
+        value,
+        ...serverOpts ? [serverOpts] : []
+      ];
+    });
+    const idTuple = [
+      "add-triple",
+      lookup2,
+      getAttrByFwdIdentName(attrsStore, etype, "id").id,
+      lookup2,
+      ...serverOpts ? [serverOpts] : []
+    ];
+    return [idTuple].concat(attrTuples);
+  }
+  function expandRuleParams({ attrsStore }, [etype, eid, ruleParams]) {
+    const lookup2 = extractLookup(attrsStore, etype, eid);
+    return [["rule-params", lookup2, etype, ruleParams]];
+  }
+  function removeIdFromArgs(step) {
+    const [op, etype, eid, obj, opts] = step;
+    if (!obj) {
+      return step;
+    }
+    const newObj = { ...obj };
+    delete newObj.id;
+    return [op, etype, eid, newObj, ...opts ? [opts] : []];
+  }
+  function toTxSteps(ctx, step) {
+    const [action, ...args] = removeIdFromArgs(step);
+    switch (action) {
+      case "merge":
+        return expandDeepMerge(ctx, args);
+      case "create":
+        return expandCreate(ctx, args);
+      case "update":
+        return expandUpdate(ctx, args);
+      case "link":
+        return expandLink(ctx, args);
+      case "unlink":
+        return expandUnlink(ctx, args);
+      case "delete":
+        return expandDelete(ctx, args);
+      case "ruleParams":
+        return expandRuleParams(ctx, args);
+      default:
+        throw new Error(`unsupported action ${action}`);
+    }
+  }
+  function checkedDataTypeOfValueType(valueType) {
+    switch (valueType) {
+      case "string":
+      case "date":
+      case "boolean":
+      case "number":
+        return valueType;
+      default:
+        return void 0;
+    }
+  }
+  function objectPropsFromSchema(schema, etype, label) {
+    const attr = schema.entities[etype]?.attrs?.[label];
+    if (label === "id")
+      return null;
+    if (!attr) {
+      throw new Error(`${etype}.${label} does not exist in your schema`);
+    }
+    const { unique, indexed } = attr?.config;
+    const checkedDataType = checkedDataTypeOfValueType(attr?.valueType);
+    return {
+      "index?": indexed,
+      "unique?": unique,
+      "checked-data-type": checkedDataType
+    };
+  }
+  function createObjectAttr(schema, etype, label, props) {
+    const schemaObjectProps = schema ? objectPropsFromSchema(schema, etype, label) : null;
+    const attrId = id_default();
+    const fwdIdentId = id_default();
+    const fwdIdent = [fwdIdentId, etype, label];
+    return {
+      id: attrId,
+      "forward-identity": fwdIdent,
+      "value-type": "blob",
+      cardinality: "one",
+      "unique?": false,
+      "index?": false,
+      isUnsynced: true,
+      ...schemaObjectProps || {},
+      ...props || {}
+    };
+  }
+  function findSchemaLink(schema, etype, label) {
+    const links = Object.values(schema.links);
+    const found = links.find((x) => {
+      return x.forward.on === etype && x.forward.label === label || x.reverse.on === etype && x.reverse.label === label;
+    });
+    return found;
+  }
+  function refPropsFromSchema(schema, etype, label) {
+    const found = findSchemaLink(schema, etype, label);
+    if (!found) {
+      throw new Error(`Couldn't find the link ${etype}.${label} in your schema`);
+    }
+    const { forward, reverse } = found;
+    return {
+      "forward-identity": [id_default(), forward.on, forward.label],
+      "reverse-identity": [id_default(), reverse.on, reverse.label],
+      cardinality: forward.has === "one" ? "one" : "many",
+      "unique?": reverse.has === "one",
+      "on-delete": forward.onDelete,
+      "on-delete-reverse": reverse.onDelete
+    };
+  }
+  function createRefAttr(schema, etype, label, props) {
+    const schemaRefProps = schema ? refPropsFromSchema(schema, etype, label) : null;
+    const attrId = id_default();
+    const fwdIdent = [id_default(), etype, label];
+    const revIdent = [id_default(), label, etype];
+    return {
+      id: attrId,
+      // @ts-ignore: ts thinks it's any[]
+      "forward-identity": fwdIdent,
+      // @ts-ignore: ts thinks it's any[]
+      "reverse-identity": revIdent,
+      "value-type": "ref",
+      // @ts-ignore: ts thinks it's type string
+      cardinality: "many",
+      "unique?": false,
+      "index?": false,
+      isUnsynced: true,
+      ...schemaRefProps || {},
+      ...props || {}
+    };
+  }
+  var OBJ_ACTIONS = /* @__PURE__ */ new Set(["create", "update", "merge", "link", "unlink"]);
+  var REF_ACTIONS = /* @__PURE__ */ new Set(["link", "unlink"]);
+  var UPDATE_ACTIONS = /* @__PURE__ */ new Set(["create", "update", "merge"]);
+  var SUPPORTS_LOOKUP_ACTIONS = /* @__PURE__ */ new Set([
+    "link",
+    "unlink",
+    "create",
+    "update",
+    "merge",
+    "delete",
+    "ruleParams"
+  ]);
+  var lookupProps = { "unique?": true, "index?": true };
+  var refLookupProps = {
+    ...lookupProps,
+    cardinality: "one"
+  };
+  function lookupPairsOfOp(op) {
+    const res = [];
+    const [action, etype, eid, obj] = op;
+    if (!SUPPORTS_LOOKUP_ACTIONS.has(action)) {
+      return res;
+    }
+    const eidLookupPair = lookupPairOfEid(eid);
+    if (eidLookupPair) {
+      res.push({ etype, lookupPair: eidLookupPair });
+    }
+    if (action === "link") {
+      for (const [label, eidOrEids] of Object.entries(obj)) {
+        const eids = Array.isArray(eidOrEids) ? eidOrEids : [eidOrEids];
+        for (const linkEid of eids) {
+          const linkEidLookupPair = lookupPairOfEid(linkEid);
+          if (linkEidLookupPair) {
+            res.push({
+              etype,
+              lookupPair: linkEidLookupPair,
+              linkLabel: label
+            });
+          }
+        }
+      }
+    }
+    return res;
+  }
+  function createMissingAttrs({ attrsStore, schema }, ops) {
+    const addedIds = /* @__PURE__ */ new Set();
+    const localAttrs = [];
+    const addOps = [];
+    function attrByFwdIdent(etype, label) {
+      return getAttrByFwdIdentName(attrsStore, etype, label) || localAttrs.find((x) => x["forward-identity"][1] === etype && x["forward-identity"][2] === label);
+    }
+    function attrByRevIdent(etype, label) {
+      return getAttrByReverseIdentName(attrsStore, etype, label) || localAttrs.find((x) => x["reverse-identity"]?.[1] === etype && x["reverse-identity"]?.[2] === label);
+    }
+    function addAttr2(attr) {
+      localAttrs.push(attr);
+      addOps.push(["add-attr", attr]);
+      addedIds.add(attr.id);
+    }
+    function addUnsynced(attr) {
+      if (attr && "isUnsynced" in attr && attr.isUnsynced && !addedIds.has(attr.id)) {
+        localAttrs.push(attr);
+        addOps.push(["add-attr", attr]);
+        addedIds.add(attr.id);
+      }
+    }
+    function isRefLookupIdentLocal(etype, identName) {
+      return identName.indexOf(".") !== -1 && // attr names can have `.` in them, so use the attr we find with a `.`
+      // before assuming it's a ref lookup.
+      !attrByFwdIdent(etype, identName);
+    }
+    function addForRef(etype, label) {
+      const fwdAttr = attrByFwdIdent(etype, label);
+      const revAttr = attrByRevIdent(etype, label);
+      addUnsynced(fwdAttr);
+      addUnsynced(revAttr);
+      if (!fwdAttr && !revAttr) {
+        addAttr2(createRefAttr(schema, etype, label, refLookupProps));
+      }
+    }
+    for (const op of ops) {
+      for (const { etype, lookupPair, linkLabel } of lookupPairsOfOp(op)) {
+        const identName = lookupPair[0];
+        if (linkLabel) {
+          addForRef(etype, linkLabel);
+          const fwdAttr = attrByFwdIdent(etype, linkLabel);
+          const revAttr = attrByRevIdent(etype, linkLabel);
+          addUnsynced(fwdAttr);
+          addUnsynced(revAttr);
+          const linkEtype = fwdAttr?.["reverse-identity"]?.[1] || revAttr?.["forward-identity"]?.[1] || linkLabel;
+          if (isRefLookupIdentLocal(linkEtype, identName)) {
+            addForRef(linkEtype, extractRefLookupFwdName(identName));
+          } else {
+            const attr = attrByFwdIdent(linkEtype, identName);
+            if (!attr) {
+              addAttr2(createObjectAttr(schema, linkEtype, identName, lookupProps));
+            }
+            addUnsynced(attr);
+          }
+        } else if (isRefLookupIdentLocal(etype, identName)) {
+          addForRef(etype, extractRefLookupFwdName(identName));
+        } else {
+          const attr = attrByFwdIdent(etype, identName);
+          if (!attr) {
+            addAttr2(createObjectAttr(schema, etype, identName, lookupProps));
+          }
+          addUnsynced(attr);
+        }
+      }
+    }
+    for (const op of ops) {
+      const [action, etype, eid, obj] = op;
+      if (OBJ_ACTIONS.has(action)) {
+        const idAttr2 = attrByFwdIdent(etype, "id");
+        addUnsynced(idAttr2);
+        if (!idAttr2) {
+          addAttr2(createObjectAttr(schema, etype, "id", { "unique?": true }));
+        }
+        for (const label of Object.keys(obj)) {
+          const fwdAttr = attrByFwdIdent(etype, label);
+          addUnsynced(fwdAttr);
+          if (UPDATE_ACTIONS.has(action)) {
+            if (!fwdAttr) {
+              addAttr2(createObjectAttr(schema, etype, label, label === "id" ? { "unique?": true } : null));
+            }
+          }
+          if (REF_ACTIONS.has(action)) {
+            const revAttr = attrByRevIdent(etype, label);
+            if (!fwdAttr && !revAttr) {
+              addAttr2(createRefAttr(schema, etype, label));
+            }
+            addUnsynced(revAttr);
+          }
+        }
+      }
+    }
+    if (localAttrs.length) {
+      const nextAttrs = { ...attrsStore.attrs };
+      for (const attr of localAttrs) {
+        nextAttrs[attr.id] = attr;
+      }
+      return [new AttrsStoreClass(nextAttrs, attrsStore.linkIndex), addOps];
+    }
+    return [attrsStore, addOps];
+  }
+  function transform(ctx, inputChunks) {
+    const chunks = Array.isArray(inputChunks) ? inputChunks : [inputChunks];
+    const ops = chunks.flatMap((tx2) => getOps(tx2));
+    const [newAttrs, addAttrTxSteps] = createMissingAttrs(ctx, ops);
+    const newCtx = { ...ctx, attrsStore: newAttrs };
+    const txSteps = ops.flatMap((op) => toTxSteps(newCtx, op));
+    return [...addAttrTxSteps, ...txSteps];
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/PersistedObject.js
+  function safeIdleCallback(cb, timeout) {
+    if (typeof requestIdleCallback === "undefined") {
+      cb();
+    } else {
+      requestIdleCallback(cb, { timeout });
+    }
+  }
+  var META_KEY = "__meta";
+  var StoreInterface = class {
+    constructor(appId, storeName) {
+    }
+  };
+  var PersistedObject = class {
+    constructor(opts) {
+      __publicField(this, "currentValue");
+      __publicField(this, "_subs", []);
+      __publicField(this, "_persister");
+      __publicField(this, "_merge");
+      __publicField(this, "serialize");
+      __publicField(this, "parse");
+      __publicField(this, "_saveThrottleMs");
+      __publicField(this, "_idleCallbackMaxWaitMs");
+      __publicField(this, "_nextSave", null);
+      __publicField(this, "_nextGc", null);
+      __publicField(this, "_pendingSaveKeys", /* @__PURE__ */ new Set());
+      __publicField(this, "_loadedKeys", /* @__PURE__ */ new Set());
+      __publicField(this, "_loadingKeys");
+      __publicField(this, "_objectSize");
+      __publicField(this, "_log");
+      __publicField(this, "onKeyLoaded");
+      __publicField(this, "_version", 0);
+      __publicField(this, "_meta", {
+        isLoading: true,
+        onLoadCbs: [],
+        value: null,
+        error: null,
+        attempts: 0
+      });
+      __publicField(this, "_gcOpts");
+      this._persister = opts.persister;
+      this._merge = opts.merge;
+      this.serialize = opts.serialize;
+      this.parse = opts.parse;
+      this._objectSize = opts.objectSize;
+      this._log = opts.logger;
+      this._saveThrottleMs = opts.saveThrottleMs ?? 100;
+      this._idleCallbackMaxWaitMs = opts.idleCallbackMaxWaitMs ?? 1e3;
+      this._gcOpts = opts.gc;
+      this.currentValue = {};
+      this._loadedKeys = /* @__PURE__ */ new Set();
+      this._loadingKeys = {};
+      this._initMeta();
+      if (opts.preloadEntryCount) {
+        this._preloadEntries(opts.preloadEntryCount);
+      }
+    }
+    async _initMeta() {
+      if (this._meta.loadingPromise) {
+        await this._meta.loadingPromise;
+      }
+      try {
+        const p = this._persister.getItem(META_KEY);
+        this._meta.loadingPromise = p;
+        const v = await p;
+        this._meta.isLoading = false;
+        this._meta.error = null;
+        this._meta.loadingPromise = null;
+        this._meta.attempts = 0;
+        const existingObjects = this._meta.value?.objects ?? {};
+        const value = v ?? {};
+        const objects = value.objects ?? {};
+        this._meta.value = {
+          ...value,
+          objects: { ...existingObjects, ...objects }
+        };
+      } catch (e) {
+        this._meta.error = e;
+        this._meta.attempts++;
+        this._meta.loadingPromise = null;
+      }
+    }
+    async _getMeta() {
+      if (this._meta.value) {
+        return this._meta.value;
+      }
+      if (this._meta.loadingPromise) {
+        await this._meta.loadingPromise;
+        return this._meta.value;
+      }
+      this._initMeta();
+      await this._meta.loadingPromise;
+      return this._meta.value;
+    }
+    async _refreshMeta() {
+      await this._initMeta();
+      return this._meta.value;
+    }
+    async _preloadEntries(n) {
+      const meta = await this.waitForMetaToLoad();
+      if (!meta)
+        return;
+      const entries = Object.entries(meta.objects);
+      entries.sort(([_k_a, a_meta], [_k_b, b_meta]) => {
+        return b_meta.updatedAt - a_meta.updatedAt;
+      });
+      for (const [k] of entries.slice(0, n)) {
+        this._loadKey(k);
+      }
+    }
+    async _getFromStorage(key) {
+      try {
+        const data = await this._persister.getItem(key);
+        if (!data) {
+          return data;
+        }
+        const parsed = this.parse(key, data);
+        return parsed;
+      } catch (e) {
+        console.error(`Unable to read from storage for key=${key}`, e);
+        return null;
+      }
+    }
+    async waitForKeyToLoad(k) {
+      if (this._loadedKeys.has(k)) {
+        return this.currentValue[k];
+      }
+      await (this._loadingKeys[k] || this._loadKey(k));
+      return this.currentValue[k];
+    }
+    // Used for tests
+    async waitForMetaToLoad() {
+      return this._getMeta();
+    }
+    // Unloads the key so that it can be garbage collected, but does not
+    // delete it. Removes the key from currentValue.
+    unloadKey(k) {
+      this._loadedKeys.delete(k);
+      delete this._loadingKeys[k];
+      delete this.currentValue[k];
+    }
+    async _loadKey(k) {
+      if (this._loadedKeys.has(k) || k in this._loadingKeys)
+        return;
+      const p = this._getFromStorage(k);
+      this._loadingKeys[k] = p;
+      const value = await p;
+      delete this._loadingKeys[k];
+      this._loadedKeys.add(k);
+      if (value) {
+        const merged = this._merge(k, value, this.currentValue[k]);
+        if (merged) {
+          this.currentValue[k] = merged;
+        }
+      }
+      this.onKeyLoaded && this.onKeyLoaded(k);
+    }
+    // Returns a promise with a number so that we can wait for flush
+    // to finish in the tests. The number is the number of operations
+    // it performed, but it's mostly there so that typescript will warn
+    // us if we forget to retun the promise from the function.
+    _writeToStorage(opts) {
+      const promises = [];
+      const skipGc = opts?.skipGc;
+      if (this._meta.isLoading) {
+        const p2 = new Promise((resolve, reject) => {
+          setTimeout(() => this._enqueuePersist(opts ? { ...opts, attempts: (opts.attempts || 0) + 1 } : { attempts: 1 }).then(resolve).catch(reject), 10 + (opts?.attempts ?? 0) * 1e3);
+        });
+        promises.push(p2);
+        return Promise.all(promises).then((vs) => vs.reduce((acc, x) => acc + x, 0));
+      }
+      const metaValue = this._meta.value;
+      if (!metaValue) {
+        return Promise.resolve(0);
+      }
+      const keysToDelete = [];
+      const keysToUpdate = [];
+      for (const k of this._pendingSaveKeys) {
+        if (!(k in this.currentValue)) {
+          keysToDelete.push(k);
+          delete metaValue.objects[k];
+        } else {
+          keysToUpdate.push(k);
+        }
+      }
+      for (const k of keysToDelete) {
+        const p2 = this._persister.removeItem(k);
+        promises.push(p2.then(() => 1));
+        this._loadedKeys.delete(k);
+        this._pendingSaveKeys.delete(k);
+      }
+      const keysToLoad = [];
+      const kvPairs = [[META_KEY, metaValue]];
+      const metaObjects = metaValue.objects ?? {};
+      metaValue.objects = metaObjects;
+      for (const k of keysToUpdate) {
+        if (this._loadedKeys.has(k)) {
+          const serializedV = this.serialize(k, this.currentValue[k]);
+          kvPairs.push([k, serializedV]);
+          const size = this._objectSize(serializedV);
+          const m = metaObjects[k] ?? {
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            size
+          };
+          m.updatedAt = Date.now();
+          m.size = size;
+          metaObjects[k] = m;
+          this._pendingSaveKeys.delete(k);
+        } else {
+          keysToLoad.push(k);
+        }
+      }
+      const p = this._persister.multiSet(kvPairs);
+      promises.push(p.then(() => 1));
+      for (const k of keysToLoad) {
+        const p2 = this._loadKey(k).then(() => this._enqueuePersist(opts));
+        promises.push(p2);
+      }
+      if (!skipGc) {
+        this.gc();
+      }
+      return Promise.all(promises).then((vs) => {
+        return vs.reduce((acc, x) => acc + x, 0);
+      });
+    }
+    async flush() {
+      if (!this._nextSave) {
+        return;
+      }
+      clearTimeout(this._nextSave);
+      this._nextSave = null;
+      const p = this._writeToStorage();
+      return p;
+    }
+    async _gc() {
+      if (!this._gcOpts) {
+        return;
+      }
+      const keys = new Set(await this._persister.getAllKeys());
+      keys.delete(META_KEY);
+      const sacredKeys = new Set(Object.keys(this.currentValue));
+      for (const k of Object.keys(this._loadingKeys)) {
+        sacredKeys.add(k);
+      }
+      for (const k of this._loadedKeys) {
+        sacredKeys.add(k);
+      }
+      const meta = await this._refreshMeta();
+      if (!meta) {
+        this._log.info("Could not gc because we were not able to load meta");
+        return;
+      }
+      const promises = [];
+      const deets = {
+        gcOpts: this._gcOpts,
+        keys,
+        sacredKeys,
+        removed: [],
+        metaRemoved: [],
+        removedMissingCount: 0,
+        removedOldCount: 0,
+        removedThresholdCount: 0,
+        removedSizeCount: 0
+      };
+      for (const key of keys) {
+        if (sacredKeys.has(key) || key in meta.objects) {
+          continue;
+        }
+        this._log.info("Lost track of key in meta", key);
+        promises.push(this._persister.removeItem(key));
+        deets.removed.push(key);
+        deets.removedMissingCount++;
+      }
+      const now = Date.now();
+      for (const [k, m] of Object.entries(meta.objects)) {
+        if (!sacredKeys.has(k) && m.updatedAt < now - this._gcOpts.maxAgeMs) {
+          promises.push(this._persister.removeItem(k));
+          delete meta.objects[k];
+          deets.removed.push(k);
+          deets.removedOldCount++;
+        }
+      }
+      const maxEntries = Object.entries(meta.objects);
+      maxEntries.sort(([_k_a, a_meta], [_k_b, b_meta]) => {
+        return a_meta.updatedAt - b_meta.updatedAt;
+      });
+      const deletableMaxEntries = maxEntries.filter(([x]) => !sacredKeys.has(x));
+      if (maxEntries.length > this._gcOpts.maxEntries) {
+        for (const [k] of deletableMaxEntries.slice(0, maxEntries.length - this._gcOpts.maxEntries)) {
+          promises.push(this._persister.removeItem(k));
+          delete meta.objects[k];
+          deets.removed.push(k);
+          deets.removedThresholdCount++;
+        }
+      }
+      const delEntries = Object.entries(meta.objects);
+      delEntries.sort(([_k_a, a_meta], [_k_b, b_meta]) => {
+        return a_meta.updatedAt - b_meta.updatedAt;
+      });
+      const deletableDelEntries = delEntries.filter(([x]) => !sacredKeys.has(x));
+      let currentSize = delEntries.reduce((acc, [_k, m]) => {
+        return acc + m.size;
+      }, 0);
+      while (currentSize > 0 && currentSize > this._gcOpts.maxSize && deletableDelEntries.length) {
+        const [[k, m]] = deletableDelEntries.splice(0, 1);
+        currentSize -= m.size;
+        promises.push(this._persister.removeItem(k));
+        delete meta.objects[k];
+        deets.removed.push(k);
+        deets.removedSizeCount++;
+      }
+      for (const k of Object.keys(meta.objects)) {
+        if (!keys.has(k) && !sacredKeys.has(k)) {
+          delete meta.objects[k];
+        }
+      }
+      if (deets.removed.length || deets.metaRemoved.length) {
+        promises.push(this._enqueuePersist({ skipGc: true }));
+      }
+      this._log.info("Completed GC", deets);
+      await Promise.all(promises);
+      return deets;
+    }
+    // Schedules a GC to run in one minute (unless it is already scheduled)
+    gc() {
+      if (this._nextGc) {
+        return;
+      }
+      this._nextGc = setTimeout(
+        () => {
+          safeIdleCallback(() => {
+            this._nextGc = null;
+            this._gc().catch((e) => this._log.error("Persisted Object GC Failed:", e));
+          }, 30 * 1e3);
+        },
+        // 1 minute + some jitter to keep multiple tabs from running at same time
+        1e3 * 60 + Math.random() * 500
+      );
+    }
+    _enqueuePersist(opts) {
+      return new Promise((resolve, reject) => {
+        if (this._nextSave) {
+          resolve(0);
+          return;
+        }
+        this._nextSave = setTimeout(() => {
+          safeIdleCallback(() => {
+            this._nextSave = null;
+            this._writeToStorage(opts).then(resolve).catch(reject);
+          }, this._idleCallbackMaxWaitMs);
+        }, this._saveThrottleMs);
+      });
+    }
+    version() {
+      return this._version;
+    }
+    // Takes a function that updates the store in place.
+    // Uses `mutative` to get a list of keys that were changed
+    // so that we know which entries we need to persist to the store.
+    updateInPlace(f) {
+      this._version++;
+      const [state, patches] = create(this.currentValue, f, {
+        enablePatches: true
+      });
+      for (const patch of patches) {
+        const k = patch.path[0];
+        if (k && typeof k === "string") {
+          this._pendingSaveKeys.add(k);
+          if (!this._loadedKeys.has(k)) {
+            this._loadKey(k);
+          }
+        }
+      }
+      this.currentValue = state;
+      this._enqueuePersist();
+      for (const cb of this._subs) {
+        cb(this.currentValue);
+      }
+      return state;
+    }
+    subscribe(cb) {
+      this._subs.push(cb);
+      cb(this.currentValue);
+      return () => {
+        this._subs = this._subs.filter((x) => x !== cb);
+      };
+    }
+    // Removes any keys that we haven't loaded--used when
+    // changing users to make sure we clean out all user data
+    async clearUnloadedKeys() {
+      let needsPersist = false;
+      for (const key of await this._persister.getAllKeys()) {
+        if (key === META_KEY || key in this.currentValue) {
+          continue;
+        }
+        this._pendingSaveKeys.add(key);
+        needsPersist = true;
+      }
+      if (needsPersist) {
+        await this._enqueuePersist();
+      }
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/IndexedDBStorage.js
+  var version = 6;
+  var storeNames = ["kv", "querySubs", "syncSubs"];
+  function logErrorCb(source) {
+    return function logError(event) {
+      console.error("Error in IndexedDB event", { source, event });
+    };
+  }
+  async function existingDb(name) {
+    return new Promise((resolve) => {
+      const request = indexedDB.open(name);
+      request.onerror = (_event) => {
+        resolve(null);
+      };
+      request.onsuccess = (event) => {
+        const target = event.target;
+        const db2 = target.result;
+        resolve(db2);
+      };
+      request.onupgradeneeded = (event) => {
+        const target = event.target;
+        target.transaction?.abort();
+        resolve(null);
+      };
+    });
+  }
+  async function upgradeQuerySubs5To6(hash, value, querySubStore) {
+    const subs = (
+      // Backwards compatibility for older versions where we JSON.stringified before storing
+      typeof value === "string" ? JSON.parse(value) : value
+    );
+    if (!subs) {
+      return;
+    }
+    const putReqs = /* @__PURE__ */ new Set();
+    return new Promise((resolve, reject) => {
+      const objects = {};
+      for (const [hash2, v] of Object.entries(subs)) {
+        const value2 = typeof v === "string" ? JSON.parse(v) : v;
+        if (value2.lastAccessed) {
+          const objectMeta = {
+            createdAt: value2.lastAccessed,
+            updatedAt: value2.lastAccessed,
+            size: value2.result?.store?.triples?.length ?? 0
+          };
+          objects[hash2] = objectMeta;
+        }
+        const putReq = querySubStore.put(value2, hash2);
+        putReqs.add(putReq);
+      }
+      const meta = { objects };
+      const metaPutReq = querySubStore.put(meta, META_KEY);
+      putReqs.add(metaPutReq);
+      for (const r of putReqs) {
+        r.onsuccess = () => {
+          putReqs.delete(r);
+          if (putReqs.size === 0) {
+            resolve();
+          }
+        };
+        r.onerror = (event) => {
+          logErrorCb(`Move ${hash} to querySubs store failed`);
+          reject(event);
+        };
+      }
+    });
+  }
+  async function moveKvEntry5To6(k, value, kvStore) {
+    const request = kvStore.put(value, k);
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve();
+      request.onerror = (event) => reject(event);
+    });
+  }
+  async function upgrade5To6(appId, v6Db) {
+    const v5db = await existingDb(`instant_${appId}_5`);
+    if (!v5db) {
+      return;
+    }
+    const data = await new Promise((resolve, reject) => {
+      const v5Tx = v5db.transaction(["kv"], "readonly");
+      const objectStore = v5Tx.objectStore("kv");
+      const cursorReq = objectStore.openCursor();
+      cursorReq.onerror = (event) => {
+        reject(event);
+      };
+      const data2 = [];
+      cursorReq.onsuccess = () => {
+        const cursor = cursorReq.result;
+        if (cursor) {
+          const key = cursor.key;
+          const value = cursor.value;
+          data2.push([key, value]);
+          cursor.continue();
+        } else {
+          resolve(data2);
+        }
+      };
+      cursorReq.onerror = (event) => {
+        reject(event);
+      };
+    });
+    const v6Tx = v6Db.transaction(["kv", "querySubs"], "readwrite");
+    const kvStore = v6Tx.objectStore("kv");
+    const querySubStore = v6Tx.objectStore("querySubs");
+    const promises = [];
+    const kvMeta = { objects: {} };
+    for (const [key, value] of data) {
+      switch (key) {
+        case "querySubs": {
+          const p2 = upgradeQuerySubs5To6(key, value, querySubStore);
+          promises.push(p2);
+          break;
+        }
+        default: {
+          const p2 = moveKvEntry5To6(key, value, kvStore);
+          promises.push(p2);
+          const objectMeta = {
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            size: 0
+          };
+          kvMeta.objects[key] = objectMeta;
+          break;
+        }
+      }
+    }
+    const p = moveKvEntry5To6(META_KEY, kvMeta, kvStore);
+    promises.push(p);
+    await Promise.all(promises);
+    await new Promise((resolve, reject) => {
+      v6Tx.oncomplete = (e) => resolve(e);
+      v6Tx.onerror = (e) => reject(e);
+      v6Tx.onabort = (e) => reject(e);
+    });
+  }
+  var upgradePromises = /* @__PURE__ */ new Map();
+  var IndexedDBStorage = class extends StoreInterface {
+    constructor(appId, storeName) {
+      super(appId, storeName);
+      __publicField(this, "dbName");
+      __publicField(this, "_storeName");
+      __publicField(this, "_appId");
+      __publicField(this, "_prefix");
+      __publicField(this, "_dbPromise");
+      this.dbName = `instant_${appId}_${version}`;
+      this._storeName = storeName;
+      this._appId = appId;
+      this._dbPromise = this._init();
+    }
+    _init() {
+      return new Promise((resolve, reject) => {
+        let requiresUpgrade = false;
+        const request = indexedDB.open(this.dbName, 1);
+        request.onerror = (event) => {
+          reject(event);
+        };
+        request.onsuccess = (event) => {
+          const target = event.target;
+          const db2 = target.result;
+          db2.onclose = () => {
+            this._dbPromise = this._init();
+          };
+          db2.onversionchange = () => {
+            db2.close();
+          };
+          if (!requiresUpgrade) {
+            const p = upgradePromises.get(this.dbName);
+            if (!p) {
+              resolve(db2);
+            } else {
+              p.then(() => resolve(db2)).catch(() => resolve(db2));
+            }
+          } else {
+            const p = upgrade5To6(this._appId, db2).catch((e) => {
+              logErrorCb("Error upgrading store from version 5 to 6.")(e);
+            });
+            upgradePromises.set(this.dbName, p);
+            p.then(() => resolve(db2)).catch(() => resolve(db2));
+          }
+        };
+        request.onupgradeneeded = (event) => {
+          requiresUpgrade = true;
+          this._upgradeStore(event);
+        };
+      });
+    }
+    _upgradeStore(event) {
+      const target = event.target;
+      const db2 = target.result;
+      for (const storeName of storeNames) {
+        if (!db2.objectStoreNames.contains(storeName)) {
+          db2.createObjectStore(storeName);
+        }
+      }
+    }
+    // Browsers can close IndexedDB connections unexpectedly (backgrounded tabs,
+    // memory pressure, cross-tab version changes, etc.), causing
+    // `db.transaction()` to throw InvalidStateError. This helper catches that
+    // error and retries once with a fresh connection.
+    async _withRetry(fn) {
+      try {
+        const db2 = await this._dbPromise;
+        return await fn(db2);
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "InvalidStateError") {
+          this._dbPromise = this._init();
+          const db2 = await this._dbPromise;
+          return await fn(db2);
+        }
+        throw e;
+      }
+    }
+    async getItem(k) {
+      return this._withRetry((db2) => {
+        return new Promise((resolve, reject) => {
+          const transaction = db2.transaction([this._storeName], "readonly");
+          const objectStore = transaction.objectStore(this._storeName);
+          const request = objectStore.get(k);
+          request.onerror = () => {
+            reject(request.error);
+          };
+          request.onsuccess = () => {
+            if (request.result) {
+              resolve(request.result);
+            } else {
+              resolve(null);
+            }
+          };
+        });
+      });
+    }
+    async setItem(k, v) {
+      return this._withRetry((db2) => {
+        return new Promise((resolve, reject) => {
+          const transaction = db2.transaction([this._storeName], "readwrite");
+          const objectStore = transaction.objectStore(this._storeName);
+          objectStore.put(v, k);
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error);
+        });
+      });
+    }
+    async multiSet(keyValuePairs) {
+      return this._withRetry((db2) => {
+        return new Promise((resolve, reject) => {
+          const transaction = db2.transaction([this._storeName], "readwrite");
+          const objectStore = transaction.objectStore(this._storeName);
+          for (const [k, v] of keyValuePairs) {
+            objectStore.put(v, k);
+          }
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error);
+        });
+      });
+    }
+    async removeItem(k) {
+      return this._withRetry((db2) => {
+        return new Promise((resolve, reject) => {
+          const transaction = db2.transaction([this._storeName], "readwrite");
+          const objectStore = transaction.objectStore(this._storeName);
+          objectStore.delete(k);
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error);
+        });
+      });
+    }
+    async getAllKeys() {
+      return this._withRetry((db2) => {
+        return new Promise((resolve, reject) => {
+          const transaction = db2.transaction([this._storeName], "readonly");
+          const objectStore = transaction.objectStore(this._storeName);
+          const request = objectStore.getAllKeys();
+          request.onerror = () => {
+            reject(request.error);
+          };
+          request.onsuccess = () => {
+            resolve(request.result.filter((x) => typeof x === "string"));
+          };
+        });
+      });
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/WindowNetworkListener.js
+  var WindowNetworkListener = class {
+    static async getIsOnline() {
+      return navigator.onLine;
+    }
+    static listen(f) {
+      const onOnline = () => {
+        f(true);
+      };
+      const onOffline = () => {
+        f(false);
+      };
+      addEventListener("online", onOnline);
+      addEventListener("offline", onOffline);
+      return () => {
+        removeEventListener("online", onOnline);
+        removeEventListener("offline", onOffline);
+      };
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/InstantError.js
+  var InstantError = class _InstantError extends Error {
+    constructor(message, hint, traceId) {
+      super(message);
+      __publicField(this, "hint");
+      __publicField(this, "traceId");
+      this.hint = hint;
+      if (traceId) {
+        this.traceId = traceId;
+      }
+      const actualProto = new.target.prototype;
+      if (Object.setPrototypeOf) {
+        Object.setPrototypeOf(this, actualProto);
+      }
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, _InstantError);
+      }
+      this.name = "InstantError";
+    }
+    get [Symbol.toStringTag]() {
+      return "InstantError";
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/utils/fetch.js
+  var InstantAPIError = class _InstantAPIError extends InstantError {
+    constructor(error) {
+      const message = error.body?.message || `API Error (${error.status})`;
+      super(message, error.body.hint, error.body?.traceId || error.body["trace-id"]);
+      __publicField(this, "body");
+      __publicField(this, "status");
+      const actualProto = new.target.prototype;
+      if (Object.setPrototypeOf) {
+        Object.setPrototypeOf(this, actualProto);
+      }
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, _InstantAPIError);
+      }
+      this.name = "InstantAPIError";
+      this.status = error.status;
+      this.body = error.body;
+    }
+    get [Symbol.toStringTag]() {
+      return "InstantAPIError";
+    }
+  };
+  async function jsonFetch(input, init2) {
+    const res = await fetch(input, init2);
+    const json = await res.json();
+    return res.status === 200 ? Promise.resolve(json) : Promise.reject(new InstantAPIError({ status: res.status, body: json }));
+  }
+
+  // node_modules/@instantdb/core/dist/esm/authAPI.js
+  function sendMagicCode({ apiURI, appId, email }) {
+    return jsonFetch(`${apiURI}/runtime/auth/send_magic_code`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ "app-id": appId, email })
+    });
+  }
+  async function checkMagicCode({ apiURI, appId, email, code, refreshToken, extraFields }) {
+    const res = await jsonFetch(`${apiURI}/runtime/auth/verify_magic_code`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        "app-id": appId,
+        email,
+        code,
+        ...refreshToken ? { "refresh-token": refreshToken } : {},
+        ...extraFields ? { "extra-fields": extraFields } : {}
+      })
+    });
+    return res;
+  }
+  async function verifyRefreshToken({ apiURI, appId, refreshToken }) {
+    const res = await jsonFetch(`${apiURI}/runtime/auth/verify_refresh_token`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        "app-id": appId,
+        "refresh-token": refreshToken
+      })
+    });
+    return res;
+  }
+  async function signInAsGuest({ apiURI, appId, extraFields }) {
+    const res = await jsonFetch(`${apiURI}/runtime/auth/sign_in_guest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        "app-id": appId,
+        ...extraFields ? { "extra-fields": extraFields } : {}
+      })
+    });
+    return res;
+  }
+  async function exchangeCodeForToken({ apiURI, appId, code, codeVerifier, refreshToken, extraFields }) {
+    const res = await jsonFetch(`${apiURI}/runtime/oauth/token`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        app_id: appId,
+        code,
+        code_verifier: codeVerifier,
+        refresh_token: refreshToken,
+        ...extraFields ? { extra_fields: extraFields } : {}
+      })
+    });
+    return res;
+  }
+  async function signInWithIdToken({ apiURI, appId, nonce, idToken, clientName, refreshToken, extraFields }) {
+    const res = await jsonFetch(`${apiURI}/runtime/oauth/id_token`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        app_id: appId,
+        nonce,
+        id_token: idToken,
+        client_name: clientName,
+        refresh_token: refreshToken,
+        ...extraFields ? { extra_fields: extraFields } : {}
+      })
+    });
+    return res;
+  }
+  async function signOut({ apiURI, appId, refreshToken }) {
+    const res = await jsonFetch(`${apiURI}/runtime/signout`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        refresh_token: refreshToken
+      })
+    });
+    return res;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/StorageAPI.js
+  async function uploadFile({ apiURI, appId, path, file, refreshToken, contentType, contentDisposition }) {
+    const headers = {
+      app_id: appId,
+      path,
+      authorization: `Bearer ${refreshToken}`,
+      "content-type": contentType || file.type
+    };
+    if (contentDisposition) {
+      headers["content-disposition"] = contentDisposition;
+    }
+    const data = await jsonFetch(`${apiURI}/storage/upload`, {
+      method: "PUT",
+      headers,
+      body: file
+    });
+    return data;
+  }
+  async function deleteFile({ apiURI, appId, path, refreshToken }) {
+    const { data } = await jsonFetch(`${apiURI}/storage/files?app_id=${appId}&filename=${encodeURIComponent(path)}`, {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${refreshToken}`
+      }
+    });
+    return data;
+  }
+  async function getSignedUploadUrl({ apiURI, appId, fileName, refreshToken, metadata = {} }) {
+    const { data } = await jsonFetch(`${apiURI}/storage/signed-upload-url`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${refreshToken}`
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        filename: fileName
+      })
+    });
+    return data;
+  }
+  async function upload(presignedUrl, file) {
+    const response = await fetch(presignedUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type
+      }
+    });
+    return response.ok;
+  }
+  async function getDownloadUrl({ apiURI, appId, path, refreshToken }) {
+    const { data } = await jsonFetch(`${apiURI}/storage/signed-download-url?app_id=${appId}&filename=${encodeURIComponent(path)}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${refreshToken}`
+      }
+    });
+    return data;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/flags.js
+  var devBackend = false;
+  var instantLogs = false;
+  var devtoolLocalDashboard = false;
+  if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+    devBackend = !!window.localStorage.getItem("devBackend");
+    instantLogs = !!window.localStorage.getItem("__instantLogging");
+    devtoolLocalDashboard = !!window.localStorage.getItem("__devtoolLocalDash");
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/pick.js
+  function pick(obj, keys) {
+    if (!keys)
+      return obj;
+    const ret = {};
+    keys.forEach((key) => {
+      ret[key] = obj[key];
+    });
+    return ret;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/presence.js
+  function buildPresenceSlice(data, opts, userPeerId) {
+    const slice = {
+      peers: {}
+    };
+    const includeUser = opts && "user" in opts ? opts.user : true;
+    if (includeUser) {
+      const user = pick(data.user ?? {}, opts?.keys);
+      slice.user = { ...user, peerId: userPeerId };
+    }
+    for (const id2 of Object.keys(data.peers ?? {})) {
+      const shouldIncludeAllPeers = opts?.peers === void 0;
+      const isPeerIncluded = Array.isArray(opts?.peers) && opts?.peers.includes(id2);
+      if (shouldIncludeAllPeers || isPeerIncluded) {
+        const peer = pick(data.peers[id2], opts?.keys);
+        slice.peers[id2] = { ...peer, peerId: id2 };
+      }
+    }
+    return slice;
+  }
+  function hasPresenceResponseChanged(a, b) {
+    if (a.isLoading !== b.isLoading)
+      return true;
+    if (a.error !== b.error)
+      return true;
+    if (a.user || b.user) {
+      if (!a.user || !b.user)
+        return true;
+      const same = areObjectsShallowEqual(a.user, b.user);
+      if (!same)
+        return true;
+    }
+    const sameKeys = areObjectKeysEqual(a.peers, b.peers);
+    if (!sameKeys)
+      return true;
+    for (const id2 of Object.keys(a.peers)) {
+      const same = areObjectsShallowEqual(a.peers[id2], b.peers[id2]);
+      if (!same)
+        return true;
+    }
+    return false;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/Deferred.js
+  var Deferred = class {
+    constructor() {
+      __publicField(this, "promise");
+      __publicField(this, "_resolve");
+      __publicField(this, "_reject");
+      this.promise = new Promise((resolve, reject) => {
+        this._resolve = resolve;
+        this._reject = reject;
+      });
+    }
+    resolve(value) {
+      this._resolve(value);
+    }
+    reject(reason) {
+      this._reject(reason);
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/model/instaqlResult.js
+  function _extractTriplesHelper(idNodes, acc = []) {
+    idNodes.forEach((idNode) => {
+      const { data } = idNode;
+      const { "datalog-result": datalogResult } = data;
+      const { "join-rows": joinRows } = datalogResult;
+      for (const rows of joinRows) {
+        for (const triple of rows) {
+          acc.push(triple);
+        }
+      }
+      _extractTriplesHelper(idNode["child-nodes"], acc);
+    });
+  }
+  function extractTriples(idNodes) {
+    const triples = [];
+    _extractTriplesHelper(idNodes, triples);
+    return triples;
+  }
+
+  // node_modules/@instantdb/core/dist/esm/utils/linkIndex.js
+  function createLinkIndex(schema) {
+    return Object.values(schema.links).reduce((linkIndex, link) => {
+      var _a, _b;
+      linkIndex[_a = link.forward.on] ?? (linkIndex[_a] = {});
+      linkIndex[link.forward.on][link.forward.label] = {
+        isForward: true,
+        isSingular: link.forward.has === "one",
+        link
+      };
+      linkIndex[_b = link.reverse.on] ?? (linkIndex[_b] = {});
+      linkIndex[link.reverse.on][link.reverse.label] = {
+        isForward: false,
+        isSingular: link.reverse.has === "one",
+        link
+      };
+      return linkIndex;
+    }, {});
+  }
+
+  // node_modules/@instantdb/version/dist/esm/version.js
+  var version2 = "v1.0.60";
+
+  // node_modules/@instantdb/core/dist/esm/version.js
+  var version_default = version2;
+
+  // node_modules/@instantdb/core/dist/esm/utils/log.js
+  function createLogger(isEnabled, getStats, baseLogger = console) {
+    return {
+      info: isEnabled ? (...args) => baseLogger.info(...args, getStats()) : () => {
+      },
+      debug: isEnabled ? (...args) => baseLogger.debug(...args, getStats()) : () => {
+      },
+      error: isEnabled ? (...args) => baseLogger.error(...args, getStats()) : () => {
+      }
+    };
+  }
+
+  // node_modules/@instantdb/core/dist/esm/schemaTypes.js
+  var DataAttrDef = class _DataAttrDef {
+    constructor(valueType, required, isIndexed, config = { indexed: false, unique: false }) {
+      __publicField(this, "valueType");
+      __publicField(this, "required");
+      __publicField(this, "isIndexed");
+      __publicField(this, "config");
+      __publicField(this, "metadata", {});
+      this.valueType = valueType;
+      this.required = required;
+      this.isIndexed = isIndexed;
+      this.config = config;
+    }
+    /**
+     * @deprecated Only use this temporarily for attributes that you want
+     * to treat as required in frontend code but can’t yet mark as required
+     * and enforced for backend
+     */
+    clientRequired() {
+      return new _DataAttrDef(this.valueType, false, this.isIndexed, this.config);
+    }
+    optional() {
+      return new _DataAttrDef(this.valueType, false, this.isIndexed, this.config);
+    }
+    unique() {
+      return new _DataAttrDef(this.valueType, this.required, this.isIndexed, {
+        ...this.config,
+        unique: true
+      });
+    }
+    indexed() {
+      return new _DataAttrDef(this.valueType, this.required, true, {
+        ...this.config,
+        indexed: true
+      });
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/queryValidation.js
+  var QueryValidationError = class extends Error {
+    constructor(message, path) {
+      const fullMessage = path ? `At path '${path}': ${message}` : message;
+      super(fullMessage);
+      this.name = "QueryValidationError";
+    }
+  };
+  var dollarSignKeys = [
+    "where",
+    "order",
+    "limit",
+    "last",
+    "first",
+    "offset",
+    "after",
+    "afterInclusive",
+    "before",
+    "beforeInclusive",
+    "fields",
+    "aggregate"
+  ];
+  var getAttrType = (attrDef) => {
+    return attrDef.valueType || "unknown";
+  };
+  var isValidValueForType = (value, expectedType, isAnyType = false) => {
+    if (isAnyType)
+      return true;
+    if (value === null || value === void 0)
+      return true;
+    switch (expectedType) {
+      case "string":
+        return typeof value === "string";
+      case "number":
+        return typeof value === "number" && !isNaN(value);
+      case "boolean":
+        return typeof value === "boolean";
+      case "date":
+        return value instanceof Date || typeof value === "string" || typeof value === "number";
+      default:
+        return true;
+    }
+  };
+  var validateOperator = (op, opValue, expectedType, attrName, entityName, attrDef, path) => {
+    const isAnyType = attrDef.valueType === "json";
+    const assertValidValue = (op2, expectedType2, opValue2) => {
+      if (!isValidValueForType(opValue2, expectedType2, isAnyType)) {
+        throw new QueryValidationError(`Invalid value for operator '${op2}' on attribute '${attrName}' in entity '${entityName}'. Expected ${expectedType2}, but received: ${typeof opValue2}`, path);
+      }
+    };
+    switch (op) {
+      case "in":
+      case "$in":
+        if (!Array.isArray(opValue)) {
+          throw new QueryValidationError(`Operator '${op}' for attribute '${attrName}' in entity '${entityName}' must be an array, but received: ${typeof opValue}`, path);
+        }
+        for (const item of opValue) {
+          assertValidValue(op, expectedType, item);
+        }
+        break;
+      case "$not":
+      case "$ne":
+      case "$gt":
+      case "$lt":
+      case "$gte":
+      case "$lte":
+        assertValidValue(op, expectedType, opValue);
+        break;
+      case "$like":
+      case "$ilike":
+        assertValidValue(op, "string", opValue);
+        if (op === "$ilike") {
+          if (!attrDef.isIndexed) {
+            throw new QueryValidationError(`Operator '${op}' can only be used with indexed attributes, but '${attrName}' in entity '${entityName}' is not indexed`, path);
+          }
+        }
+        break;
+      case "$isNull":
+        assertValidValue(op, "boolean", opValue);
+        break;
+      default:
+        throw new QueryValidationError(`Unknown operator '${op}' for attribute '${attrName}' in entity '${entityName}'`, path);
+    }
+  };
+  var validateWhereClauseValue = (value, attrName, attrDef, entityName, path) => {
+    const expectedType = getAttrType(attrDef);
+    const isAnyType = attrDef.valueType === "json";
+    const isComplexObject = typeof value === "object" && value !== null && !Array.isArray(value);
+    if (isComplexObject) {
+      if (isAnyType) {
+        return;
+      }
+      const operators = value;
+      for (const [op, opValue] of Object.entries(operators)) {
+        validateOperator(op, opValue, expectedType, attrName, entityName, attrDef, `${path}.${op}`);
+      }
+    } else {
+      if (!isValidValueForType(value, expectedType, isAnyType)) {
+        throw new QueryValidationError(`Invalid value for attribute '${attrName}' in entity '${entityName}'. Expected ${expectedType}, but received: ${typeof value}`, path);
+      }
+    }
+  };
+  var validateDotNotationAttribute = (dotPath, value, startEntityName, schema, path) => {
+    const pathParts = dotPath.split(".");
+    if (pathParts.length < 2) {
+      throw new QueryValidationError(`Invalid dot notation path '${dotPath}'. Must contain at least one dot.`, path);
+    }
+    let currentEntityName = startEntityName;
+    for (let i2 = 0; i2 < pathParts.length - 1; i2++) {
+      const linkName = pathParts[i2];
+      const currentEntity = schema.entities[currentEntityName];
+      if (!currentEntity) {
+        throw new QueryValidationError(`Entity '${currentEntityName}' does not exist in schema while traversing dot notation path '${dotPath}'.`, path);
+      }
+      const link = currentEntity.links[linkName];
+      if (!link) {
+        const availableLinks = Object.keys(currentEntity.links);
+        throw new QueryValidationError(`Link '${linkName}' does not exist on entity '${currentEntityName}' in dot notation path '${dotPath}'. Available links: ${availableLinks.length > 0 ? availableLinks.join(", ") : "none"}`, path);
+      }
+      currentEntityName = link.entityName;
+    }
+    const finalAttrName = pathParts[pathParts.length - 1];
+    const finalEntity = schema.entities[currentEntityName];
+    if (!finalEntity) {
+      throw new QueryValidationError(`Target entity '${currentEntityName}' does not exist in schema for dot notation path '${dotPath}'.`, path);
+    }
+    if (finalAttrName === "id") {
+      if (typeof value == "string" && !validate_default(value)) {
+        throw new QueryValidationError(`Invalid value for id field in entity '${currentEntityName}'. Expected a UUID, but received: ${value}`, path);
+      }
+      validateWhereClauseValue(value, dotPath, new DataAttrDef("string", false, true), startEntityName, path);
+      return;
+    }
+    const attrDef = finalEntity.attrs[finalAttrName];
+    if (Object.keys(finalEntity.links).includes(finalAttrName)) {
+      if (typeof value === "string" && !validate_default(value)) {
+        throw new QueryValidationError(`Invalid value for link '${finalAttrName}' in entity '${currentEntityName}'. Expected a UUID, but received: ${value}`, path);
+      }
+      validateWhereClauseValue(value, dotPath, new DataAttrDef("string", false, true), startEntityName, path);
+      return;
+    }
+    if (!attrDef) {
+      const availableAttrs = Object.keys(finalEntity.attrs);
+      throw new QueryValidationError(`Attribute '${finalAttrName}' does not exist on entity '${currentEntityName}' in dot notation path '${dotPath}'. Available attributes: ${availableAttrs.length > 0 ? availableAttrs.join(", ") + ", id" : "id"}`, path);
+    }
+    validateWhereClauseValue(value, dotPath, attrDef, startEntityName, path);
+  };
+  var validateWhereClause = (whereClause, entityName, schema, path) => {
+    for (const [key, value] of Object.entries(whereClause)) {
+      if (key === "or" || key === "and") {
+        if (Array.isArray(value)) {
+          for (const clause of value) {
+            if (typeof clause === "object" && clause !== null) {
+              validateWhereClause(clause, entityName, schema, `${path}.${key}[${clause}]`);
+            }
+          }
+        }
+        continue;
+      }
+      if (key === "id") {
+        validateWhereClauseValue(value, "id", new DataAttrDef("string", false, true), entityName, `${path}.id`);
+        continue;
+      }
+      if (key.includes(".")) {
+        validateDotNotationAttribute(key, value, entityName, schema, `${path}.${key}`);
+        continue;
+      }
+      const entityDef = schema.entities[entityName];
+      if (!entityDef)
+        continue;
+      const attrDef = entityDef.attrs[key];
+      const linkDef = entityDef.links[key];
+      if (!attrDef && !linkDef) {
+        const availableAttrs = Object.keys(entityDef.attrs);
+        const availableLinks = Object.keys(entityDef.links);
+        throw new QueryValidationError(`Attribute or link '${key}' does not exist on entity '${entityName}'. Available attributes: ${availableAttrs.length > 0 ? availableAttrs.join(", ") : "none"}. Available links: ${availableLinks.length > 0 ? availableLinks.join(", ") : "none"}`, `${path}.${key}`);
+      }
+      if (attrDef) {
+        validateWhereClauseValue(value, key, attrDef, entityName, `${path}.${key}`);
+      } else if (linkDef) {
+        if (typeof value === "string" && !validate_default(value)) {
+          throw new QueryValidationError(`Invalid value for link '${key}' in entity '${entityName}'. Expected a UUID, but received: ${value}`, `${path}.${key}`);
+        }
+        const syntheticAttrDef = new DataAttrDef("string", false, true);
+        validateWhereClauseValue(value, key, syntheticAttrDef, entityName, `${path}.${key}`);
+      }
+    }
+  };
+  var validateDollarObject = (dollarObj, entityName, schema, path, depth = 0) => {
+    for (const key of Object.keys(dollarObj)) {
+      if (!dollarSignKeys.includes(key)) {
+        throw new QueryValidationError(`Invalid query parameter '${key}' in $ object. Valid parameters are: ${dollarSignKeys.join(", ")}. Found: ${key}`, path);
+      }
+    }
+    const paginationParams = [
+      // 'limit', // only supported client side
+      "offset",
+      "before",
+      "beforeInclusive",
+      "after",
+      "afterInclusive",
+      "first",
+      "last"
+    ];
+    for (const param of paginationParams) {
+      if (dollarObj[param] !== void 0 && depth > 0) {
+        throw new QueryValidationError(`'${param}' can only be used on top-level namespaces. It cannot be used in nested queries.`, path);
+      }
+    }
+    if (dollarObj.where && schema) {
+      if (typeof dollarObj.where !== "object" || dollarObj.where === null) {
+        throw new QueryValidationError(`'where' clause must be an object in entity '${entityName}', but received: ${typeof dollarObj.where}`, path ? `${path}.where` : void 0);
+      }
+      validateWhereClause(dollarObj.where, entityName, schema, path ? `${path}.where` : "where");
+    }
+  };
+  var validateEntityInQuery = (queryPart, entityName, schema, path, depth = 0) => {
+    if (!queryPart || typeof queryPart !== "object") {
+      throw new QueryValidationError(`Query part for entity '${entityName}' must be an object, but received: ${typeof queryPart}`, path);
+    }
+    for (const key of Object.keys(queryPart)) {
+      if (key !== "$") {
+        if (schema && !(key in schema.entities[entityName].links)) {
+          const availableLinks = Object.keys(schema.entities[entityName].links);
+          throw new QueryValidationError(`Link '${key}' does not exist on entity '${entityName}'. Available links: ${availableLinks.length > 0 ? availableLinks.join(", ") : "none"}`, `${path}.${key}`);
+        }
+        const nestedQuery = queryPart[key];
+        if (typeof nestedQuery === "object" && nestedQuery !== null) {
+          const linkedEntityName = schema?.entities[entityName].links[key]?.entityName;
+          if (linkedEntityName) {
+            validateEntityInQuery(nestedQuery, linkedEntityName, schema, `${path}.${key}`, depth + 1);
+          }
+        }
+      } else {
+        const dollarObj = queryPart[key];
+        if (typeof dollarObj !== "object" || dollarObj === null) {
+          throw new QueryValidationError(`Query parameter '$' must be an object in entity '${entityName}', but received: ${typeof dollarObj}`, `${path}.$`);
+        }
+        validateDollarObject(dollarObj, entityName, schema, `${path}.$`, depth);
+      }
+    }
+  };
+  var validateQuery = (q, schema) => {
+    if (typeof q !== "object" || q === null) {
+      throw new QueryValidationError(`Query must be an object, but received: ${typeof q}${q === null ? " (null)" : ""}`);
+    }
+    if (Array.isArray(q)) {
+      throw new QueryValidationError(`Query must be an object, but received: ${typeof q}`);
+    }
+    const queryObj = q;
+    for (const topLevelKey of Object.keys(queryObj)) {
+      if (Array.isArray(q[topLevelKey])) {
+        throw new QueryValidationError(`Query keys must be strings, but found key of type: ${typeof topLevelKey}`, topLevelKey);
+      }
+      if (typeof topLevelKey !== "string") {
+        throw new QueryValidationError(`Query keys must be strings, but found key of type: ${typeof topLevelKey}`, topLevelKey);
+      }
+      if (topLevelKey === "$$ruleParams") {
+        continue;
+      }
+      if (schema) {
+        if (!schema.entities[topLevelKey]) {
+          const availableEntities = Object.keys(schema.entities);
+          throw new QueryValidationError(`Entity '${topLevelKey}' does not exist in schema. Available entities: ${availableEntities.length > 0 ? availableEntities.join(", ") : "none"}`, topLevelKey);
+        }
+      }
+      validateEntityInQuery(queryObj[topLevelKey], topLevelKey, schema, topLevelKey, 0);
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/transactionValidation.js
+  var isValidEntityId = (value) => {
+    if (typeof value !== "string") {
+      return false;
+    }
+    if (isLookup(value)) {
+      return true;
+    }
+    return validate_default(value);
+  };
+  var TransactionValidationError = class extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "TransactionValidationError";
+    }
+  };
+  var formatAvailableOptions = (items) => items.length > 0 ? items.join(", ") : "none";
+  var createEntityNotFoundError = (entityName, availableEntities) => new TransactionValidationError(`Entity '${entityName}' does not exist in schema. Available entities: ${formatAvailableOptions(availableEntities)}`);
+  var TYPE_VALIDATORS = {
+    string: (value) => typeof value === "string",
+    number: (value) => typeof value === "number" && !isNaN(value),
+    boolean: (value) => typeof value === "boolean",
+    date: (value) => value instanceof Date || typeof value === "string" || typeof value === "number",
+    json: () => true
+  };
+  var isValidValueForAttr = (value, attrDef) => {
+    if (value === null || value === void 0)
+      return true;
+    return TYPE_VALIDATORS[attrDef.valueType]?.(value) ?? false;
+  };
+  var validateEntityExists = (entityName, schema) => {
+    const entityDef = schema.entities[entityName];
+    if (!entityDef) {
+      throw createEntityNotFoundError(entityName, Object.keys(schema.entities));
+    }
+    return entityDef;
+  };
+  var validateDataOperation = (entityName, data, schema) => {
+    const entityDef = validateEntityExists(entityName, schema);
+    if (typeof data !== "object" || data === null) {
+      throw new TransactionValidationError(`Arguments for data operation on entity '${entityName}' must be an object, but received: ${typeof data}`);
+    }
+    for (const [attrName, value] of Object.entries(data)) {
+      if (attrName === "id")
+        continue;
+      const attrDef = entityDef.attrs[attrName];
+      if (attrDef) {
+        if (!isValidValueForAttr(value, attrDef)) {
+          throw new TransactionValidationError(`Invalid value for attribute '${attrName}' in entity '${entityName}'. Expected ${attrDef.valueType}, but received: ${typeof value}`);
+        }
+      }
+    }
+  };
+  var validateLinkOperation = (entityName, links, schema) => {
+    const entityDef = validateEntityExists(entityName, schema);
+    if (typeof links !== "object" || links === null) {
+      throw new TransactionValidationError(`Arguments for link operation on entity '${entityName}' must be an object, but received: ${typeof links}`);
+    }
+    for (const [linkName, linkValue] of Object.entries(links)) {
+      const link = entityDef.links[linkName];
+      if (!link) {
+        const availableLinks = Object.keys(entityDef.links);
+        throw new TransactionValidationError(`Link '${linkName}' does not exist on entity '${entityName}'. Available links: ${formatAvailableOptions(availableLinks)}`);
+      }
+      if (linkValue !== null && linkValue !== void 0) {
+        if (Array.isArray(linkValue)) {
+          for (const linkReference of linkValue) {
+            if (!isValidEntityId(linkReference)) {
+              throw new TransactionValidationError(`Invalid entity ID in link '${linkName}' for entity '${entityName}'. Expected a UUID or a lookup, but received: ${linkReference}`);
+            }
+          }
+        } else {
+          if (!isValidEntityId(linkValue)) {
+            throw new TransactionValidationError(`Invalid UUID in link '${linkName}' for entity '${entityName}'. Expected a UUID, but received: ${linkValue}`);
+          }
+        }
+      }
+    }
+  };
+  var VALIDATION_STRATEGIES = {
+    create: validateDataOperation,
+    update: validateDataOperation,
+    merge: validateDataOperation,
+    link: validateLinkOperation,
+    unlink: validateLinkOperation,
+    delete: () => {
+    }
+  };
+  var validateOp = (op, schema) => {
+    if (!schema)
+      return;
+    const [action, entityName, _id, args] = op;
+    if (!Array.isArray(_id)) {
+      const isUuid = validate_default(_id);
+      if (!isUuid) {
+        throw new TransactionValidationError(`Invalid id for entity '${entityName}'. Expected a UUID, but received: ${_id}`);
+      }
+    }
+    if (typeof entityName !== "string") {
+      throw new TransactionValidationError(`Entity name must be a string, but received: ${typeof entityName}`);
+    }
+    const validator = VALIDATION_STRATEGIES[action];
+    if (validator && args !== void 0) {
+      validator(entityName, args, schema);
+    }
+  };
+  var validateTransactions = (inputChunks, schema) => {
+    const chunks = Array.isArray(inputChunks) ? inputChunks : [inputChunks];
+    for (const txStep of chunks) {
+      if (!txStep || typeof txStep !== "object") {
+        throw new TransactionValidationError(`Transaction chunk must be an object, but received: ${typeof txStep}`);
+      }
+      if (!Array.isArray(txStep.__ops)) {
+        throw new TransactionValidationError(`Transaction chunk must have __ops array, but received: ${typeof txStep.__ops}`);
+      }
+      for (const op of txStep.__ops) {
+        if (!Array.isArray(op)) {
+          throw new TransactionValidationError(`Transaction operation must be an array, but received: ${typeof op}`);
+        }
+        validateOp(op, schema);
+      }
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/Connection.js
+  var _connId = 0;
+  var WSConnection = class {
+    constructor(url) {
+      __publicField(this, "type", "ws");
+      __publicField(this, "conn");
+      __publicField(this, "id");
+      __publicField(this, "onopen");
+      __publicField(this, "onmessage");
+      __publicField(this, "onclose");
+      __publicField(this, "onerror");
+      this.id = `${this.type}_${_connId++}`;
+      this.conn = new WebSocket(url);
+      this.conn.onopen = (_e) => {
+        if (this.onopen) {
+          this.onopen({ target: this });
+        }
+      };
+      this.conn.onmessage = (e) => {
+        if (this.onmessage) {
+          this.onmessage({
+            target: this,
+            message: JSON.parse(e.data.toString())
+          });
+        }
+      };
+      this.conn.onclose = (_e) => {
+        if (this.onclose) {
+          this.onclose({ target: this });
+        }
+      };
+      this.conn.onerror = (_e) => {
+        if (this.onerror) {
+          this.onerror({ target: this });
+        }
+      };
+    }
+    close() {
+      this.conn.close();
+    }
+    isOpen() {
+      return this.conn.readyState === (WebSocket.OPEN ?? 1);
+    }
+    isConnecting() {
+      return this.conn.readyState === (WebSocket.CONNECTING ?? 0);
+    }
+    send(msg) {
+      return this.conn.send(JSON.stringify(msg));
+    }
+  };
+  var SSEConnection = class {
+    constructor(ES, url, messageUrl) {
+      __publicField(this, "type", "sse");
+      __publicField(this, "initParams", null);
+      __publicField(this, "sendQueue", []);
+      __publicField(this, "sendPromise");
+      __publicField(this, "closeFired", false);
+      __publicField(this, "sseInitTimeout");
+      __publicField(this, "ES");
+      __publicField(this, "messageUrl");
+      __publicField(this, "conn");
+      __publicField(this, "url");
+      __publicField(this, "id");
+      __publicField(this, "onopen");
+      __publicField(this, "onmessage");
+      __publicField(this, "onclose");
+      __publicField(this, "onerror");
+      this.id = `${this.type}_${_connId++}`;
+      this.url = url;
+      this.messageUrl = messageUrl || this.url;
+      this.ES = ES;
+      this.conn = new ES(url);
+      this.sseInitTimeout = setTimeout(() => {
+        if (!this.initParams) {
+          this.handleError();
+        }
+      }, 1e4);
+      this.conn.onmessage = (e) => {
+        const message = JSON.parse(e.data);
+        if (Array.isArray(message)) {
+          for (const msg of message) {
+            this.handleMessage(msg);
+          }
+        } else {
+          this.handleMessage(message);
+        }
+      };
+      this.conn.onerror = (e) => {
+        this.handleError();
+      };
+    }
+    handleMessage(msg) {
+      if (msg.op === "sse-init") {
+        this.initParams = {
+          machineId: msg["machine-id"],
+          sessionId: msg["session-id"],
+          sseToken: msg["sse-token"]
+        };
+        if (this.onopen) {
+          this.onopen({ target: this });
+        }
+        clearTimeout(this.sseInitTimeout);
+        return;
+      }
+      if (this.onmessage) {
+        this.onmessage({
+          target: this,
+          message: msg
+        });
+      }
+    }
+    // Runs the onerror and closes the connection
+    handleError() {
+      try {
+        if (this.onerror) {
+          this.onerror({ target: this });
+        }
+      } finally {
+        this.handleClose();
+      }
+    }
+    handleClose() {
+      this.conn.close();
+      if (this.onclose && !this.closeFired) {
+        this.closeFired = true;
+        this.onclose({ target: this });
+      }
+    }
+    async postMessages(messages) {
+      try {
+        const resp = await fetch(this.messageUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            machine_id: this.initParams?.machineId,
+            session_id: this.initParams?.sessionId,
+            sse_token: this.initParams?.sseToken,
+            messages
+          })
+        });
+        if (!resp.ok) {
+          this.handleError();
+        }
+      } catch (e) {
+        this.handleError();
+      }
+    }
+    async flushQueue() {
+      if (this.sendPromise || !this.sendQueue.length)
+        return;
+      const messages = this.sendQueue;
+      this.sendQueue = [];
+      const sendPromise = this.postMessages(messages);
+      this.sendPromise = sendPromise;
+      sendPromise.then(() => {
+        this.sendPromise = null;
+        this.flushQueue();
+      });
+    }
+    send(msg) {
+      if (!this.isOpen() || !this.initParams) {
+        if (this.isConnecting()) {
+          throw new Error(`Failed to execute 'send' on 'EventSource': Still in CONNECTING state.`);
+        }
+        if (this.conn.readyState === this.ES.CLOSED) {
+          throw new Error(`EventSource is already in CLOSING or CLOSED state.`);
+        }
+        throw new Error(`EventSource is in invalid state.`);
+      }
+      this.sendQueue.push(msg);
+      this.flushQueue();
+    }
+    isOpen() {
+      return this.conn.readyState === this.ES.OPEN && this.initParams !== null;
+    }
+    isConnecting() {
+      return this.conn.readyState === this.ES.CONNECTING || this.conn.readyState === this.ES.OPEN && this.initParams === null;
+    }
+    close() {
+      this.handleClose();
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/SyncTable.js
+  function syncSubFromStorage(sub, useDateObjects) {
+    const values = sub.values;
+    if (values) {
+      const attrsStore = attrsStoreFromJSON(values.attrsStore, null);
+      if (attrsStore) {
+        for (const e of values.entities || []) {
+          e.store.useDateObjects = useDateObjects;
+          e.store = fromJSON(attrsStore, e.store);
+        }
+        values.attrsStore = attrsStore;
+      }
+    }
+    return sub;
+  }
+  function syncSubToStorage(_k, sub) {
+    if (sub.values) {
+      const entities = [];
+      for (const e of sub.values?.entities) {
+        const store = toJSON(e.store);
+        entities.push({ ...e, store });
+      }
+      return {
+        ...sub,
+        values: { attrsStore: sub.values.attrsStore.toJSON(), entities }
+      };
+    } else {
+      return sub;
+    }
+  }
+  function onMergeSub(_key, storageSub, inMemorySub) {
+    const storageTxId = storageSub?.state?.txId;
+    const memoryTxId = inMemorySub?.state?.txId;
+    if (storageTxId && (!memoryTxId || storageTxId > memoryTxId)) {
+      return storageSub;
+    }
+    if (memoryTxId && (!storageTxId || memoryTxId > storageTxId)) {
+      return inMemorySub;
+    }
+    return storageSub || inMemorySub;
+  }
+  function queryEntity(sub, store, attrsStore) {
+    const res = query2({ store, attrsStore, pageInfo: null, aggregate: null }, sub.query);
+    return res.data[sub.table][0];
+  }
+  function getServerCreatedAt(sub, store, attrsStore, entityId) {
+    const aid = getAttrByFwdIdentName(attrsStore, sub.table, "id")?.id;
+    if (!aid) {
+      return -1;
+    }
+    const t = getInMap(store.eav, [entityId, aid, entityId]);
+    if (!t) {
+      return -1;
+    }
+    return t[3];
+  }
+  function applyChangesToStore(store, attrsStore, changes) {
+    for (const { action, triple } of changes) {
+      switch (action) {
+        case "added":
+          addTriple(store, attrsStore, triple);
+          break;
+        case "removed":
+          retractTriple(store, attrsStore, triple);
+          break;
+      }
+    }
+  }
+  function changedFieldsOfChanges(store, attrsStore, changes) {
+    const changedFields = {};
+    for (const { action, triple } of changes) {
+      const [e, a, v] = triple;
+      const field = attrsStore.getAttr(a)?.["forward-identity"]?.[2];
+      if (!field)
+        continue;
+      const fields = changedFields[e] ?? {};
+      changedFields[e] = fields;
+      const oldNew = fields[field] ?? {};
+      switch (action) {
+        case "added":
+          oldNew.newValue = v;
+          break;
+        case "removed":
+          if (oldNew.oldValue === void 0) {
+            oldNew.oldValue = v;
+          }
+          break;
+      }
+      fields[field] = oldNew;
+    }
+    for (const [_eid, fields] of Object.entries(changedFields)) {
+      for (const [k, { oldValue, newValue }] of Object.entries(fields)) {
+        if (oldValue === newValue) {
+          delete fields[k];
+        }
+      }
+    }
+    return changedFields;
+  }
+  function subData(sub, entities) {
+    return { [sub.table]: entities.map((e) => e.entity) };
+  }
+  function orderFieldTypeMutative(sub, getAttrs) {
+    if (sub.orderFieldType) {
+      return sub.orderFieldType;
+    }
+    const orderFieldType = sub.orderField === "serverCreatedAt" ? "number" : getAttrByFwdIdentName(getAttrs(), sub.table, sub.orderField)?.["checked-data-type"];
+    sub.orderFieldType = orderFieldType;
+    return orderFieldType;
+  }
+  function sortEntitiesInPlace(sub, orderFieldType, entities) {
+    const dataType = orderFieldType;
+    if (sub.orderField === "serverCreatedAt") {
+      entities.sort(sub.orderDirection === "asc" ? function compareEntities(a, b) {
+        return compareOrder(a.entity.id, a.serverCreatedAt, b.entity.id, b.serverCreatedAt, dataType);
+      } : function compareEntities(b, a) {
+        return compareOrder(a.entity.id, a.serverCreatedAt, b.entity.id, b.serverCreatedAt, dataType);
+      });
+      return;
+    }
+    const field = sub.orderField;
+    entities.sort(sub.orderDirection === "asc" ? function compareEntities(a, b) {
+      return compareOrder(a.entity.id, a.entity[field], b.entity.id, b.entity[field], dataType);
+    } : function compareEntities(b, a) {
+      return compareOrder(a.entity.id, a.entity[field], b.entity.id, b.entity[field], dataType);
+    });
+  }
+  var CallbackEventType;
+  (function(CallbackEventType2) {
+    CallbackEventType2["InitialSyncBatch"] = "InitialSyncBatch";
+    CallbackEventType2["InitialSyncComplete"] = "InitialSyncComplete";
+    CallbackEventType2["LoadFromStorage"] = "LoadFromStorage";
+    CallbackEventType2["SyncTransaction"] = "SyncTransaction";
+    CallbackEventType2["Error"] = "Error";
+  })(CallbackEventType || (CallbackEventType = {}));
+  var SyncTable = class {
+    constructor(trySend, storage, config, log, createStore2, getAttrs) {
+      __publicField(this, "trySend");
+      __publicField(this, "subs");
+      // Using any for the SyncCallback because we'd need Reactor to be typed
+      __publicField(this, "callbacks", {});
+      __publicField(this, "config");
+      __publicField(this, "idToHash", {});
+      __publicField(this, "log");
+      __publicField(this, "createStore");
+      __publicField(this, "getAttrs");
+      this.trySend = trySend;
+      this.config = config;
+      this.log = log;
+      this.createStore = createStore2;
+      this.getAttrs = getAttrs;
+      this.subs = new PersistedObject({
+        persister: storage,
+        merge: onMergeSub,
+        serialize: syncSubToStorage,
+        parse: (_key, x) => syncSubFromStorage(x, this.config.useDateObjects),
+        objectSize: (sub) => sub.values?.entities.length || 0,
+        logger: log,
+        gc: {
+          maxAgeMs: 1e3 * 60 * 60 * 24 * 7 * 52,
+          // 1 year
+          maxEntries: 1e3,
+          // Size of each sub is the number of entity
+          maxSize: 1e6
+          // 1 million entities
+        }
+      });
+    }
+    beforeUnload() {
+      this.subs.flush();
+    }
+    subscribe(q, cb) {
+      const hash = weakHash(q);
+      this.callbacks[hash] = this.callbacks[hash] || [];
+      this.callbacks[hash].push(cb);
+      this.initSubscription(q, hash, cb);
+      return (opts) => {
+        this.unsubscribe(hash, cb, opts?.keepSubscription);
+      };
+    }
+    unsubscribe(hash, cb, keepSubscription) {
+      const cbs = (this.callbacks[hash] || []).filter((x) => x !== cb);
+      this.callbacks[hash] = cbs;
+      if (!cbs.length) {
+        delete this.callbacks[hash];
+        const sub = this.subs.currentValue[hash];
+        if (sub?.state) {
+          this.clearSubscriptionData(sub.state.subscriptionId, !!keepSubscription);
+        }
+        if (!keepSubscription) {
+          this.subs.updateInPlace((prev) => {
+            delete prev[hash];
+          });
+        }
+      }
+    }
+    sendStart(query3) {
+      this.trySend(id_default(), {
+        op: "start-sync",
+        q: query3
+      });
+    }
+    sendResync(sub, state, txId) {
+      this.idToHash[state.subscriptionId] = sub.hash;
+      this.trySend(state.subscriptionId, {
+        op: "resync-table",
+        "subscription-id": state.subscriptionId,
+        "tx-id": txId,
+        token: state.token
+      });
+    }
+    sendRemove(state, keepSubscription) {
+      this.trySend(id_default(), {
+        op: "remove-sync",
+        "subscription-id": state.subscriptionId,
+        "keep-subscription": keepSubscription
+      });
+    }
+    async initSubscription(query3, hash, cb) {
+      await this.subs.waitForKeyToLoad(hash);
+      const existingSub = this.subs.currentValue[hash];
+      if (existingSub && existingSub.state && existingSub.state.txId) {
+        this.sendResync(existingSub, existingSub.state, existingSub.state.txId);
+        if (existingSub.values?.entities && cb) {
+          cb({
+            type: CallbackEventType.LoadFromStorage,
+            data: subData(existingSub, existingSub.values?.entities)
+          });
+        }
+        return;
+      }
+      const table = Object.keys(query3)[0];
+      const orderBy = query3[table]?.$?.order || { serverCreatedAt: "asc" };
+      const [orderField, orderDirection] = Object.entries(orderBy)[0];
+      this.subs.updateInPlace((prev) => {
+        prev[hash] = {
+          query: query3,
+          hash,
+          table,
+          orderDirection,
+          orderField,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+      });
+      this.sendStart(query3);
+    }
+    async flushPending() {
+      for (const hash of Object.keys(this.callbacks)) {
+        await this.subs.waitForKeyToLoad(hash);
+        const sub = this.subs.currentValue[hash];
+        if (sub) {
+          await this.initSubscription(sub.query, sub.hash);
+        } else {
+          this.log.error("Missing sub for hash in flushPending", hash);
+        }
+      }
+    }
+    onStartSyncOk(msg) {
+      const subscriptionId = msg["subscription-id"];
+      const q = msg.q;
+      const hash = weakHash(q);
+      this.idToHash[subscriptionId] = hash;
+      this.subs.updateInPlace((prev) => {
+        const sub = prev[hash];
+        if (!sub) {
+          this.log.error("Missing sub for hash", hash, "subscription-id", subscriptionId, "query", q);
+          return prev;
+        }
+        sub.state = {
+          subscriptionId,
+          token: msg.token
+        };
+      });
+    }
+    notifyCbs(hash, event) {
+      for (const cb of this.callbacks[hash] || []) {
+        cb(event);
+      }
+    }
+    onSyncLoadBatch(msg) {
+      const subscriptionId = msg["subscription-id"];
+      const joinRows = msg["join-rows"];
+      const hash = this.idToHash[subscriptionId];
+      if (!hash) {
+        this.log.error("Missing hash for subscription", msg);
+        return;
+      }
+      const batch = [];
+      const sub = this.subs.currentValue[hash];
+      if (!sub) {
+        this.log.error("Missing sub for hash", hash, msg);
+        return;
+      }
+      const values = sub.values ?? {
+        entities: [],
+        attrsStore: this.getAttrs()
+      };
+      sub.values = values;
+      const entities = values.entities;
+      for (const entRows of joinRows) {
+        const store = this.createStore(entRows);
+        const entity = queryEntity(sub, store, values.attrsStore);
+        entities.push({
+          store,
+          entity,
+          serverCreatedAt: getServerCreatedAt(sub, store, values.attrsStore, entity.id)
+        });
+        batch.push(entity);
+      }
+      this.subs.updateInPlace((prev) => {
+        prev[hash] = sub;
+        prev[hash].updatedAt = Date.now();
+      });
+      if (sub.values) {
+        this.notifyCbs(hash, {
+          type: CallbackEventType.InitialSyncBatch,
+          data: subData(sub, sub.values.entities),
+          batch
+        });
+      }
+    }
+    onSyncInitFinish(msg) {
+      const subscriptionId = msg["subscription-id"];
+      const hash = this.idToHash[subscriptionId];
+      if (!hash) {
+        this.log.error("Missing hash for subscription", msg);
+        return;
+      }
+      this.subs.updateInPlace((prev) => {
+        const sub2 = prev[hash];
+        if (!sub2) {
+          this.log.error("Missing sub for hash", hash, msg);
+          return;
+        }
+        const state = sub2.state;
+        if (!state) {
+          this.log.error("Sub never set init, missing result", sub2, msg);
+          return prev;
+        }
+        state.txId = msg["tx-id"];
+        sub2.updatedAt = Date.now();
+      });
+      const sub = this.subs.currentValue[hash];
+      if (sub) {
+        this.notifyCbs(hash, {
+          type: CallbackEventType.InitialSyncComplete,
+          data: subData(sub, sub.values?.entities || [])
+        });
+      }
+    }
+    onSyncUpdateTriples(msg) {
+      const subscriptionId = msg["subscription-id"];
+      const hash = this.idToHash[subscriptionId];
+      if (!hash) {
+        this.log.error("Missing hash for subscription", msg);
+        return;
+      }
+      const sub = this.subs.currentValue[hash];
+      if (!sub) {
+        this.log.error("Missing sub for hash", hash, msg);
+        return;
+      }
+      const state = sub.state;
+      if (!state) {
+        this.log.error("Missing state for sub", sub, msg);
+        return;
+      }
+      for (const tx2 of msg.txes) {
+        if (state.txId && state.txId >= tx2["tx-id"]) {
+          continue;
+        }
+        state.txId = tx2["tx-id"];
+        const idxesToDelete = [];
+        const byEid = {};
+        for (const change of tx2.changes) {
+          const eidChanges = byEid[change.triple[0]] ?? [];
+          byEid[change.triple[0]] = eidChanges;
+          eidChanges.push(change);
+        }
+        const values = sub.values ?? {
+          entities: [],
+          attrsStore: this.getAttrs()
+        };
+        const entities = values.entities;
+        sub.values = values;
+        const updated = [];
+        eidLoop: for (const [eid, changes] of Object.entries(byEid)) {
+          for (let i2 = 0; i2 < entities.length; i2++) {
+            const ent = entities[i2];
+            if (hasEntity(ent.store, eid)) {
+              applyChangesToStore(ent.store, values.attrsStore, changes);
+              const entity = queryEntity(sub, ent.store, values.attrsStore);
+              const changedFields = changedFieldsOfChanges(ent.store, values.attrsStore, changes)[eid];
+              if (entity) {
+                updated.push({
+                  oldEntity: ent.entity,
+                  newEntity: entity,
+                  changedFields: changedFields || {}
+                });
+                ent.entity = entity;
+              } else {
+                idxesToDelete.push(i2);
+              }
+              delete byEid[eid];
+              continue eidLoop;
+            }
+          }
+        }
+        const added = [];
+        for (const [_eid, changes] of Object.entries(byEid)) {
+          const store = this.createStore([]);
+          applyChangesToStore(store, values.attrsStore, changes);
+          const entity = queryEntity(sub, store, values.attrsStore);
+          if (!entity) {
+            this.log.error("No entity found after applying change", {
+              sub,
+              changes,
+              store
+            });
+            continue;
+          }
+          entities.push({
+            store,
+            entity,
+            serverCreatedAt: getServerCreatedAt(sub, store, values.attrsStore, entity.id)
+          });
+          added.push(entity);
+        }
+        const removed = [];
+        for (const idx of idxesToDelete.sort().reverse()) {
+          removed.push(entities[idx].entity);
+          entities.splice(idx, 1);
+        }
+        const orderFieldType = orderFieldTypeMutative(sub, this.getAttrs);
+        sortEntitiesInPlace(sub, orderFieldType, entities);
+        this.notifyCbs(hash, {
+          type: CallbackEventType.SyncTransaction,
+          data: subData(sub, sub.values?.entities),
+          added,
+          removed,
+          updated
+        });
+      }
+      this.subs.updateInPlace((prev) => {
+        prev[hash] = sub;
+        prev[hash].updatedAt = Date.now();
+      });
+    }
+    clearSubscriptionData(subscriptionId, keepSubscription) {
+      const hash = this.idToHash[subscriptionId];
+      if (hash) {
+        delete this.idToHash[subscriptionId];
+        const sub = this.subs.currentValue[hash];
+        if (sub.state) {
+          this.sendRemove(sub.state, keepSubscription);
+        }
+        if (keepSubscription) {
+          this.subs.unloadKey(hash);
+        } else {
+          this.subs.updateInPlace((prev) => {
+            delete prev[hash];
+          });
+        }
+        if (sub) {
+          return sub;
+        }
+      }
+    }
+    onStartSyncError(msg) {
+      const hash = weakHash(msg["original-event"]["q"]);
+      const error = {
+        message: msg.message || "Uh-oh, something went wrong. Ping Joe & Stopa.",
+        status: msg.status,
+        type: msg.type,
+        hint: msg.hint
+      };
+      const k = Object.keys(msg["original-event"]["q"])[0];
+      this.notifyCbs(hash, {
+        type: CallbackEventType.Error,
+        data: { [k]: [] },
+        error
+      });
+    }
+    onResyncError(msg) {
+      const subscriptionId = msg["original-event"]["subscription-id"];
+      const removedSub = this.clearSubscriptionData(subscriptionId, false);
+      if (removedSub) {
+        this.initSubscription(removedSub.query, removedSub.hash);
+      }
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/Stream.js
+  function createWriteStream({ WStream, opts, startStream, appendStream, registerStream }) {
+    const clientId = opts.clientId;
+    let streamId_ = null;
+    let error_ = null;
+    let controller_ = null;
+    const reconnectToken = id_default();
+    let isDone = false;
+    let closed = false;
+    const closeCbs = [];
+    const streamIdCbs = [];
+    const completeCbs = [];
+    let disconnected = false;
+    let bufferOffset = 0;
+    let bufferByteSize = 0;
+    const buffer = [];
+    const encoder = new TextEncoder();
+    function markClosed() {
+      closed = true;
+      for (const cb of closeCbs) {
+        cb(error_ ?? void 0);
+      }
+    }
+    function addCloseCb(cb) {
+      closeCbs.push(cb);
+      if (closed) {
+        cb(error_ ?? void 0);
+      }
+      return () => {
+        const i2 = closeCbs.indexOf(cb);
+        if (i2 !== -1) {
+          closeCbs.splice(i2, 1);
+        }
+      };
+    }
+    function addCompleteCb(cb) {
+      completeCbs.push(cb);
+      return () => {
+        const i2 = completeCbs.indexOf(cb);
+        if (i2 !== -1) {
+          completeCbs.splice(i2, 1);
+        }
+      };
+    }
+    if (opts.waitUntil) {
+      opts.waitUntil(new Promise((resolve) => {
+        completeCbs.push(resolve);
+      }));
+    }
+    function runCompleteCbs() {
+      for (const cb of completeCbs) {
+        try {
+          cb();
+        } catch (_e) {
+        }
+      }
+    }
+    function addStreamIdCb(cb) {
+      streamIdCbs.push(cb);
+      if (streamId_) {
+        cb(streamId_);
+      }
+      return () => {
+        const i2 = streamIdCbs.indexOf(cb);
+        if (i2 !== -1) {
+          streamIdCbs.splice(i2, 1);
+        }
+      };
+    }
+    function setStreamId(streamId) {
+      streamId_ = streamId;
+      for (const cb of streamIdCbs) {
+        cb(streamId_);
+      }
+    }
+    function onDisconnect() {
+      disconnected = true;
+    }
+    function discardFlushed(offset) {
+      let chunkOffset = bufferOffset;
+      let segmentsToDrop = 0;
+      let droppedSegmentsByteLen = 0;
+      for (const { byteLen } of buffer) {
+        const nextChunkOffset = chunkOffset + byteLen;
+        if (nextChunkOffset > offset) {
+          break;
+        }
+        chunkOffset = nextChunkOffset;
+        segmentsToDrop++;
+        droppedSegmentsByteLen += byteLen;
+      }
+      if (segmentsToDrop > 0) {
+        bufferOffset += droppedSegmentsByteLen;
+        bufferByteSize -= droppedSegmentsByteLen;
+        buffer.splice(0, segmentsToDrop);
+      }
+    }
+    function error(controller, e) {
+      error_ = e;
+      markClosed();
+      controller.error(e);
+      runCompleteCbs();
+    }
+    async function onConnectionReconnect() {
+      const result = await startStream({
+        clientId,
+        reconnectToken,
+        ruleParams: opts.ruleParams
+      });
+      switch (result.type) {
+        case "ok": {
+          const { streamId, offset } = result;
+          streamId_ = streamId;
+          discardFlushed(offset);
+          if (buffer.length) {
+            appendStream({
+              streamId,
+              chunks: buffer.map((b) => b.chunk),
+              offset: bufferOffset
+            });
+          }
+          disconnected = false;
+          break;
+        }
+        case "disconnect": {
+          onDisconnect();
+          break;
+        }
+        case "error": {
+          if (controller_) {
+            error(controller_, result.error);
+          }
+          break;
+        }
+      }
+    }
+    function onAppendFailed() {
+      onDisconnect();
+      onConnectionReconnect();
+    }
+    function onFlush({ offset, done }) {
+      discardFlushed(offset);
+      if (done) {
+        isDone = true;
+        runCompleteCbs();
+      }
+    }
+    function ensureSetup(controller) {
+      if (isDone) {
+        error(controller, new InstantError("Stream has been closed."));
+        return null;
+      }
+      if (!streamId_) {
+        error(controller, new InstantError("Stream has not been initialized."));
+        return null;
+      }
+      return streamId_;
+    }
+    async function start(controller) {
+      controller_ = controller;
+      let tryAgain = true;
+      let attempts = 0;
+      while (tryAgain) {
+        let nextAttempt = Date.now() + Math.min(15e3, 500 * (attempts - 1));
+        tryAgain = false;
+        const result = await startStream({
+          clientId: opts.clientId,
+          reconnectToken,
+          ruleParams: opts.ruleParams
+        });
+        switch (result.type) {
+          case "ok": {
+            const { streamId, offset } = result;
+            if (offset !== 0) {
+              const e = new InstantError("Write stream is corrupted");
+              error(controller, e);
+              return;
+            }
+            setStreamId(streamId);
+            registerStream(streamId, {
+              onDisconnect,
+              onFlush,
+              onConnectionReconnect,
+              onAppendFailed
+            });
+            disconnected = false;
+            return;
+          }
+          case "disconnect": {
+            tryAgain = true;
+            onDisconnect();
+            attempts++;
+            await new Promise((resolve) => {
+              setTimeout(resolve, Math.max(0, nextAttempt - Date.now()));
+            });
+            break;
+          }
+          case "error": {
+            error(controller, result.error);
+            return;
+          }
+        }
+      }
+    }
+    class WStreamEnhanced extends WStream {
+      constructor(sink, strategy) {
+        super(sink, strategy);
+      }
+      async streamId() {
+        if (streamId_) {
+          return streamId_;
+        }
+        return new Promise((resolve, reject) => {
+          const cleanupFns = [];
+          const cleanup = () => {
+            for (const f of cleanupFns) {
+              f();
+            }
+          };
+          const resolveCb = (streamId) => {
+            resolve(streamId);
+            cleanup();
+          };
+          const rejectCb = (e) => {
+            reject(e || new InstantError("Stream is closed."));
+            cleanup();
+          };
+          cleanupFns.push(addStreamIdCb(resolveCb));
+          cleanupFns.push(addCloseCb(rejectCb));
+        });
+      }
+    }
+    const stream = new WStreamEnhanced({
+      // TODO(dww): accept a storage so that write streams can survive across
+      //            browser restarts
+      async start(controller) {
+        try {
+          await start(controller);
+        } catch (e) {
+          error(controller, e);
+        }
+      },
+      write(chunk, controller) {
+        const streamId = ensureSetup(controller);
+        if (streamId) {
+          const byteLen = encoder.encode(chunk).length;
+          buffer.push({ chunk, byteLen });
+          const offset = bufferOffset + bufferByteSize;
+          bufferByteSize += byteLen;
+          if (!disconnected) {
+            appendStream({ streamId, chunks: [chunk], offset });
+          }
+        }
+      },
+      close() {
+        if (streamId_) {
+          appendStream({
+            streamId: streamId_,
+            chunks: [],
+            offset: bufferOffset + bufferByteSize,
+            isDone: true
+          });
+        } else {
+          runCompleteCbs();
+        }
+        markClosed();
+      },
+      abort(reason) {
+        if (streamId_) {
+          appendStream({
+            streamId: streamId_,
+            chunks: [],
+            offset: bufferOffset + bufferByteSize,
+            isDone: true,
+            abortReason: reason
+          });
+        } else {
+          runCompleteCbs();
+        }
+        markClosed();
+      }
+    });
+    return {
+      stream,
+      addCompleteCb,
+      closed() {
+        return closed;
+      }
+    };
+  }
+  var StreamIterator = class {
+    constructor() {
+      __publicField(this, "items", []);
+      __publicField(this, "resolvers", []);
+      __publicField(this, "isClosed", false);
+    }
+    push(item) {
+      if (this.isClosed)
+        return;
+      const resolve = this.resolvers.shift();
+      if (resolve) {
+        resolve({ value: item, done: false });
+      } else {
+        this.items.push(item);
+      }
+    }
+    close() {
+      this.isClosed = true;
+      while (this.resolvers.length > 0) {
+        const resolve = this.resolvers.shift();
+        resolve({ value: void 0, done: true });
+      }
+    }
+    async *[Symbol.asyncIterator]() {
+      while (true) {
+        if (this.items.length > 0) {
+          yield this.items.shift();
+        } else if (this.isClosed) {
+          return;
+        } else {
+          const { value, done } = await new Promise((resolve) => {
+            this.resolvers.push(resolve);
+          });
+          if (done || !value) {
+            return;
+          }
+          yield value;
+        }
+      }
+    }
+  };
+  function createReadStream({ RStream, opts, startStream, cancelStream }) {
+    let seenOffset = opts.byteOffset || 0;
+    let canceled = false;
+    const decoder = new TextDecoder("utf-8");
+    const encoder = new TextEncoder();
+    let eventId;
+    let closed = false;
+    const closeCbs = [];
+    const streamIdCbs = [];
+    let streamId_ = null;
+    let error_ = null;
+    function markClosed(error2) {
+      closed = true;
+      for (const cb of closeCbs) {
+        cb(error2);
+      }
+    }
+    function addCloseCb(cb) {
+      closeCbs.push(cb);
+      return () => {
+        const i2 = closeCbs.indexOf(cb);
+        if (i2 !== -1) {
+          closeCbs.splice(i2, 1);
+        }
+      };
+    }
+    function addStreamIdCb(cb) {
+      streamIdCbs.push(cb);
+      if (streamId_) {
+        cb(streamId_);
+      }
+      return () => {
+        const i2 = streamIdCbs.indexOf(cb);
+        if (i2 !== -1) {
+          streamIdCbs.splice(i2, 1);
+        }
+      };
+    }
+    function error(controller, e) {
+      error_ = e;
+      controller.error(e);
+      markClosed(e);
+    }
+    let fetchFailures = 0;
+    async function runStartStream(opts2, controller) {
+      eventId = id_default();
+      const streamOpts = { ...opts2 || {}, eventId };
+      for await (const item of startStream(streamOpts)) {
+        if (canceled) {
+          return;
+        }
+        if (item.type === "reconnect") {
+          return { retry: true };
+        }
+        if (item.type === "error") {
+          error(controller, item.error);
+          return;
+        }
+        if (item.offset > seenOffset) {
+          error(controller, new InstantError("Stream is corrupted."));
+          canceled = true;
+          return;
+        }
+        streamId_ = item.streamId;
+        for (const cb of streamIdCbs) {
+          cb(streamId_);
+        }
+        let discardLen = seenOffset - item.offset;
+        if (item.files && item.files.length) {
+          const fetchAbort = new AbortController();
+          let nextFetch = fetch(item.files[0].url, {
+            signal: fetchAbort.signal
+          });
+          for (let i2 = 0; i2 < item.files.length; i2++) {
+            const nextFile = item.files[i2 + 1];
+            const thisFetch = nextFetch;
+            const res = await thisFetch;
+            if (nextFile) {
+              nextFetch = fetch(nextFile.url, { signal: fetchAbort.signal });
+            }
+            if (!res.ok) {
+              fetchFailures++;
+              if (fetchFailures > 10) {
+                error(controller, new InstantError("Unable to process stream."));
+                return;
+              }
+              return { retry: true };
+            }
+            if (res.body) {
+              const reader = res.body.getReader();
+              try {
+                while (true) {
+                  const { done, value: bodyChunk } = await reader.read();
+                  if (done) {
+                    break;
+                  }
+                  if (canceled) {
+                    fetchAbort.abort();
+                    return;
+                  }
+                  let chunk = bodyChunk;
+                  if (discardLen > 0) {
+                    chunk = bodyChunk.subarray(discardLen);
+                    discardLen -= bodyChunk.length - chunk.length;
+                  }
+                  if (!chunk.length) {
+                    continue;
+                  }
+                  seenOffset += chunk.length;
+                  const s = decoder.decode(chunk);
+                  controller.enqueue(s);
+                }
+              } finally {
+                reader.releaseLock();
+              }
+            } else {
+              const bodyChunk = await res.arrayBuffer();
+              let chunk = bodyChunk;
+              if (canceled) {
+                fetchAbort.abort();
+                return;
+              }
+              if (discardLen > 0) {
+                chunk = new Uint8Array(bodyChunk).subarray(discardLen);
+                discardLen -= bodyChunk.byteLength - chunk.length;
+              }
+              if (!chunk.byteLength) {
+                continue;
+              }
+              seenOffset += chunk.byteLength;
+              const s = decoder.decode(chunk);
+              controller.enqueue(s);
+            }
+          }
+        }
+        fetchFailures = 0;
+        if (item.content) {
+          let content = item.content;
+          let encoded = encoder.encode(item.content);
+          if (discardLen > 0) {
+            const remaining = encoded.subarray(discardLen);
+            discardLen -= encoded.length - remaining.length;
+            if (!remaining.length) {
+              continue;
+            }
+            encoded = remaining;
+            content = decoder.decode(remaining);
+          }
+          seenOffset += encoded.length;
+          controller.enqueue(content);
+        }
+      }
+    }
+    async function start(controller) {
+      let retry = true;
+      let attempts = 0;
+      while (retry) {
+        retry = false;
+        let nextAttempt = Date.now() + Math.min(15e3, 500 * (attempts - 1));
+        const res = await runStartStream({ ...opts, offset: seenOffset }, controller);
+        if (res?.retry) {
+          retry = true;
+          attempts++;
+          if (nextAttempt < Date.now() - 3e5) {
+            attempts = 0;
+          }
+          await new Promise((resolve) => {
+            setTimeout(resolve, Math.max(0, nextAttempt - Date.now()));
+          });
+        }
+      }
+      if (!canceled && !closed) {
+        controller.close();
+        markClosed();
+      }
+    }
+    class RStreamEnhanced extends RStream {
+      constructor(source, strategy) {
+        super(source, strategy);
+      }
+      async streamId() {
+        if (streamId_) {
+          return streamId_;
+        }
+        if (error_) {
+          throw error_;
+        }
+        return new Promise((resolve, reject) => {
+          const cleanupFns = [];
+          const cleanup = () => {
+            for (const f of cleanupFns) {
+              f();
+            }
+          };
+          const resolveCb = (streamId) => {
+            resolve(streamId);
+            cleanup();
+          };
+          const rejectCb = (e) => {
+            reject(e || new InstantError("Stream is closed."));
+            cleanup();
+          };
+          cleanupFns.push(addStreamIdCb(resolveCb));
+          cleanupFns.push(addCloseCb(rejectCb));
+        });
+      }
+    }
+    const stream = new RStreamEnhanced({
+      start(controller) {
+        start(controller);
+      },
+      cancel(_reason) {
+        canceled = true;
+        if (eventId) {
+          cancelStream({ eventId });
+        }
+        markClosed();
+      }
+    });
+    return {
+      stream,
+      addCloseCb,
+      closed() {
+        return closed;
+      }
+    };
+  }
+  var InstantStream = class {
+    constructor({ WStream, RStream, trySend, log }) {
+      __publicField(this, "trySend");
+      __publicField(this, "WStream");
+      __publicField(this, "RStream");
+      __publicField(this, "writeStreams", {});
+      __publicField(this, "startWriteStreamCbs", {});
+      __publicField(this, "readStreamIterators", {});
+      __publicField(this, "log");
+      __publicField(this, "activeStreams", /* @__PURE__ */ new Set());
+      this.WStream = WStream;
+      this.RStream = RStream;
+      this.trySend = trySend;
+      this.log = log;
+    }
+    createWriteStream(opts) {
+      const { stream, addCompleteCb } = createWriteStream({
+        WStream: this.WStream,
+        startStream: this.startWriteStream.bind(this),
+        appendStream: this.appendStream.bind(this),
+        registerStream: this.registerWriteStream.bind(this),
+        opts
+      });
+      this.activeStreams.add(stream);
+      addCompleteCb(() => {
+        this.activeStreams.delete(stream);
+      });
+      return stream;
+    }
+    createReadStream(opts) {
+      const { stream, addCloseCb } = createReadStream({
+        RStream: this.RStream,
+        opts,
+        startStream: this.startReadStream.bind(this),
+        cancelStream: this.cancelReadStream.bind(this)
+      });
+      this.activeStreams.add(stream);
+      addCloseCb(() => {
+        this.activeStreams.delete(stream);
+      });
+      return stream;
+    }
+    startWriteStream(opts) {
+      const eventId = id_default();
+      let resolve = null;
+      const promise = new Promise((r) => {
+        resolve = r;
+      });
+      this.startWriteStreamCbs[eventId] = resolve;
+      const msg = {
+        op: "start-stream",
+        "client-id": opts.clientId,
+        "reconnect-token": opts.reconnectToken
+      };
+      if (opts.ruleParams) {
+        msg["rule-params"] = opts.ruleParams;
+      }
+      this.trySend(eventId, msg);
+      return promise;
+    }
+    registerWriteStream(streamId, cbs) {
+      this.writeStreams[streamId] = cbs;
+    }
+    appendStream({ streamId, chunks, isDone, offset, abortReason }) {
+      const msg = {
+        op: "append-stream",
+        "stream-id": streamId,
+        chunks,
+        offset,
+        done: !!isDone
+      };
+      if (abortReason) {
+        msg["abort-reason"] = abortReason;
+      }
+      this.trySend(id_default(), msg);
+    }
+    onAppendFailed(msg) {
+      const cbs = this.writeStreams[msg["stream-id"]];
+      if (cbs) {
+        cbs.onAppendFailed();
+      }
+    }
+    onStartStreamOk(msg) {
+      const cb = this.startWriteStreamCbs[msg["client-event-id"]];
+      if (!cb) {
+        this.log.info("No stream for start-stream-ok", msg);
+        return;
+      }
+      cb({ type: "ok", streamId: msg["stream-id"], offset: msg.offset });
+      delete this.startWriteStreamCbs[msg["client-event-id"]];
+    }
+    onStreamFlushed(msg) {
+      const streamId = msg["stream-id"];
+      const cbs = this.writeStreams[streamId];
+      if (!cbs) {
+        this.log.info("No stream cbs for stream-flushed", msg);
+        return;
+      }
+      cbs.onFlush({ offset: msg.offset, done: msg.done });
+      if (msg.done) {
+        delete this.writeStreams[streamId];
+      }
+    }
+    startReadStream({ eventId, clientId, streamId, offset, ruleParams }) {
+      const msg = { op: "subscribe-stream" };
+      if (!streamId && !clientId) {
+        throw new Error("Must provide one of streamId or clientId to subscribe to the stream.");
+      }
+      if (streamId) {
+        msg["stream-id"] = streamId;
+      }
+      if (clientId) {
+        msg["client-id"] = clientId;
+      }
+      if (offset) {
+        msg["offset"] = offset;
+      }
+      if (ruleParams) {
+        msg["rule-params"] = ruleParams;
+      }
+      const iterator = new StreamIterator();
+      this.readStreamIterators[eventId] = iterator;
+      this.trySend(eventId, msg);
+      return iterator;
+    }
+    cancelReadStream({ eventId }) {
+      const msg = {
+        op: "unsubscribe-stream",
+        "subscribe-event-id": eventId
+      };
+      this.trySend(id_default(), msg);
+      delete this.readStreamIterators[eventId];
+    }
+    onStreamAppend(msg) {
+      const eventId = msg["client-event-id"];
+      const iterator = this.readStreamIterators[eventId];
+      if (!iterator) {
+        this.log.info("No iterator for read stream", msg);
+        return;
+      }
+      if (msg.error) {
+        if (msg.retry) {
+          iterator.push({ type: "reconnect" });
+        } else {
+          iterator.push({
+            type: "error",
+            error: new InstantError(msg.error)
+          });
+        }
+        iterator.close();
+        delete this.readStreamIterators[eventId];
+        return;
+      }
+      iterator.push({
+        type: "append",
+        offset: msg.offset,
+        files: msg.files,
+        content: msg.content,
+        streamId: msg["stream-id"]
+      });
+      if (msg.done) {
+        iterator.close();
+        delete this.readStreamIterators[eventId];
+      }
+    }
+    onConnectionStatusChange(status) {
+      for (const cb of Object.values(this.startWriteStreamCbs)) {
+        cb({ type: "disconnect" });
+      }
+      this.startWriteStreamCbs = {};
+      if (status !== STATUS.AUTHENTICATED) {
+        for (const { onDisconnect } of Object.values(this.writeStreams)) {
+          onDisconnect();
+        }
+      } else {
+        for (const { onConnectionReconnect } of Object.values(this.writeStreams)) {
+          onConnectionReconnect();
+        }
+        for (const iterator of Object.values(this.readStreamIterators)) {
+          iterator.push({ type: "reconnect" });
+          iterator.close();
+        }
+        this.readStreamIterators = {};
+      }
+    }
+    onRecieveError(msg) {
+      const ev = msg["original-event"];
+      switch (ev.op) {
+        case "append-stream": {
+          const streamId = ev["stream-id"];
+          const cbs = this.writeStreams[streamId];
+          cbs?.onAppendFailed();
+          break;
+        }
+        case "start-stream": {
+          const eventId = msg["client-event-id"];
+          const cb = this.startWriteStreamCbs[eventId];
+          if (cb) {
+            cb({
+              type: "error",
+              error: new InstantError(msg.message || "Unknown error", msg.hint)
+            });
+            delete this.startWriteStreamCbs[eventId];
+          }
+          break;
+        }
+        case "subscribe-stream": {
+          const eventId = msg["client-event-id"];
+          const iterator = this.readStreamIterators[eventId];
+          if (iterator) {
+            iterator.push({
+              type: "error",
+              error: new InstantError(msg.message || "Unknown error", msg.hint)
+            });
+            iterator.close();
+            delete this.readStreamIterators[eventId];
+          }
+          break;
+        }
+        case "unsubscribe-stream": {
+          break;
+        }
+      }
+    }
+    hasActiveStreams() {
+      return this.activeStreams.size > 0;
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/Reactor.js
+  var STATUS = {
+    CONNECTING: "connecting",
+    OPENED: "opened",
+    AUTHENTICATED: "authenticated",
+    CLOSED: "closed",
+    ERRORED: "errored"
+  };
+  var QUERY_ONCE_TIMEOUT = 3e4;
+  var PENDING_TX_CLEANUP_TIMEOUT = 3e4;
+  var PENDING_MUTATION_CLEANUP_THRESHOLD = 200;
+  var ONE_MIN_MS = 1e3 * 60;
+  var ONE_DAY_MS = ONE_MIN_MS * 60 * 24;
+  var COOKIE_SYNC_LAST_UPDATED_KEY = "lastSyncedUserCookie";
+  var defaultConfig = {
+    apiURI: "https://api.instantdb.com",
+    websocketURI: "wss://api.instantdb.com/runtime/session"
+  };
+  var OAUTH_REDIRECT_PARAM = "_instant_oauth_redirect";
+  var OAUTH_EXTRA_FIELDS_ID_PARAM = "_instant_extra_fields_id";
+  var oauthExtraFieldsKey = "oauthExtraFields";
+  var currentUserKey = `currentUser`;
+  function createTransport({ transportType, appId, apiURI, wsURI, EventSourceImpl }) {
+    if (!EventSourceImpl) {
+      return new WSConnection(`${wsURI}?app_id=${appId}`);
+    }
+    switch (transportType) {
+      case "ws":
+        return new WSConnection(`${wsURI}?app_id=${appId}`);
+      case "sse":
+        return new SSEConnection(EventSourceImpl, `${apiURI}/runtime/sse?app_id=${appId}`);
+      default:
+        throw new Error("Unknown transport type " + transportType);
+    }
+  }
+  function isClient() {
+    const hasWindow = typeof window !== "undefined";
+    const isChrome = typeof chrome !== "undefined";
+    return hasWindow || isChrome;
+  }
+  var ignoreLogging = {
+    "set-presence": true,
+    "set-presence-ok": true,
+    "refresh-presence": true,
+    "patch-presence": true
+  };
+  function querySubFromStorage(x, useDateObjects) {
+    const v = typeof x === "string" ? JSON.parse(x) : x;
+    if (v?.result?.store) {
+      const attrsStore = attrsStoreFromJSON(v.result.attrsStore, v.result.store);
+      if (attrsStore) {
+        const storeJSON = v.result.store;
+        v.result.store = fromJSON(attrsStore, {
+          ...storeJSON,
+          useDateObjects
+        });
+        v.result.attrsStore = attrsStore;
+      }
+    }
+    return v;
+  }
+  function querySubToStorage(_key, sub) {
+    const { result, ...rest } = sub;
+    const jsonSub = (
+      /** @type {import('./reactorTypes.ts').QuerySubInStorage} */
+      rest
+    );
+    if (result) {
+      const jsonResult = {
+        ...result,
+        store: toJSON(result.store),
+        attrsStore: result.attrsStore.toJSON()
+      };
+      jsonSub.result = jsonResult;
+    }
+    return jsonSub;
+  }
+  function kvFromStorage(key, x) {
+    switch (key) {
+      case "pendingMutations":
+        return new Map(typeof x === "string" ? JSON.parse(x) : x);
+      default:
+        return x;
+    }
+  }
+  function kvToStorage(key, x) {
+    switch (key) {
+      case "pendingMutations":
+        return [...x.entries()];
+      default:
+        return x;
+    }
+  }
+  function onMergeQuerySub(_k, storageSub, inMemorySub) {
+    const storageResult = storageSub?.result;
+    const memoryResult = inMemorySub?.result;
+    if (storageResult && !memoryResult && inMemorySub) {
+      inMemorySub.result = storageResult;
+    }
+    return inMemorySub || storageSub;
+  }
+  function sortedMutationEntries(entries) {
+    return [...entries].sort((a, b) => {
+      const [ka, muta] = a;
+      const [kb, mutb] = b;
+      const a_order = muta.order || 0;
+      const b_order = mutb.order || 0;
+      if (a_order == b_order) {
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
+      }
+      return a_order - b_order;
+    });
+  }
+  var Reactor = class {
+    constructor(config, Storage2 = IndexedDBStorage, NetworkListener = WindowNetworkListener, versions, EventSourceConstructor) {
+      /** @type {s.AttrsStore | undefined} */
+      __publicField(this, "attrs");
+      __publicField(this, "_isOnline", true);
+      __publicField(this, "_isShutdown", false);
+      __publicField(this, "status", STATUS.CONNECTING);
+      /** @type {PersistedObject<string, QuerySub, QuerySubInStorage>} */
+      __publicField(this, "querySubs");
+      /** @type {PersistedObject} */
+      __publicField(this, "kv");
+      /** @type {SyncTable} */
+      __publicField(this, "_syncTable");
+      /** @type {InstantStream} */
+      __publicField(this, "_instantStream");
+      /** @type {Record<string, Array<{ q: any, cb: (data: any) => any }>>} */
+      __publicField(this, "queryCbs", {});
+      /** @type {Record<string, Array<{ q: any, eventId: string, dfd: Deferred }>>} */
+      __publicField(this, "queryOnceDfds", {});
+      __publicField(this, "authCbs", []);
+      __publicField(this, "attrsCbs", []);
+      __publicField(this, "mutationErrorCbs", []);
+      __publicField(this, "connectionStatusCbs", []);
+      __publicField(this, "appStatusCbs", []);
+      /**
+       * Carries the raw server status off the public type: `disabled` is an
+       * operator-level state we don't surface to apps.
+       * @type {import('./clientTypes.ts').AppStatusState & { status?: 'active' | 'read-only' | 'disabled' }}
+       */
+      __publicField(this, "_appStatusState", { isLoading: true, isReadOnly: void 0 });
+      __publicField(this, "config");
+      __publicField(this, "mutationDeferredStore", /* @__PURE__ */ new Map());
+      __publicField(this, "_reconnectTimeoutId", null);
+      __publicField(this, "_reconnectTimeoutMs", 0);
+      /** @type {Connection} */
+      __publicField(this, "_transport");
+      /** @type {TransportType} */
+      __publicField(this, "_transportType", "ws");
+      /** @type {EventSourceConstructor} */
+      __publicField(this, "_EventSource");
+      /** @type {boolean | null} */
+      __publicField(this, "_wsOk", null);
+      __publicField(this, "_localIdPromises", {});
+      __publicField(this, "_errorMessage", null);
+      /** @type {Promise<null | {error: {message: string}}> | null}**/
+      __publicField(this, "_oauthCallbackResponse", null);
+      /** @type {null | import('./utils/linkIndex.ts').LinkIndex}} */
+      __publicField(this, "_linkIndex", null);
+      /** @type BroadcastChannel | undefined */
+      __publicField(this, "_broadcastChannel");
+      /** @type {Record<string, {roomType: string; isConnected: boolean; error: any}>} */
+      __publicField(this, "_rooms", {});
+      /** @type {Record<string, boolean>} */
+      __publicField(this, "_roomsPendingLeave", {});
+      __publicField(this, "_presence", {});
+      __publicField(this, "_broadcastQueue", []);
+      __publicField(this, "_broadcastSubs", {});
+      /** @type {{isLoading: boolean; error: any | undefined, user: any | undefined}} */
+      __publicField(this, "_currentUserCached", { isLoading: true, error: void 0, user: void 0 });
+      __publicField(this, "_beforeUnloadCbs", []);
+      __publicField(this, "_dataForQueryCache", {});
+      /** @type {Logger} */
+      __publicField(this, "_log");
+      __publicField(this, "_pendingTxCleanupTimeout");
+      __publicField(this, "_pendingMutationCleanupThreshold");
+      __publicField(this, "_inFlightMutationEventIds", /* @__PURE__ */ new Set());
+      /** @type FrameworkClient | null */
+      __publicField(this, "_frameworkClient", null);
+      __publicField(this, "_onMergeKv", (key, storageV, inMemoryV) => {
+        switch (key) {
+          case "pendingMutations": {
+            const storageEntries = storageV?.entries() ?? [];
+            const inMemoryEntries = inMemoryV?.entries() ?? [];
+            const muts = new Map([...storageEntries, ...inMemoryEntries]);
+            const rewrittenStorageMuts = storageV ? this._rewriteMutationsSorted(this.attrs, storageV) : [];
+            rewrittenStorageMuts.forEach(([k, mut]) => {
+              if (!inMemoryV?.pendingMutations?.has(k) && !mut["tx-id"]) {
+                this._sendMutation(k, mut);
+              }
+            });
+            return muts;
+          }
+          default:
+            return inMemoryV || storageV;
+        }
+      });
+      // ---------------------------
+      // Queries
+      __publicField(this, "getPreviousResult", (q) => {
+        const hash = weakHash(q);
+        return this.dataForQuery(hash)?.data;
+      });
+      /** Re-run instaql and call all callbacks with new data */
+      __publicField(this, "notifyOne", (hash) => {
+        const cbs = this.queryCbs[hash] ?? [];
+        const prevData = this._dataForQueryCache[hash]?.data;
+        const resp = this.dataForQuery(hash);
+        if (!resp?.data)
+          return;
+        this._dataForQueryCache[hash] = resp;
+        if (areObjectsDeepEqual(resp.data, prevData))
+          return;
+        cbs.forEach((r) => r.cb(resp.data));
+      });
+      __publicField(this, "notifyOneQueryOnce", (hash) => {
+        const dfds = this.queryOnceDfds[hash] ?? [];
+        const data = this.dataForQuery(hash)?.data;
+        dfds.forEach((r) => {
+          this._completeQueryOnce(r.q, hash, r.dfd);
+          r.dfd.resolve(data);
+        });
+      });
+      __publicField(this, "notifyQueryError", (hash, error) => {
+        delete this._dataForQueryCache[hash];
+        const cbs = this.queryCbs[hash] || [];
+        cbs.forEach((r) => r.cb({ error }));
+      });
+      /** Applies transactions locally and sends transact message to server */
+      __publicField(this, "pushTx", (chunks) => {
+        if (this._appStatusState.isReadOnly) {
+          return Promise.reject(this._appStatusState.status === "disabled" ? new InstantError("This app is currently disabled.", {
+            status: "disabled"
+          }) : new InstantError("This app is in read-only mode.", {
+            status: "read-only"
+          }));
+        }
+        if (!this.config.disableValidation) {
+          validateTransactions(chunks, this.config.schema);
+        }
+        try {
+          const txSteps = transform({
+            attrsStore: this.optimisticAttrs(),
+            schema: this.config.schema,
+            stores: Object.values(this.querySubs.currentValue).map((sub) => sub?.result?.store),
+            useDateObjects: this.config.useDateObjects
+          }, chunks);
+          return this.pushOps(txSteps);
+        } catch (e) {
+          return this.pushOps([], e);
+        }
+      });
+      /**
+       * @param {*} txSteps
+       * @param {*} [error]
+       * @returns
+       */
+      __publicField(this, "pushOps", (txSteps, error) => {
+        const eventId = id_default();
+        const mutations = [...this._pendingMutations().values()];
+        const order = Math.max(0, ...mutations.map((mut) => mut.order || 0)) + 1;
+        const mutation = {
+          op: "transact",
+          "tx-steps": txSteps,
+          created: Date.now(),
+          error,
+          order
+        };
+        this._updatePendingMutations((prev) => {
+          prev.set(eventId, mutation);
+        });
+        const dfd = new Deferred();
+        this.mutationDeferredStore.set(eventId, dfd);
+        this._sendMutation(eventId, mutation);
+        this.notifyAll();
+        return dfd.promise;
+      });
+      __publicField(this, "_transportOnOpen", (e) => {
+        const targetTransport = e.target;
+        if (this._transport !== targetTransport) {
+          this._log.info("[socket][open]", targetTransport.id, "skip; this is no longer the current transport");
+          return;
+        }
+        this._log.info("[socket][open]", this._transport.id);
+        this._setStatus(STATUS.OPENED);
+        this.getCurrentUser().then((resp) => {
+          this._trySend(id_default(), {
+            op: "init",
+            "app-id": this.config.appId,
+            "refresh-token": resp.user?.["refresh_token"],
+            versions: this.versions,
+            // If an admin token is provided for an app, we will
+            // skip all permission checks. This is an advanced feature,
+            // to let users write internal tools
+            // This option is not exposed in `Config`, as it's
+            // not ready for prime time
+            "__admin-token": this.config.__adminToken
+          });
+        }).catch((e2) => {
+          this._log.error("[socket][error]", targetTransport.id, e2);
+        });
+      });
+      __publicField(this, "_transportOnMessage", (e) => {
+        const targetTransport = e.target;
+        const m = e.message;
+        if (this._transport !== targetTransport) {
+          this._log.info("[socket][message]", targetTransport.id, m, "skip; this is no longer the current transport");
+          return;
+        }
+        if (!this._wsOk && targetTransport.type === "ws") {
+          this._wsOk = true;
+        }
+        this._transportType = "ws";
+        if (Array.isArray(e.message)) {
+          for (const msg of e.message) {
+            this._handleReceive(targetTransport.id, msg);
+          }
+        } else {
+          this._handleReceive(targetTransport.id, e.message);
+        }
+      });
+      __publicField(this, "_transportOnError", (e) => {
+        const targetTransport = e.target;
+        if (this._transport !== targetTransport) {
+          this._log.info("[socket][error]", targetTransport.id, "skip; this is no longer the current transport");
+          return;
+        }
+        this._log.error("[socket][error]", targetTransport.id, e);
+      });
+      __publicField(this, "_scheduleReconnect", () => {
+        if (!this._wsOk && this._transportType !== "sse") {
+          this._transportType = "sse";
+          this._reconnectTimeoutMs = 0;
+        }
+        setTimeout(() => {
+          this._reconnectTimeoutMs = Math.min(this._reconnectTimeoutMs + 1e3, 1e4);
+          if (!this._isOnline) {
+            this._log.info("[socket][close]", this._transport.id, "we are offline, no need to start socket");
+            return;
+          }
+          this._startSocket();
+        }, this._reconnectTimeoutMs);
+      });
+      __publicField(this, "_transportOnClose", (e) => {
+        const targetTransport = e.target;
+        if (this._transport !== targetTransport) {
+          this._log.info("[socket][close]", targetTransport.id, "skip; this is no longer the current transport");
+          return;
+        }
+        this._setStatus(STATUS.CLOSED);
+        for (const room of Object.values(this._rooms)) {
+          room.isConnected = false;
+        }
+        if (this._isShutdown) {
+          this._log.info("[socket][close]", targetTransport.id, "Reactor has been shut down and will not reconnect");
+          return;
+        }
+        this._log.info("[socket][close]", targetTransport.id, "schedule reconnect, ms =", this._reconnectTimeoutMs);
+        this._scheduleReconnect();
+      });
+      this._EventSource = EventSourceConstructor;
+      this.config = { ...defaultConfig, ...config };
+      this.queryCacheLimit = this.config.queryCacheLimit ?? 10;
+      this._pendingTxCleanupTimeout = this.config.pendingTxCleanupTimeout ?? PENDING_TX_CLEANUP_TIMEOUT;
+      this._pendingMutationCleanupThreshold = this.config.pendingMutationCleanupThreshold ?? PENDING_MUTATION_CLEANUP_THRESHOLD;
+      this._log = createLogger(config.verbose || devBackend || instantLogs, () => this._reactorStats(), config.logger);
+      this.versions = { ...versions || {}, "@instantdb/core": version_default };
+      if (this.config.schema) {
+        this._linkIndex = createLinkIndex(this.config.schema);
+      }
+      if (!isClient()) {
+        return;
+      }
+      if (!config.appId) {
+        throw new Error("Instant must be initialized with an appId.");
+      }
+      if (!validate_default(config.appId)) {
+        throw new Error(`Instant must be initialized with a valid appId. \`${config.appId}\` is not a valid uuid.`);
+      }
+      if (typeof BroadcastChannel === "function") {
+        this._broadcastChannel = new BroadcastChannel("@instantdb");
+        this._broadcastChannel.addEventListener("message", async (e) => {
+          try {
+            if (e.data?.type === "auth") {
+              const res = await this.getCurrentUser({
+                forceReadFromStorage: true
+              });
+              await this.updateUser(res.user).catch((error) => {
+                this._log.error("[error] update user", error);
+              });
+            }
+          } catch (e2) {
+            this._log.error("[error] handle broadcast channel", e2);
+          }
+        });
+      }
+      this._initStorage(Storage2);
+      this._syncTable = new SyncTable(this._trySendAuthed.bind(this), new Storage2(this.config.appId, "syncSubs"), {
+        useDateObjects: this.config.useDateObjects
+      }, this._log, (triples) => {
+        return createStore(this.ensureAttrs(), triples, this.config.enableCardinalityInference, this.config.useDateObjects);
+      }, () => this.ensureAttrs());
+      this._instantStream = new InstantStream({
+        WStream: this.config.WritableStream || WritableStream,
+        RStream: this.config.ReadableStream || ReadableStream,
+        trySend: this._trySendAuthed.bind(this),
+        log: this._log
+      });
+      this._oauthCallbackResponse = this._oauthLoginInit();
+      this.setupUserSyncTimer();
+      NetworkListener.getIsOnline().then((isOnline) => {
+        this._isOnline = isOnline;
+        this._startSocket();
+        NetworkListener.listen((isOnline2) => {
+          if (isOnline2 === this._isOnline) {
+            return;
+          }
+          this._log.info("[network] online =", isOnline2);
+          this._isOnline = isOnline2;
+          if (this._isOnline) {
+            this._startSocket();
+          } else {
+            this._log.info("Changing status from", this.status, "to", STATUS.CLOSED);
+            this._setStatus(STATUS.CLOSED);
+          }
+        });
+      });
+      if (typeof addEventListener !== "undefined") {
+        this._beforeUnload = this._beforeUnload.bind(this);
+        addEventListener("beforeunload", this._beforeUnload);
+      }
+    }
+    getFrameworkClient() {
+      return this._frameworkClient;
+    }
+    /** @param {FrameworkClient} client  */
+    setFrameworkClient(client) {
+      this._frameworkClient = client;
+    }
+    ensureAttrs() {
+      if (!this.attrs) {
+        throw new Error("attrs have not loaded.");
+      }
+      return this.attrs;
+    }
+    updateSchema(schema) {
+      this.config = {
+        ...this.config,
+        schema,
+        cardinalityInference: Boolean(schema)
+      };
+      this._linkIndex = schema ? createLinkIndex(this.config.schema) : null;
+    }
+    _reactorStats() {
+      return {
+        inFlightMutationCount: this._inFlightMutationEventIds.size,
+        storedMutationCount: this._pendingMutations().size,
+        transportType: this._transportType
+      };
+    }
+    _onQuerySubLoaded(hash) {
+      this.kv.waitForKeyToLoad("pendingMutations").then(() => this.notifyOne(hash));
+    }
+    _initStorage(Storage2) {
+      this.querySubs = new PersistedObject({
+        persister: new Storage2(this.config.appId, "querySubs"),
+        merge: onMergeQuerySub,
+        serialize: querySubToStorage,
+        parse: (_key, x) => querySubFromStorage(x, this.config.useDateObjects),
+        // objectSize
+        objectSize: (x) => x?.result?.store?.triples?.length ?? 0,
+        logger: this._log,
+        preloadEntryCount: 10,
+        gc: {
+          maxAgeMs: 1e3 * 60 * 60 * 24 * 7 * 52,
+          // 1 year
+          maxEntries: 1e3,
+          // Size of each query is the number of triples
+          maxSize: 1e6
+          // 1 million triples
+        }
+      });
+      this.querySubs.onKeyLoaded = (k) => this._onQuerySubLoaded(k);
+      this.kv = new PersistedObject({
+        persister: new Storage2(this.config.appId, "kv"),
+        merge: this._onMergeKv,
+        serialize: kvToStorage,
+        parse: kvFromStorage,
+        objectSize: () => 0,
+        logger: this._log,
+        saveThrottleMs: 100,
+        idleCallbackMaxWaitMs: 100,
+        // Don't GC the kv store
+        gc: null
+      });
+      this.kv.onKeyLoaded = (k) => {
+        if (k === "pendingMutations") {
+          this.notifyAll();
+        }
+      };
+      this.kv.waitForKeyToLoad("pendingMutations");
+      this.kv.waitForKeyToLoad(currentUserKey);
+      this._beforeUnloadCbs.push(() => {
+        this.kv.flush();
+        this.querySubs.flush();
+      });
+    }
+    _beforeUnload() {
+      for (const cb of this._beforeUnloadCbs) {
+        cb();
+      }
+      this._syncTable.beforeUnload();
+    }
+    /**
+     * @param {'enqueued' | 'pending' | 'synced' | 'timeout' |  'error' } status
+     * @param {string} eventId
+     * @param {{message?: string, type?: string, status?: number, hint?: unknown, traceId?: string}} [errorMsg]
+     */
+    _finishTransaction(status, eventId, errorMsg) {
+      const dfd = this.mutationDeferredStore.get(eventId);
+      this.mutationDeferredStore.delete(eventId);
+      const ok = status !== "error" && status !== "timeout";
+      if (!dfd && !ok) {
+        console.error("Mutation failed", { status, eventId, ...errorMsg });
+      }
+      if (!dfd) {
+        return;
+      }
+      if (ok) {
+        dfd.resolve({ status, eventId });
+      } else {
+        if (errorMsg?.type) {
+          const { status: status2, ...body } = errorMsg;
+          dfd.reject(new InstantAPIError({
+            // @ts-expect-error body.type is not constant typed
+            body,
+            status: status2 ?? 0
+          }));
+        } else {
+          dfd.reject(new InstantError(errorMsg?.message || "Unknown error", errorMsg?.hint, errorMsg?.traceId));
+        }
+      }
+    }
+    _setStatus(status, err) {
+      this.status = status;
+      this._errorMessage = err;
+      this.notifyConnectionStatusSubs(status);
+      this._instantStream.onConnectionStatusChange(status);
+    }
+    _flushEnqueuedRoomData(roomId) {
+      const enqueuedUserPresence = this._presence[roomId]?.result?.user;
+      const enqueuedBroadcasts = this._broadcastQueue[roomId];
+      this._broadcastQueue[roomId] = [];
+      if (enqueuedUserPresence) {
+        this._trySetPresence(roomId, enqueuedUserPresence);
+      }
+      if (enqueuedBroadcasts) {
+        for (const item of enqueuedBroadcasts) {
+          const { topic, roomType, data } = item;
+          this._tryBroadcast(roomId, roomType, topic, data);
+        }
+      }
+    }
+    /**
+     * Does the same thing as add-query-ok
+     * but called as a result of receiving query info from ssr
+     * @param {any} q
+     * @param {{ triples: any; pageInfo: any; }} result
+     * @param {boolean} enableCardinalityInference
+     */
+    _addQueryData(q, result, enableCardinalityInference) {
+      if (!this.attrs) {
+        throw new Error("Attrs in reactor have not been set");
+      }
+      const queryHash = weakHash(q);
+      const attrsStore = this.ensureAttrs();
+      const store = createStore(this.attrs, result.triples, enableCardinalityInference, this.config.useDateObjects);
+      this.querySubs.updateInPlace((prev) => {
+        prev[queryHash] = {
+          result: {
+            store,
+            attrsStore,
+            pageInfo: result.pageInfo,
+            processedTxId: void 0,
+            isExternal: true
+          },
+          q
+        };
+      });
+      this._cleanupPendingMutationsQueries();
+      this.notifyOne(queryHash);
+      this.notifyOneQueryOnce(queryHash);
+      this._cleanupPendingMutationsTimeout();
+    }
+    _handleReceive(connId, msg) {
+      const enableCardinalityInference = Boolean(this.config.schema) && ("cardinalityInference" in this.config ? Boolean(this.config.cardinalityInference) : true);
+      if (!ignoreLogging[msg.op]) {
+        this._log.info("[receive]", connId, msg.op, msg);
+      }
+      switch (msg.op) {
+        case "init-ok": {
+          this._setStatus(STATUS.AUTHENTICATED);
+          this._reconnectTimeoutMs = 0;
+          this._setAppStatus(msg["app-status"]?.status ?? "active");
+          this._setAttrs(msg.attrs);
+          this._flushPendingMessages();
+          this._sessionId = msg["session-id"];
+          for (const roomId of Object.keys(this._rooms)) {
+            const enqueuedUserPresence = this._presence[roomId]?.result?.user;
+            const roomType = this._rooms[roomId]?.roomType;
+            this._tryJoinRoom(roomType, roomId, enqueuedUserPresence);
+          }
+          break;
+        }
+        case "add-query-exists": {
+          this.notifyOneQueryOnce(weakHash(msg.q));
+          break;
+        }
+        case "add-query-ok": {
+          const { q, result } = msg;
+          const hash = weakHash(q);
+          if (!this._hasQueryListeners() && !this.querySubs.currentValue[hash]) {
+            break;
+          }
+          const pageInfo = result?.[0]?.data?.["page-info"];
+          const aggregate = result?.[0]?.data?.["aggregate"];
+          const triples = extractTriples(result);
+          const attrsStore = this.ensureAttrs();
+          const store = createStore(attrsStore, triples, enableCardinalityInference, this.config.useDateObjects);
+          this.querySubs.updateInPlace((prev) => {
+            if (!prev[hash]) {
+              this._log.info("Missing value in querySubs", { hash, q });
+              return;
+            }
+            prev[hash].result = {
+              store,
+              attrsStore,
+              pageInfo,
+              aggregate,
+              processedTxId: msg["processed-tx-id"]
+            };
+          });
+          this._cleanupPendingMutationsQueries();
+          this.notifyOne(hash);
+          this.notifyOneQueryOnce(hash);
+          this._cleanupPendingMutationsTimeout();
+          break;
+        }
+        case "start-sync-ok": {
+          this._syncTable.onStartSyncOk(msg);
+          break;
+        }
+        case "sync-load-batch": {
+          this._syncTable.onSyncLoadBatch(msg);
+          break;
+        }
+        case "sync-init-finish": {
+          this._syncTable.onSyncInitFinish(msg);
+          break;
+        }
+        case "sync-update-triples": {
+          this._syncTable.onSyncUpdateTriples(msg);
+          break;
+        }
+        case "start-stream-ok": {
+          this._instantStream.onStartStreamOk(msg);
+          break;
+        }
+        case "stream-flushed": {
+          this._instantStream.onStreamFlushed(msg);
+          break;
+        }
+        case "append-failed": {
+          this._instantStream.onAppendFailed(msg);
+          break;
+        }
+        case "stream-append": {
+          this._instantStream.onStreamAppend(msg);
+          break;
+        }
+        case "refresh-ok": {
+          const { computations, attrs } = msg;
+          const processedTxId = msg["processed-tx-id"];
+          if (attrs) {
+            this._setAttrs(attrs);
+          }
+          this._cleanupPendingMutationsTimeout();
+          const rewrittenMutations = this._rewriteMutations(this.ensureAttrs(), this._pendingMutations(), processedTxId);
+          if (rewrittenMutations !== this._pendingMutations()) {
+            this.kv.updateInPlace((prev) => {
+              prev.pendingMutations = rewrittenMutations;
+            });
+          }
+          const mutations = sortedMutationEntries(rewrittenMutations.entries());
+          const updates = computations.map((x) => {
+            const q = x["instaql-query"];
+            const result = x["instaql-result"];
+            const hash = weakHash(q);
+            const triples = extractTriples(result);
+            const attrsStore = this.ensureAttrs();
+            const store = createStore(attrsStore, triples, enableCardinalityInference, this.config.useDateObjects);
+            const { store: newStore, attrsStore: newAttrsStore } = this._applyOptimisticUpdates(store, attrsStore, mutations, processedTxId);
+            const pageInfo = result?.[0]?.data?.["page-info"];
+            const aggregate = result?.[0]?.data?.["aggregate"];
+            return {
+              q,
+              hash,
+              store: newStore,
+              attrsStore: newAttrsStore,
+              pageInfo,
+              aggregate
+            };
+          });
+          updates.forEach(({ hash, q, store, attrsStore, pageInfo, aggregate }) => {
+            this.querySubs.updateInPlace((prev) => {
+              if (!prev[hash]) {
+                this._log.error("Missing value in querySubs", { hash, q });
+                return;
+              }
+              prev[hash].result = {
+                store,
+                attrsStore,
+                pageInfo,
+                aggregate,
+                processedTxId
+              };
+            });
+          });
+          this._cleanupPendingMutationsQueries();
+          updates.forEach(({ hash }) => {
+            this.notifyOne(hash);
+          });
+          break;
+        }
+        case "transact-ok": {
+          const { "client-event-id": eventId, "tx-id": txId } = msg;
+          this._inFlightMutationEventIds.delete(eventId);
+          const muts = this._rewriteMutations(this.ensureAttrs(), this._pendingMutations());
+          const prevMutation = muts.get(eventId);
+          if (!prevMutation) {
+            break;
+          }
+          this._updatePendingMutations((prev) => {
+            prev.set(eventId, {
+              ...prev.get(eventId),
+              "tx-id": txId,
+              confirmed: Date.now()
+            });
+          });
+          const newAttrs = [];
+          for (const step of prevMutation["tx-steps"]) {
+            if (step[0] === "add-attr") {
+              const attr = step[1];
+              newAttrs.push(attr);
+            }
+          }
+          if (newAttrs.length) {
+            const existingAttrs = Object.values(this.ensureAttrs().attrs);
+            this._setAttrs([...existingAttrs, ...newAttrs]);
+          }
+          this._finishTransaction("synced", eventId);
+          this._cleanupPendingMutationsTimeout();
+          break;
+        }
+        case "patch-presence": {
+          const roomId = msg["room-id"];
+          this._trySetRoomConnected(roomId, true);
+          this._patchPresencePeers(roomId, msg["edits"]);
+          this._notifyPresenceSubs(roomId);
+          break;
+        }
+        case "refresh-presence": {
+          const roomId = msg["room-id"];
+          this._trySetRoomConnected(roomId, true);
+          this._setPresencePeers(roomId, msg["data"]);
+          this._notifyPresenceSubs(roomId);
+          break;
+        }
+        case "server-broadcast": {
+          const room = msg["room-id"];
+          const topic = msg.topic;
+          this._trySetRoomConnected(room, true);
+          this._notifyBroadcastSubs(room, topic, msg);
+          break;
+        }
+        case "join-room-ok": {
+          const loadingRoomId = msg["room-id"];
+          const joinedRoom = this._rooms[loadingRoomId];
+          if (!joinedRoom) {
+            if (this._roomsPendingLeave[loadingRoomId]) {
+              this._tryLeaveRoom(loadingRoomId);
+              delete this._roomsPendingLeave[loadingRoomId];
+            }
+            break;
+          }
+          this._trySetRoomConnected(loadingRoomId, true);
+          this._flushEnqueuedRoomData(loadingRoomId);
+          break;
+        }
+        case "leave-room-ok": {
+          const roomId = msg["room-id"];
+          this._trySetRoomConnected(roomId, false);
+          break;
+        }
+        case "app-status-changed": {
+          const prevStatus = this._appStatusState.status;
+          this._setAppStatus(msg.status);
+          if (msg.status === "disabled" && prevStatus !== "disabled") {
+            const error = {
+              message: "This app is currently disabled.",
+              hint: { status: "disabled" }
+            };
+            Object.keys(this.queryCbs).forEach((hash) => this.notifyQueryError(hash, error));
+          }
+          if (prevStatus === "disabled" && msg.status !== "disabled") {
+            this._startSocket();
+          }
+          break;
+        }
+        case "join-room-error":
+          const errorRoomId = msg["room-id"];
+          const errorRoom = this._rooms[errorRoomId];
+          if (errorRoom) {
+            errorRoom.error = msg["error"];
+          }
+          this._notifyPresenceSubs(errorRoomId);
+          break;
+        case "error":
+          this._handleReceiveError(msg);
+          break;
+        default:
+          this._log.info("Unknown op", msg.op, msg);
+          break;
+      }
+    }
+    createWriteStream(opts) {
+      return this._instantStream.createWriteStream(opts);
+    }
+    createReadStream(opts) {
+      return this._instantStream.createReadStream(opts);
+    }
+    _pendingMutations() {
+      return this.kv.currentValue.pendingMutations ?? /* @__PURE__ */ new Map();
+    }
+    _updatePendingMutations(f) {
+      this.kv.updateInPlace((prev) => {
+        const muts = prev.pendingMutations ?? /* @__PURE__ */ new Map();
+        prev.pendingMutations = muts;
+        f(muts);
+      });
+    }
+    /**
+     * @param {'timeout' | 'error'} status
+     * @param {string} eventId
+     * @param {{message?: string, type?: string, status?: number, hint?: unknown, traceId?: string}} errorMsg
+     */
+    _handleMutationError(status, eventId, errorMsg) {
+      const mut = this._pendingMutations().get(eventId);
+      if (mut && (status !== "timeout" || !mut["tx-id"])) {
+        this._updatePendingMutations((prev) => {
+          prev.delete(eventId);
+          return prev;
+        });
+        this._inFlightMutationEventIds.delete(eventId);
+        const errDetails = {
+          message: errorMsg.message,
+          hint: errorMsg.hint,
+          traceId: errorMsg.traceId
+        };
+        this.notifyAll();
+        this.notifyAttrsSubs();
+        this.notifyMutationErrorSubs(errDetails);
+        this._finishTransaction(status, eventId, errorMsg);
+      }
+    }
+    _handleReceiveError(msg) {
+      this._log.info("error", msg);
+      const eventId = msg["client-event-id"];
+      this._inFlightMutationEventIds.delete(eventId);
+      const prevMutation = this._pendingMutations().get(eventId);
+      const errorMessage = {
+        message: msg.message || "Uh-oh, something went wrong. Ping Joe & Stopa."
+      };
+      if (msg.hint) {
+        errorMessage.hint = msg.hint;
+      }
+      if (msg["trace-id"] || msg["original-event"]?.["trace-id"]) {
+        const traceIds = [msg["trace-id"], msg["original-event"]?.["trace-id"]];
+        const traceId = traceIds.filter(Boolean).join(",");
+        errorMessage.traceId = traceId;
+      }
+      if (prevMutation) {
+        this._handleMutationError("error", eventId, errorMessage);
+        return;
+      }
+      if (msg["original-event"]?.hasOwnProperty("q") && msg["original-event"]?.op === "add-query") {
+        const q = msg["original-event"]?.q;
+        const hash = weakHash(q);
+        this.notifyQueryError(weakHash(q), errorMessage);
+        this.notifyQueryOnceError(q, hash, eventId, errorMessage);
+        return;
+      }
+      const isInitError = msg["original-event"]?.op === "init";
+      if (isInitError) {
+        if (msg.type === "record-not-found" && msg.hint?.["record-type"] === "app-user") {
+          this.changeCurrentUser(null);
+          return;
+        }
+        this._setStatus(STATUS.ERRORED, errorMessage);
+        this.notifyAll();
+        return;
+      }
+      switch (msg["original-event"]?.op) {
+        case "resync-table": {
+          this._syncTable.onResyncError(msg);
+          return;
+        }
+        case "start-sync": {
+          this._syncTable.onStartSyncError(msg);
+          return;
+        }
+        case "start-stream":
+        case "append-stream":
+        case "subscribe-stream":
+        case "unsubscribe-stream": {
+          this._instantStream.onRecieveError(msg);
+          return;
+        }
+      }
+      const errorObj = { ...msg };
+      delete errorObj.message;
+      delete errorObj.hint;
+      console.error(msg.message, errorObj);
+      if (msg.hint) {
+        console.error("This error comes with some debugging information. Here it is: \n", msg.hint);
+      }
+    }
+    notifyQueryOnceError(q, hash, eventId, e) {
+      const r = this.queryOnceDfds[hash]?.find((r2) => r2.eventId === eventId);
+      if (!r)
+        return;
+      r.dfd.reject(e);
+      this._completeQueryOnce(q, hash, r.dfd);
+    }
+    _setAttrs(attrs) {
+      this.attrs = new AttrsStoreClass(attrs.reduce((acc, attr) => {
+        acc[attr.id] = attr;
+        return acc;
+      }, {}), this._linkIndex);
+      this.notifyAttrsSubs();
+    }
+    _startQuerySub(q, hash) {
+      const eventId = id_default();
+      this.querySubs.updateInPlace((prev) => {
+        if (!prev[hash]) {
+          const legacyHash = weakHashLegacy(q);
+          if (legacyHash !== hash && prev[legacyHash]) {
+            prev[hash] = prev[legacyHash];
+            delete prev[legacyHash];
+          }
+        }
+        prev[hash] = prev[hash] || { q, result: null, eventId };
+        prev[hash].lastAccessed = Date.now();
+      });
+      this._tryMigrateLegacyQuerySub(q, hash);
+      this._trySendAuthed(eventId, { op: "add-query", q });
+      return eventId;
+    }
+    // Legacy hash migration (async): covers entries that weren't preloaded
+    // into currentValue. Actively loads the legacy key from storage, moves
+    // its result onto the new key, and notifies subscribers. Safe to remove
+    // a few releases after v1.0.39.
+    async _tryMigrateLegacyQuerySub(q, newHash) {
+      const legacyHash = weakHashLegacy(q);
+      if (legacyHash === newHash)
+        return;
+      await this.querySubs.waitForKeyToLoad(legacyHash);
+      const legacy = this.querySubs.currentValue[legacyHash];
+      if (!legacy)
+        return;
+      let migratedResult = false;
+      this.querySubs.updateInPlace((prev) => {
+        const existing = prev[newHash];
+        if (existing && !existing.result && legacy.result) {
+          existing.result = legacy.result;
+          migratedResult = true;
+        } else if (!existing) {
+          prev[newHash] = legacy;
+          migratedResult = !!legacy.result;
+        }
+        delete prev[legacyHash];
+      });
+      if (migratedResult)
+        this.notifyOne(newHash);
+    }
+    subscribeTable(q, cb) {
+      return this._syncTable.subscribe(q, cb);
+    }
+    /**
+     *  When a user subscribes to a query the following side effects occur:
+     *
+     *  - We update querySubs to include the new query
+     *  - We update queryCbs to include the new cb
+     *  - If we already have a result for the query we call cb immediately
+     *  - We send the server an `add-query` message
+     *
+     *  Returns an unsubscribe function
+     */
+    subscribeQuery(q, cb, opts) {
+      if (!this.config.disableValidation) {
+        validateQuery(q, this.config.schema);
+      }
+      if (opts && "ruleParams" in opts) {
+        q = { $$ruleParams: opts["ruleParams"], ...q };
+      }
+      const hash = weakHash(q);
+      const prevResult = this.getPreviousResult(q);
+      if (prevResult) {
+        cb(prevResult);
+      }
+      this.queryCbs[hash] = this.queryCbs[hash] ?? [];
+      this.queryCbs[hash].push({ q, cb });
+      this._startQuerySub(q, hash);
+      return () => {
+        this._unsubQuery(q, hash, cb);
+      };
+    }
+    queryOnce(q, opts) {
+      if (!this.config.disableValidation) {
+        validateQuery(q, this.config.schema);
+      }
+      if (opts && "ruleParams" in opts) {
+        q = { $$ruleParams: opts["ruleParams"], ...q };
+      }
+      const dfd = new Deferred();
+      if (!this._isOnline) {
+        dfd.reject(new Error("We can't run `queryOnce`, because the device is offline."));
+        return dfd.promise;
+      }
+      if (!this.querySubs) {
+        dfd.reject(new Error("We can't run `queryOnce` on the backend. Use adminAPI.query instead: https://www.instantdb.com/docs/backend#query"));
+        return dfd.promise;
+      }
+      const hash = weakHash(q);
+      const eventId = this._startQuerySub(q, hash);
+      this.queryOnceDfds[hash] = this.queryOnceDfds[hash] ?? [];
+      this.queryOnceDfds[hash].push({ q, dfd, eventId });
+      setTimeout(() => dfd.reject(new Error("Query timed out")), QUERY_ONCE_TIMEOUT);
+      return dfd.promise;
+    }
+    _completeQueryOnce(q, hash, dfd) {
+      if (!this.queryOnceDfds[hash])
+        return;
+      this.queryOnceDfds[hash] = this.queryOnceDfds[hash].filter((r) => r.dfd !== dfd);
+      this._cleanupQuery(q, hash);
+    }
+    _unsubQuery(q, hash, cb) {
+      if (!this.queryCbs[hash])
+        return;
+      this.queryCbs[hash] = this.queryCbs[hash].filter((r) => r.cb !== cb);
+      this._cleanupQuery(q, hash);
+    }
+    _hasQueryListeners(hash) {
+      return !!(this.queryCbs[hash]?.length || this.queryOnceDfds[hash]?.length);
+    }
+    _cleanupQuery(q, hash) {
+      const hasListeners = this._hasQueryListeners(hash);
+      if (hasListeners)
+        return;
+      delete this.queryCbs[hash];
+      delete this.queryOnceDfds[hash];
+      delete this._dataForQueryCache[hash];
+      this.querySubs.unloadKey(hash);
+      this._trySendAuthed(id_default(), { op: "remove-query", q });
+    }
+    // When we `pushTx`, it's possible that we don't yet have `this.attrs`
+    // This means that `tx-steps` in `pendingMutations` will include `add-attr`
+    // commands for attrs that already exist.
+    //
+    // This will also affect `add-triple` and `retract-triple` which
+    // reference attr-ids that do not match the server.
+    //
+    // We fix this by rewriting `tx-steps` in each `pendingMutation`.
+    // We remove `add-attr` commands for attrs that already exist.
+    // We update `add-triple` and `retract-triple` commands to use the
+    // server attr-ids.
+    /**
+     *
+     * @param {s.AttrsStore} attrs
+     * @param {any} muts
+     * @param {number} [processedTxId]
+     */
+    _rewriteMutations(attrs, muts, processedTxId) {
+      if (!attrs)
+        return muts;
+      if (!muts)
+        return /* @__PURE__ */ new Map();
+      const findExistingAttr = (attr) => {
+        const [_, etype, label] = attr["forward-identity"];
+        const existing = getAttrByFwdIdentName(attrs, etype, label);
+        return existing;
+      };
+      const findReverseAttr = (attr) => {
+        const [_, etype, label] = attr["forward-identity"];
+        const revAttr = getAttrByReverseIdentName(attrs, etype, label);
+        return revAttr;
+      };
+      const mapping = { attrIdMap: {}, refSwapAttrIds: /* @__PURE__ */ new Set() };
+      let mappingChanged = false;
+      const rewriteTxSteps = (txSteps, txId) => {
+        const retTxSteps = [];
+        for (const txStep of txSteps) {
+          const [action] = txStep;
+          if (action === "add-attr") {
+            const [_action, attr] = txStep;
+            const existing = findExistingAttr(attr);
+            if (existing && attr.id !== existing.id) {
+              mapping.attrIdMap[attr.id] = existing.id;
+              mappingChanged = true;
+              continue;
+            }
+            if (attr["value-type"] === "ref") {
+              const revAttr = findReverseAttr(attr);
+              if (revAttr) {
+                mapping.attrIdMap[attr.id] = revAttr.id;
+                mapping.refSwapAttrIds.add(attr.id);
+                mappingChanged = true;
+                continue;
+              }
+            }
+          }
+          if (processedTxId && txId && processedTxId >= txId && action === "add-attr" || action === "update-attr" || action === "delete-attr") {
+            mappingChanged = true;
+            continue;
+          }
+          const newTxStep = mappingChanged ? rewriteStep(mapping, txStep) : txStep;
+          retTxSteps.push(newTxStep);
+        }
+        return mappingChanged ? retTxSteps : txSteps;
+      };
+      const rewritten = /* @__PURE__ */ new Map();
+      for (const [k, mut] of muts.entries()) {
+        rewritten.set(k, {
+          ...mut,
+          "tx-steps": rewriteTxSteps(mut["tx-steps"], mut["tx-id"])
+        });
+      }
+      if (!mappingChanged) {
+        return muts;
+      }
+      return rewritten;
+    }
+    _rewriteMutationsSorted(attrs, muts) {
+      return sortedMutationEntries(this._rewriteMutations(attrs, muts).entries());
+    }
+    // ---------------------------
+    // Transact
+    /**
+     * @returns {s.AttrsStore}
+     */
+    optimisticAttrs() {
+      const pendingMutationSteps = [...this._pendingMutations().values()].flatMap((x) => x["tx-steps"]);
+      const deletedAttrIds = new Set(pendingMutationSteps.filter(([action, _attr]) => action === "delete-attr").map(([_action, id2]) => id2));
+      const pendingAttrs = [];
+      for (const [_action, attr] of pendingMutationSteps) {
+        if (_action === "add-attr") {
+          pendingAttrs.push(attr);
+        } else if (_action === "update-attr" && attr.id && this.attrs?.getAttr(attr.id)) {
+          const fullAttr = { ...this.attrs.getAttr(attr.id), ...attr };
+          pendingAttrs.push(fullAttr);
+        }
+      }
+      if (!deletedAttrIds.size && !pendingAttrs.length) {
+        return this.attrs || new AttrsStoreClass({}, this._linkIndex);
+      }
+      const attrs = { ...this.attrs?.attrs || {} };
+      for (const attr of pendingAttrs) {
+        attrs[attr.id] = attr;
+      }
+      for (const id2 of deletedAttrIds) {
+        delete attrs[id2];
+      }
+      return new AttrsStoreClass(attrs, this._linkIndex);
+    }
+    /** Runs instaql on a query and a store */
+    dataForQuery(hash, applyOptimistic = true) {
+      const errorMessage = this._errorMessage;
+      if (errorMessage) {
+        return { error: errorMessage };
+      }
+      if (!this.querySubs)
+        return;
+      if (!this.kv.currentValue.pendingMutations)
+        return;
+      const querySubVersion = this.querySubs.version();
+      const querySubs = this.querySubs.currentValue;
+      const pendingMutationsVersion = this.kv.version();
+      const pendingMutations = this._pendingMutations();
+      const { q, result } = querySubs[hash] || {};
+      if (!result)
+        return;
+      const cached = this._dataForQueryCache[hash];
+      if (cached && querySubVersion === cached.querySubVersion && pendingMutationsVersion === cached.pendingMutationsVersion) {
+        return cached;
+      }
+      let store = result.store;
+      let attrsStore = result.attrsStore;
+      const { pageInfo, aggregate, processedTxId } = result;
+      const mutations = this._rewriteMutationsSorted(attrsStore, pendingMutations);
+      if (applyOptimistic) {
+        const optimisticResult = this._applyOptimisticUpdates(store, attrsStore, mutations, processedTxId);
+        store = optimisticResult.store;
+        attrsStore = optimisticResult.attrsStore;
+      }
+      const resp = query2({ store, attrsStore, pageInfo, aggregate }, q);
+      return { data: resp, querySubVersion, pendingMutationsVersion };
+    }
+    _applyOptimisticUpdates(store, attrsStore, mutations, processedTxId) {
+      for (const [_, mut] of mutations) {
+        if (!mut["tx-id"] || processedTxId && mut["tx-id"] > processedTxId) {
+          const result = transact(store, attrsStore, mut["tx-steps"]);
+          store = result.store;
+          attrsStore = result.attrsStore;
+        }
+      }
+      return { store, attrsStore };
+    }
+    /** Re-compute all subscriptions */
+    notifyAll() {
+      Object.keys(this.queryCbs).forEach((hash) => {
+        this.querySubs.waitForKeyToLoad(hash).then(() => this.notifyOne(hash)).catch(() => this.notifyOne(hash));
+      });
+    }
+    loadedNotifyAll() {
+      this.kv.waitForKeyToLoad("pendingMutations").then(() => this.notifyAll()).catch(() => this.notifyAll());
+    }
+    shutdown() {
+      this._log.info("[shutdown]", this.config.appId);
+      this._isShutdown = true;
+      this._transport?.close();
+    }
+    /**
+     * Sends mutation to server and schedules a timeout to cancel it if
+     * we don't hear back in time.
+     * Note: If we're offline we don't schedule a timeout, we'll schedule it
+     * later once we're back online and send the mutation again
+     *
+     */
+    _sendMutation(eventId, mutation) {
+      if (mutation.error) {
+        this._handleMutationError("error", eventId, {
+          message: mutation.error.message
+        });
+        return;
+      }
+      if (this.status !== STATUS.AUTHENTICATED) {
+        this._finishTransaction("enqueued", eventId);
+        return;
+      }
+      const timeoutMs = Math.max(6e3, Math.min(
+        this._inFlightMutationEventIds.size + 1,
+        // Defensive code in case we don't clean up in flight mutation event ids
+        this._pendingMutations().size + 1
+      ) * 6e3);
+      if (!this._isOnline) {
+        this._finishTransaction("enqueued", eventId);
+      } else {
+        this._trySend(eventId, mutation);
+        setTimeout(() => {
+          if (!this._isOnline) {
+            return;
+          }
+          this._handleMutationError("timeout", eventId, {
+            message: "transaction timed out"
+          });
+        }, timeoutMs);
+      }
+    }
+    // ---------------------------
+    // Websocket
+    /** Send messages we accumulated while we were connecting */
+    _flushPendingMessages() {
+      const subs = Object.keys(this.queryCbs).map((hash) => {
+        return this.querySubs.currentValue[hash];
+      });
+      const safeSubs = subs.filter((x) => x);
+      safeSubs.forEach(({ eventId, q }) => {
+        this._trySendAuthed(eventId, { op: "add-query", q });
+      });
+      Object.values(this.queryOnceDfds).flat().forEach(({ eventId, q }) => {
+        this._trySendAuthed(eventId, { op: "add-query", q });
+      });
+      const rewrittenMutations = this._rewriteMutations(this.ensureAttrs(), this._pendingMutations());
+      if (rewrittenMutations !== this._pendingMutations()) {
+        this.kv.updateInPlace((prev) => {
+          prev.pendingMutations = rewrittenMutations;
+        });
+      }
+      const muts = sortedMutationEntries(rewrittenMutations.entries());
+      muts.forEach(([eventId, mut]) => {
+        if (!mut["tx-id"]) {
+          this._sendMutation(eventId, mut);
+        }
+      });
+      this._syncTable.flushPending();
+    }
+    /**
+     * Clean up pendingMutations that all queries have seen
+     */
+    _cleanupPendingMutationsQueries() {
+      let minProcessedTxId = Number.MAX_SAFE_INTEGER;
+      for (const { result } of Object.values(this.querySubs.currentValue)) {
+        if (result?.processedTxId) {
+          minProcessedTxId = Math.min(minProcessedTxId, result?.processedTxId);
+        }
+      }
+      this._updatePendingMutations((prev) => {
+        for (const [eventId, mut] of Array.from(prev.entries())) {
+          if (mut["tx-id"] && mut["tx-id"] <= minProcessedTxId) {
+            prev.delete(eventId);
+          }
+        }
+      });
+    }
+    /**
+     * After mutations is confirmed by server, we give each query 30 sec
+     * to update its results. If that doesn't happen, we assume query is
+     * unaffected by this mutation and it’s safe to delete it from local queue
+     */
+    _cleanupPendingMutationsTimeout() {
+      if (this._pendingMutations().size < this._pendingMutationCleanupThreshold) {
+        return;
+      }
+      const now = Date.now();
+      this._updatePendingMutations((prev) => {
+        for (const [eventId, mut] of Array.from(prev.entries())) {
+          if (mut.confirmed && mut.confirmed + this._pendingTxCleanupTimeout < now) {
+            prev.delete(eventId);
+          }
+        }
+      });
+    }
+    _trySendAuthed(...args) {
+      if (this.status !== STATUS.AUTHENTICATED) {
+        return;
+      }
+      this._trySend(...args);
+    }
+    _trySend(eventId, msg, opts) {
+      if (!this._transport.isOpen()) {
+        return;
+      }
+      if (!ignoreLogging[msg.op]) {
+        this._log.info("[send]", this._transport.id, msg.op, {
+          "client-event-id": eventId,
+          ...msg
+        });
+      }
+      switch (msg.op) {
+        case "transact": {
+          this._inFlightMutationEventIds.add(eventId);
+          break;
+        }
+        case "init": {
+          this._inFlightMutationEventIds.clear();
+        }
+      }
+      this._transport.send({ "client-event-id": eventId, ...msg });
+    }
+    _startSocket() {
+      this._wsOk = null;
+      if (this._isShutdown) {
+        this._log.info("[socket][start]", this.config.appId, "Reactor has been shut down and will not start a new socket");
+        return;
+      }
+      if (this._transport && this._transport.isConnecting()) {
+        this._log.info("[socket][start]", this._transport.id, "maintained as current transport, we were still in a connecting state");
+        return;
+      }
+      const prevTransport = this._transport;
+      this._transport = createTransport({
+        transportType: this._transportType,
+        appId: this.config.appId,
+        apiURI: this.config.apiURI,
+        wsURI: this.config.websocketURI,
+        EventSourceImpl: this._EventSource
+      });
+      this._transport.onopen = this._transportOnOpen;
+      this._transport.onmessage = this._transportOnMessage;
+      this._transport.onclose = this._transportOnClose;
+      this._transport.onerror = this._transportOnError;
+      this._log.info("[socket][start]", this._transport.id);
+      if (prevTransport?.isOpen()) {
+        this._log.info("[socket][start]", this._transport.id, "close previous transport id = ", prevTransport.id);
+        prevTransport.close();
+      }
+    }
+    /**
+     * Given a key, returns a stable local id, unique to this device and app.
+     *
+     * This can be useful if you want to create guest ids for example.
+     *
+     * Note: If the user deletes their local storage, this id will change.
+     *
+     */
+    async getLocalId(name) {
+      const k = `localToken_${name}`;
+      if (this.kv.currentValue[k]) {
+        return this.kv.currentValue[k];
+      }
+      const current2 = await this.kv.waitForKeyToLoad(k);
+      if (current2) {
+        return current2;
+      }
+      const newId = id_default();
+      this.kv.updateInPlace((prev) => {
+        if (prev[k])
+          return;
+        prev[k] = newId;
+      });
+      return await this.kv.waitForKeyToLoad(k);
+    }
+    // ----
+    // Auth
+    _replaceUrlAfterOAuth() {
+      if (typeof URL === "undefined") {
+        return;
+      }
+      const url = new URL(window.location.href);
+      if (url.searchParams.get(OAUTH_REDIRECT_PARAM)) {
+        const startUrl = url.toString();
+        url.searchParams.delete(OAUTH_REDIRECT_PARAM);
+        url.searchParams.delete(OAUTH_EXTRA_FIELDS_ID_PARAM);
+        url.searchParams.delete("code");
+        url.searchParams.delete("error");
+        const newPath = url.pathname + (url.searchParams.size ? "?" + url.searchParams : "") + url.hash;
+        history.replaceState(history.state, "", newPath);
+        if (
+          // @ts-ignore (waiting for ts support)
+          typeof navigation === "object" && // @ts-ignore (waiting for ts support)
+          typeof navigation.addEventListener === "function" && // @ts-ignore (waiting for ts support)
+          typeof navigation.removeEventListener === "function"
+        ) {
+          let ran = false;
+          const listener = (e) => {
+            if (!ran) {
+              ran = true;
+              navigation.removeEventListener("navigate", listener);
+              if (!e.userInitiated && e.navigationType === "replace" && e.destination?.url === startUrl) {
+                history.replaceState(history.state, "", newPath);
+              }
+            }
+          };
+          navigation.addEventListener("navigate", listener);
+        }
+      }
+    }
+    /**
+     *
+     * @returns Promise<null | {error: {message: string}}>
+     */
+    async _oauthLoginInit() {
+      if (typeof window === "undefined" || typeof window.location === "undefined" || typeof URLSearchParams === "undefined") {
+        return null;
+      }
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get(OAUTH_REDIRECT_PARAM)) {
+        return null;
+      }
+      const error = params.get("error");
+      if (error) {
+        this._replaceUrlAfterOAuth();
+        return { error: { message: error } };
+      }
+      const code = params.get("code");
+      if (!code) {
+        return null;
+      }
+      const extraFieldsId = params.get(OAUTH_EXTRA_FIELDS_ID_PARAM);
+      this._replaceUrlAfterOAuth();
+      try {
+        let extraFields;
+        const stored = await this.kv.waitForKeyToLoad(oauthExtraFieldsKey);
+        if (extraFieldsId && stored) {
+          extraFields = stored[extraFieldsId];
+        }
+        if (stored) {
+          this.kv.updateInPlace((prev) => {
+            delete prev[oauthExtraFieldsKey];
+          });
+        }
+        const currentUser = await this._getCurrentUser();
+        const isGuest = currentUser?.type === "guest";
+        const { user } = await exchangeCodeForToken({
+          apiURI: this.config.apiURI,
+          appId: this.config.appId,
+          code,
+          refreshToken: isGuest ? currentUser.refresh_token : void 0,
+          extraFields
+        });
+        this.setCurrentUser(user);
+        return null;
+      } catch (e) {
+        if (e?.body?.type === "record-not-found" && e?.body?.hint?.["record-type"] === "app-oauth-code" && await this._hasCurrentUser()) {
+          return null;
+        }
+        const message = e?.body?.message || "Error logging in.";
+        return { error: { message } };
+      }
+    }
+    async _waitForOAuthCallbackResponse() {
+      return await this._oauthCallbackResponse;
+    }
+    __subscribeMutationErrors(cb) {
+      this.mutationErrorCbs.push(cb);
+      return () => {
+        this.mutationErrorCbs = this.mutationErrorCbs.filter((x) => x !== cb);
+      };
+    }
+    subscribeAuth(cb) {
+      this.authCbs.push(cb);
+      const currUserCached = this._currentUserCached;
+      if (!currUserCached.isLoading) {
+        cb(this._currentUserCached);
+      }
+      let unsubbed = false;
+      this.getCurrentUser().then((resp) => {
+        if (unsubbed)
+          return;
+        if (areObjectsDeepEqual(resp, currUserCached))
+          return;
+        cb(resp);
+      });
+      return () => {
+        unsubbed = true;
+        this.authCbs = this.authCbs.filter((x) => x !== cb);
+      };
+    }
+    async getAuth() {
+      const { user, error } = await this.getCurrentUser();
+      if (error) {
+        throw new InstantError("Could not get current user: " + error.message);
+      }
+      return user ?? null;
+    }
+    subscribeConnectionStatus(cb) {
+      this.connectionStatusCbs.push(cb);
+      return () => {
+        this.connectionStatusCbs = this.connectionStatusCbs.filter((x) => x !== cb);
+      };
+    }
+    /**
+     * @param {'active' | 'read-only' | 'disabled' | undefined} status
+     */
+    _setAppStatus(status) {
+      if (!status || status === this._appStatusState.status)
+        return;
+      this._appStatusState = {
+        isLoading: false,
+        isReadOnly: status !== "active",
+        status
+      };
+      this.notifyAppStatusSubs(this._appStatusState);
+    }
+    subscribeAppStatus(cb) {
+      this.appStatusCbs.push(cb);
+      cb(this._appStatusState);
+      return () => {
+        this.appStatusCbs = this.appStatusCbs.filter((x) => x !== cb);
+      };
+    }
+    subscribeAttrs(cb) {
+      this.attrsCbs.push(cb);
+      if (this.attrs) {
+        cb(this.attrs.attrs);
+      }
+      return () => {
+        this.attrsCbs = this.attrsCbs.filter((x) => x !== cb);
+      };
+    }
+    notifyAuthSubs(user) {
+      this.authCbs.forEach((cb) => cb(user));
+    }
+    notifyMutationErrorSubs(error) {
+      this.mutationErrorCbs.forEach((cb) => cb(error));
+    }
+    notifyAttrsSubs() {
+      if (!this.attrs)
+        return;
+      const oas = this.optimisticAttrs();
+      this.attrsCbs.forEach((cb) => cb(oas.attrs));
+    }
+    notifyConnectionStatusSubs(status) {
+      this.connectionStatusCbs.forEach((cb) => cb(status));
+    }
+    notifyAppStatusSubs(state) {
+      this.appStatusCbs.forEach((cb) => cb(state));
+    }
+    async setCurrentUser(user) {
+      this.kv.updateInPlace((prev) => {
+        prev[currentUserKey] = user;
+      });
+      await this.kv.waitForKeyToLoad(currentUserKey);
+    }
+    getCurrentUserCached() {
+      return this._currentUserCached;
+    }
+    /**
+     * @param {{ forceReadFromStorage?: boolean }} [opts]
+     * @returns {Promise<User | undefined>}
+     */
+    async _getCurrentUser(opts) {
+      if (opts?.forceReadFromStorage) {
+        await this.kv.unloadKey(currentUserKey);
+      }
+      const user = await this.kv.waitForKeyToLoad(currentUserKey);
+      return typeof user === "string" ? JSON.parse(user) : user;
+    }
+    /**
+     * @param {{ forceReadFromStorage?: boolean }} [opts]
+     * @returns {Promise<AuthState>}
+     */
+    async getCurrentUser(opts) {
+      const oauthResp = await this._waitForOAuthCallbackResponse();
+      if (oauthResp?.error) {
+        const errorV = { error: oauthResp.error, user: void 0 };
+        this._currentUserCached = { isLoading: false, ...errorV };
+        return this._currentUserCached;
+      }
+      try {
+        const user = await this._getCurrentUser(opts);
+        const userV = { user, error: void 0 };
+        this._currentUserCached = {
+          isLoading: false,
+          ...userV
+        };
+        return this._currentUserCached;
+      } catch (e) {
+        return {
+          user: void 0,
+          isLoading: false,
+          error: { message: e?.message || "Error loading user" }
+        };
+      }
+    }
+    async _hasCurrentUser() {
+      const user = await this.kv.waitForKeyToLoad(currentUserKey);
+      return typeof user === "string" ? JSON.parse(user) != null : user != null;
+    }
+    async changeCurrentUser(newUser) {
+      const { user: oldUser } = await this.getCurrentUser();
+      if (areObjectsDeepEqual(oldUser, newUser)) {
+        return;
+      }
+      this._frameworkClient = null;
+      await this.setCurrentUser(newUser);
+      await this.updateUser(newUser);
+      try {
+        await this.kv.flush();
+        this._broadcastChannel?.postMessage({ type: "auth" });
+      } catch (error) {
+        console.error("Error posting message to broadcast channel", error);
+      }
+    }
+    async setupUserSyncTimer() {
+      if (!this.config.firstPartyPath)
+        return;
+      try {
+        const lastSynced = await this.kv.waitForKeyToLoad(COOKIE_SYNC_LAST_UPDATED_KEY);
+        const lastSyncTime = lastSynced ? new Date(lastSynced).getTime() : 0;
+        const shouldSync = !Number.isFinite(lastSyncTime) || Date.now() - lastSyncTime >= ONE_DAY_MS;
+        if (!shouldSync)
+          return;
+        const { user } = await this.getCurrentUser();
+        await this.syncUserToEndpoint(user ?? null);
+      } catch (error) {
+        this._log.error("Error syncing user cookie on startup", error);
+      }
+    }
+    async syncUserToEndpoint(user) {
+      if (!this.config.firstPartyPath)
+        return;
+      try {
+        const response = await fetch(this.config.firstPartyPath + "/", {
+          method: "POST",
+          body: JSON.stringify({
+            type: "sync-user",
+            appId: this.config.appId,
+            user
+          }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      } catch (error) {
+        this._log.error("Error syncing user with external endpoint", error);
+      }
+      this.kv.updateInPlace((prev) => {
+        prev[COOKIE_SYNC_LAST_UPDATED_KEY] = (/* @__PURE__ */ new Date()).toISOString();
+      });
+    }
+    async updateUser(newUser) {
+      const newV = { error: void 0, user: newUser };
+      this._currentUserCached = { isLoading: false, ...newV };
+      this._dataForQueryCache = {};
+      this.querySubs.updateInPlace((prev) => {
+        Object.keys(prev).forEach((k) => {
+          delete prev[k].result;
+        });
+      });
+      this.querySubs.clearUnloadedKeys();
+      this._updatePendingMutations((prev) => {
+        for (const [eventId, _v] of prev.entries()) {
+          if (this.mutationDeferredStore.get(eventId)) {
+            this._finishTransaction("error", eventId, {
+              message: "User changed while transaction was in progress.",
+              type: "user-changed"
+            });
+          }
+        }
+        prev.clear();
+      });
+      this._reconnectTimeoutMs = 0;
+      this._transport.close();
+      this._oauthCallbackResponse = null;
+      this.notifyAuthSubs(newV);
+      try {
+        await this.syncUserToEndpoint(newUser);
+      } catch (error) {
+        this._log.error("Error syncing user with external endpoint", error);
+      }
+    }
+    sendMagicCode({ email }) {
+      return sendMagicCode({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        email
+      });
+    }
+    async signInWithMagicCode(params) {
+      const currentUser = await this.getCurrentUser();
+      const isGuest = currentUser?.user?.type === "guest";
+      const res = await checkMagicCode({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        email: params.email,
+        code: params.code,
+        refreshToken: isGuest ? currentUser?.user?.refresh_token : void 0,
+        extraFields: params.extraFields
+      });
+      await this.changeCurrentUser(res.user);
+      return res;
+    }
+    async signInWithCustomToken(authToken) {
+      const res = await verifyRefreshToken({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        refreshToken: authToken
+      });
+      await this.changeCurrentUser(res.user);
+      return res;
+    }
+    async signInAsGuest(params) {
+      const res = await signInAsGuest({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        extraFields: params?.extraFields
+      });
+      await this.changeCurrentUser(res.user);
+      return res;
+    }
+    potentiallyInvalidateToken(currentUser, opts) {
+      const refreshToken = currentUser?.user?.refresh_token;
+      if (!refreshToken) {
+        return;
+      }
+      const wantsToSkip = opts.invalidateToken === false;
+      if (wantsToSkip) {
+        this._log.info("[auth-invalidate] skipped invalidateToken");
+        return;
+      }
+      signOut({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        refreshToken
+      }).then(() => {
+        this._log.info("[auth-invalidate] completed invalidateToken");
+      }).catch((e) => {
+      });
+    }
+    async signOut(opts) {
+      const currentUser = await this.getCurrentUser();
+      this.potentiallyInvalidateToken(currentUser, opts);
+      await this.changeCurrentUser(null);
+    }
+    /**
+     * Creates an OAuth authorization URL.
+     *
+     * @param {Object} params - The parameters to create the authorization URL.
+     * @param {string} params.clientName - The name of the client requesting authorization.
+     * @param {string} params.redirectURL - The URL to redirect users to after authorization.
+     * @param {Record<string, any>} [params.extraFields] - Extra fields to write to $users on creation
+     * @returns {string} The created authorization URL.
+     */
+    createAuthorizationURL({ clientName, redirectURL, extraFields }) {
+      const { apiURI, appId } = this.config;
+      let finalRedirectURL = redirectURL;
+      if (extraFields) {
+        const extraFieldsId = `${Math.random().toString(36).slice(2)}`;
+        this.kv.updateInPlace((prev) => {
+          const stored = prev[oauthExtraFieldsKey] || {};
+          stored[extraFieldsId] = extraFields;
+          prev[oauthExtraFieldsKey] = stored;
+        });
+        finalRedirectURL = `${redirectURL}${redirectURL.includes("?") ? "&" : "?"}${OAUTH_EXTRA_FIELDS_ID_PARAM}=${extraFieldsId}`;
+      }
+      return `${apiURI}/runtime/oauth/start?app_id=${appId}&client_name=${clientName}&redirect_uri=${encodeURIComponent(finalRedirectURL)}`;
+    }
+    /**
+     * @param {Object} params
+     * @param {string} params.code - The code received from the OAuth service.
+     * @param {string} [params.codeVerifier] - The code verifier used to generate the code challenge.
+     * @param {Record<string, any>} [params.extraFields] - Extra fields to write to $users on creation
+     */
+    async exchangeCodeForToken({ code, codeVerifier, extraFields }) {
+      const currentUser = await this.getCurrentUser();
+      const isGuest = currentUser?.user?.type === "guest";
+      const res = await exchangeCodeForToken({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        code,
+        codeVerifier,
+        refreshToken: isGuest ? currentUser?.user?.refresh_token : void 0,
+        extraFields
+      });
+      await this.changeCurrentUser(res.user);
+      return res;
+    }
+    issuerURI() {
+      const { apiURI, appId } = this.config;
+      return `${apiURI}/runtime/${appId}`;
+    }
+    /**
+     * @param {Object} params
+     * @param {string} params.clientName - The name of the client requesting authorization.
+     * @param {string} params.idToken - The id_token from the external service
+     * @param {string | null | undefined} [params.nonce] - The nonce used when requesting the id_token from the external service
+     * @param {Record<string, any>} [params.extraFields] - Extra fields to write to $users on creation
+     */
+    async signInWithIdToken(params) {
+      const currentUser = await this.getCurrentUser();
+      const refreshToken = currentUser?.user?.refresh_token;
+      const res = await signInWithIdToken({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        idToken: params.idToken,
+        clientName: params.clientName,
+        nonce: params.nonce,
+        refreshToken,
+        extraFields: params.extraFields
+      });
+      await this.changeCurrentUser(res.user);
+      return res;
+    }
+    // --------
+    // Rooms
+    /**
+     * @param {string} roomType
+     * @param {string} roomId
+     * @param {any | null | undefined} [initialPresence] -- initial presence data to send when joining the room
+     * @returns () => void
+     */
+    joinRoom(roomType, roomId, initialPresence) {
+      let needsToSendJoin = false;
+      if (!this._rooms[roomId]) {
+        needsToSendJoin = true;
+        this._rooms[roomId] = {
+          roomType,
+          isConnected: false,
+          error: void 0
+        };
+      }
+      this._presence[roomId] = this._presence[roomId] || {};
+      const previousResult = this._presence[roomId].result;
+      if (initialPresence && !previousResult) {
+        this._presence[roomId].result = this._presence[roomId].result || {};
+        this._presence[roomId].result.user = initialPresence;
+        this._notifyPresenceSubs(roomId);
+      }
+      if (needsToSendJoin) {
+        this._tryJoinRoom(roomType, roomId, initialPresence);
+      }
+      return () => {
+        this._cleanupRoom(roomId);
+      };
+    }
+    _cleanupRoom(roomId) {
+      if (!this._presence[roomId]?.handlers?.length && !Object.keys(this._broadcastSubs[roomId] ?? {}).length) {
+        const isConnected = this._rooms[roomId]?.isConnected;
+        delete this._rooms[roomId];
+        delete this._presence[roomId];
+        delete this._broadcastSubs[roomId];
+        if (isConnected) {
+          this._tryLeaveRoom(roomId);
+        } else {
+          this._roomsPendingLeave[roomId] = true;
+        }
+      }
+    }
+    // --------
+    // Presence
+    // TODO: look into typing again
+    getPresence(roomType, roomId, opts = {}) {
+      const room = this._rooms[roomId];
+      const presence = this._presence[roomId];
+      if (!room || !presence || !presence.result)
+        return null;
+      return {
+        ...buildPresenceSlice(presence.result, opts, this._sessionId),
+        isLoading: !room.isConnected,
+        error: room.error
+      };
+    }
+    // TODO: look into typing again
+    publishPresence(roomType, roomId, partialData) {
+      const room = this._rooms[roomId];
+      const presence = this._presence[roomId];
+      if (!room || !presence) {
+        return;
+      }
+      presence.result = presence.result || {};
+      const data = {
+        ...presence.result.user,
+        ...partialData
+      };
+      presence.result.user = data;
+      if (!room.isConnected) {
+        return;
+      }
+      this._trySetPresence(roomId, data);
+      this._notifyPresenceSubs(roomId);
+    }
+    _trySetPresence(roomId, data) {
+      this._trySendAuthed(id_default(), {
+        op: "set-presence",
+        "room-id": roomId,
+        data
+      });
+    }
+    _tryJoinRoom(roomType, roomId, data) {
+      this._trySendAuthed(id_default(), {
+        op: "join-room",
+        "room-type": roomType,
+        "room-id": roomId,
+        data
+      });
+      delete this._roomsPendingLeave[roomId];
+    }
+    _tryLeaveRoom(roomId) {
+      this._trySendAuthed(id_default(), { op: "leave-room", "room-id": roomId });
+    }
+    _trySetRoomConnected(roomId, isConnected) {
+      const room = this._rooms[roomId];
+      if (room) {
+        room.isConnected = isConnected;
+      }
+    }
+    // TODO: look into typing again
+    subscribePresence(roomType, roomId, opts, cb) {
+      const leaveRoom = this.joinRoom(
+        roomType,
+        roomId,
+        // Oct 28, 2025
+        // Note: initialData is deprecated.
+        // Keeping here for backwards compatibility
+        opts.initialPresence || opts.initialData
+      );
+      const handler = { ...opts, roomId, cb, prev: null };
+      this._presence[roomId] = this._presence[roomId] || {};
+      this._presence[roomId].handlers = this._presence[roomId].handlers || [];
+      this._presence[roomId].handlers.push(handler);
+      this._notifyPresenceSub(roomId, handler);
+      return () => {
+        this._presence[roomId].handlers = this._presence[roomId]?.handlers?.filter((x) => x !== handler) ?? [];
+        leaveRoom();
+      };
+    }
+    _notifyPresenceSubs(roomId) {
+      this._presence[roomId]?.handlers?.forEach((handler) => {
+        this._notifyPresenceSub(roomId, handler);
+      });
+    }
+    _notifyPresenceSub(roomId, handler) {
+      const slice = this.getPresence("", roomId, handler);
+      if (!slice) {
+        return;
+      }
+      if (handler.prev && !hasPresenceResponseChanged(slice, handler.prev)) {
+        return;
+      }
+      handler.prev = slice;
+      handler.cb(slice);
+    }
+    _patchPresencePeers(roomId, edits) {
+      const peers = this._presence[roomId]?.result?.peers || {};
+      let sessions = Object.fromEntries(Object.entries(peers).map(([k, v]) => [k, { data: v }]));
+      const myPresence = this._presence[roomId]?.result;
+      const newSessions = create(sessions, (draft) => {
+        for (let [path, op, value] of edits) {
+          switch (op) {
+            case "+":
+              insertInMutative(draft, path, value);
+              break;
+            case "r":
+              assocInMutative(draft, path, value);
+              break;
+            case "-":
+              dissocInMutative(draft, path);
+              break;
+          }
+        }
+        delete draft[this._sessionId];
+      });
+      this._setPresencePeers(roomId, newSessions);
+    }
+    _setPresencePeers(roomId, data) {
+      const sessions = { ...data };
+      delete sessions[this._sessionId];
+      const peers = Object.fromEntries(Object.entries(sessions).map(([k, v]) => [k, v.data]));
+      this._presence = create(this._presence, (draft) => {
+        assocInMutative(draft, [roomId, "result", "peers"], peers);
+      });
+    }
+    // --------
+    // Broadcast
+    publishTopic({ roomType, roomId, topic, data }) {
+      const room = this._rooms[roomId];
+      if (!room) {
+        return;
+      }
+      if (!room.isConnected) {
+        this._broadcastQueue[roomId] = this._broadcastQueue[roomId] ?? [];
+        this._broadcastQueue[roomId].push({ topic, roomType, data });
+        return;
+      }
+      this._tryBroadcast(roomId, roomType, topic, data);
+    }
+    _tryBroadcast(roomId, roomType, topic, data) {
+      this._trySendAuthed(id_default(), {
+        op: "client-broadcast",
+        "room-id": roomId,
+        roomType,
+        topic,
+        data
+      });
+    }
+    subscribeTopic(roomType, roomId, topic, cb) {
+      const leaveRoom = this.joinRoom(roomType, roomId);
+      this._broadcastSubs[roomId] = this._broadcastSubs[roomId] || {};
+      this._broadcastSubs[roomId][topic] = this._broadcastSubs[roomId][topic] || [];
+      this._broadcastSubs[roomId][topic].push(cb);
+      this._presence[roomId] = this._presence[roomId] || {};
+      return () => {
+        this._broadcastSubs[roomId][topic] = this._broadcastSubs[roomId][topic].filter((x) => x !== cb);
+        if (!this._broadcastSubs[roomId][topic].length) {
+          delete this._broadcastSubs[roomId][topic];
+        }
+        leaveRoom();
+      };
+    }
+    _notifyBroadcastSubs(room, topic, msg) {
+      this._broadcastSubs?.[room]?.[topic]?.forEach((cb) => {
+        const data = msg.data?.data;
+        const peer = msg.data["peer-id"] === this._sessionId ? this._presence[room]?.result?.user : this._presence[room]?.result?.peers?.[msg.data["peer-id"]];
+        return cb(data, peer);
+      });
+    }
+    // --------
+    // Storage
+    async uploadFile(path, file, opts) {
+      const currentUser = await this.getCurrentUser();
+      const refreshToken = currentUser?.user?.refresh_token;
+      return uploadFile({
+        ...opts,
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        path,
+        file,
+        refreshToken
+      });
+    }
+    async deleteFile(path) {
+      const currentUser = await this.getCurrentUser();
+      const refreshToken = currentUser?.user?.refresh_token;
+      const result = await deleteFile({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        path,
+        refreshToken
+      });
+      return result;
+    }
+    // Deprecated Storage API (Jan 2025)
+    // ---------------------------------
+    async upload(path, file) {
+      const currentUser = await this.getCurrentUser();
+      const refreshToken = currentUser?.user?.refresh_token;
+      const fileName = path || file.name;
+      const url = await getSignedUploadUrl({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        fileName,
+        refreshToken
+      });
+      const isSuccess = await upload(url, file);
+      return isSuccess;
+    }
+    async getDownloadUrl(path) {
+      const currentUser = await this.getCurrentUser();
+      const refreshToken = currentUser?.user?.refresh_token;
+      const url = await getDownloadUrl({
+        apiURI: this.config.apiURI,
+        appId: this.config.appId,
+        path,
+        refreshToken
+      });
+      return url;
+    }
+  };
+
+  // node_modules/@instantdb/core/dist/esm/devtool.js
+  var currentDevtool;
+  function createDevtool(appId, config) {
+    currentDevtool?.dispose();
+    const iframeContrainer = createIframeContainer(config);
+    const toggler = createToggler(config, toggleView);
+    const iframe = createIframe(getSrc(appId));
+    function onPostMessage(event) {
+      if (event.source !== iframe.element.contentWindow)
+        return;
+      if (event.data?.type === "close" && iframeContrainer.isVisible()) {
+        toggleView();
+      }
+    }
+    function onKeyDown(event) {
+      const isToggleShortcut = event.shiftKey && event.ctrlKey && event.code === "Digit0";
+      const isEsc = event.key === "Escape" || event.key === "Esc";
+      if (isToggleShortcut) {
+        toggleView();
+      } else if (isEsc && iframeContrainer.isVisible()) {
+        toggleView();
+      }
+    }
+    function toggleView() {
+      if (iframeContrainer.isVisible()) {
+        iframeContrainer.element.style.display = "none";
+      } else {
+        iframeContrainer.element.style.display = "block";
+        if (!iframeContrainer.element.contains(iframe.element)) {
+          iframeContrainer.element.appendChild(iframe.element);
+        }
+      }
+    }
+    function dispose() {
+      iframeContrainer.element.remove();
+      toggler.element.remove();
+      removeEventListener("keydown", onKeyDown);
+      removeEventListener("message", onPostMessage);
+    }
+    function create2() {
+      document.body.appendChild(iframeContrainer.element);
+      document.body.appendChild(toggler.element);
+      addEventListener("keydown", onKeyDown);
+      addEventListener("message", onPostMessage);
+      currentDevtool = {
+        dispose
+      };
+    }
+    return create2();
+  }
+  function getSrc(appId) {
+    const useLocalDashboard = devBackend || devtoolLocalDashboard;
+    const src = `${useLocalDashboard ? "http://localhost:3000" : "https://instantdb.com"}/_devtool?appId=${appId}`;
+    return src;
+  }
+  function createIframe(src) {
+    const element = document.createElement("iframe");
+    element.src = src;
+    element.className = "instant-devtool-iframe";
+    Object.assign(element.style, {
+      width: "100%",
+      height: "100%",
+      backgroundColor: "white",
+      border: "none"
+    });
+    return { element };
+  }
+  function createToggler(config, onClick) {
+    const logoSVG = `
+    <svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="512" height="512" fill="black"/>
+      <rect x="97.0973" y="91.3297" width="140" height="330" fill="white"/>
+    </svg>
+  `;
+    const element = document.createElement("button");
+    element.innerHTML = logoSVG;
+    element.className = "instant-devtool-toggler";
+    Object.assign(element.style, {
+      // pos
+      position: "fixed",
+      ...cssPositionForToggler(config.position),
+      height: "32px",
+      width: "32px",
+      // layout
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "9010",
+      // look
+      padding: "0",
+      margin: "0",
+      border: "none",
+      cursor: "pointer"
+    });
+    element.addEventListener("click", onClick);
+    return { element };
+  }
+  function cssPositionForToggler(position) {
+    switch (position) {
+      case "bottom-left":
+        return { bottom: "24px", left: "24px" };
+      case "bottom-right":
+        return { bottom: "24px", right: "24px" };
+      case "top-right":
+        return { top: "24px", right: "24px" };
+      case "top-left":
+        return { top: "24px", left: "24px" };
+    }
+  }
+  function cssPositionForIframeContainer(position) {
+    switch (position) {
+      case "bottom-left":
+        return { bottom: "24px", right: "24px", left: "60px", top: "72px" };
+      case "bottom-right":
+        return { bottom: "24px", left: "24px", right: "60px", top: "72px" };
+      case "top-right":
+        return { top: "24px", left: "24px", right: "60px", bottom: "72px" };
+      case "top-left":
+        return { top: "24px", right: "24px", left: "60px", bottom: "72px" };
+    }
+  }
+  function createIframeContainer(config) {
+    const element = document.createElement("div");
+    Object.assign(element.style, {
+      position: "fixed",
+      ...cssPositionForIframeContainer(config.position),
+      display: "block",
+      borderRadius: "4px",
+      border: "1px #ccc solid",
+      boxShadow: "0px 0px 8px #00000044",
+      backgroundColor: "#eee",
+      zIndex: "999990"
+    });
+    element.style.display = "none";
+    element.className = "instant-devtool-container";
+    function isVisible() {
+      return element.style.display !== "none";
+    }
+    return { element, isVisible };
+  }
+
+  // node_modules/@instantdb/core/dist/esm/framework.js
+  var isServer = typeof window === "undefined" || "Deno" in globalThis;
+
+  // node_modules/@instantdb/core/dist/esm/utils/error.js
+  function assert(condition, msg) {
+    if (!condition) {
+      throw new Error("[assertion error] " + msg);
+    }
+  }
+
+  // node_modules/@instantdb/core/dist/esm/infiniteQuery.js
+  var makeCursorKey = (cursor) => JSON.stringify(cursor);
+  var makeChunkKey = (cursor, afterInclusive = false) => JSON.stringify([cursor, afterInclusive]);
+  var parseChunkKey = (chunkKey) => {
+    const [cursor, afterInclusive] = JSON.parse(chunkKey);
+    return { cursor, afterInclusive };
+  };
+  var chunkSubKey = (direction, cursor, afterInclusive = false) => `${direction}:${makeChunkKey(cursor, afterInclusive)}`;
+  var chunkHasEndCursor = (chunk) => {
+    return !!chunk.endCursor;
+  };
+  var readCanLoadNextPage = (forwardChunks) => {
+    const chunksInOrder = Array.from(forwardChunks.values());
+    if (chunksInOrder.length === 0)
+      return false;
+    return chunksInOrder[chunksInOrder.length - 1]?.hasMore || false;
+  };
+  var reverseOrder = (order) => {
+    if (!order) {
+      return {
+        serverCreatedAt: "asc"
+      };
+    }
+    const key = Object.keys(order).at(0);
+    if (!key) {
+      return {
+        serverCreatedAt: "asc"
+      };
+    }
+    return {
+      [key]: order[key] === "asc" ? "desc" : "asc"
+    };
+  };
+  var resolveOrder = (order) => {
+    if (order && Object.keys(order).length > 0)
+      return order;
+    return {
+      serverCreatedAt: "asc"
+    };
+  };
+  var normalizeChunks = (forwardChunks, reverseChunks) => {
+    const chunks = [
+      ...Array.from(reverseChunks.values()).slice().reverse(),
+      ...Array.from(forwardChunks.values())
+    ];
+    const data = [
+      ...Array.from(reverseChunks.values()).slice().reverse().flatMap((chunk) => chunk.data.slice().reverse()),
+      ...Array.from(forwardChunks.values()).flatMap((chunk) => chunk.data)
+    ];
+    return { chunks, data };
+  };
+  var PRE_BOOTSTRAP_CURSOR = ["bootstrap", "bootstrap", "bootstrap", 1];
+  var subscribeInfiniteQuery = (db2, fullQuery, cb, opts) => {
+    const { entityName, entityQuery: query3 } = splitAndValidateQuery(fullQuery);
+    const pageSize = query3.$?.limit || 10;
+    const entity = entityName;
+    const order = resolveOrder(query3.$?.order);
+    const forwardChunks = /* @__PURE__ */ new Map();
+    const reverseChunks = /* @__PURE__ */ new Map();
+    const allUnsubs = /* @__PURE__ */ new Map();
+    let hasKickstarted = false;
+    let isActive = true;
+    let lastReverseAdvancedChunkKey = null;
+    let starterUnsub = null;
+    const sendError = (err) => {
+      cb({ error: err, data: void 0, canLoadNextPage: false });
+    };
+    const pushUpdate = () => {
+      if (!isActive)
+        return;
+      const { chunks, data } = normalizeChunks(forwardChunks, reverseChunks);
+      cb({
+        data: { [entity]: data },
+        // @ts-expect-error hidden debug variable
+        chunks,
+        canLoadNextPage: readCanLoadNextPage(forwardChunks)
+      });
+    };
+    const setForwardChunk = (startCursor, chunk) => {
+      forwardChunks.set(makeChunkKey(startCursor, chunk.afterInclusive), chunk);
+      pushUpdate();
+    };
+    const setReverseChunk = (startCursor, chunk) => {
+      reverseChunks.set(makeChunkKey(startCursor), chunk);
+      maybeAdvanceReverse();
+      pushUpdate();
+    };
+    const freezeReverse = (chunkKey, chunk) => {
+      const { cursor: startCursor } = parseChunkKey(chunkKey);
+      const currentSub = allUnsubs.get(chunkSubKey("reverse", startCursor));
+      currentSub?.();
+      const nextSub = db2.subscribeQuery({
+        [entity]: {
+          ...query3,
+          $: {
+            after: startCursor,
+            before: chunk.endCursor,
+            beforeInclusive: true,
+            where: query3.$?.where,
+            fields: query3.$?.fields,
+            order: reverseOrder(order)
+          }
+        }
+      }, (frozenData) => {
+        if (frozenData.error) {
+          return sendError(frozenData.error);
+        }
+        const rows = frozenData.data[entity];
+        const pageInfo = frozenData.pageInfo[entity];
+        assert(rows && pageInfo, "Expected query subscription to contain rows and pageInfo");
+        setReverseChunk(startCursor, {
+          data: rows,
+          status: "frozen",
+          hasMore: pageInfo.hasNextPage,
+          endCursor: pageInfo.endCursor
+        });
+      }, opts);
+      allUnsubs.set(chunkSubKey("reverse", startCursor), nextSub);
+    };
+    const pushNewReverse = (startCursor) => {
+      const querySub = db2.subscribeQuery({
+        [entity]: {
+          ...query3,
+          $: {
+            limit: pageSize,
+            after: startCursor,
+            where: query3.$?.where,
+            fields: query3.$?.fields,
+            order: reverseOrder(order)
+          }
+        }
+      }, (windowData) => {
+        if (windowData.error) {
+          return sendError(windowData.error);
+        }
+        const rows = windowData.data[entity];
+        const pageInfo = windowData.pageInfo[entity];
+        assert(rows && pageInfo, "Expected rows and pageInfo");
+        setReverseChunk(startCursor, {
+          data: rows,
+          status: "bootstrapping",
+          hasMore: pageInfo.hasNextPage,
+          endCursor: pageInfo.endCursor
+        });
+      }, opts);
+      allUnsubs.set(chunkSubKey("reverse", startCursor), querySub);
+    };
+    const pushNewForward = (startCursor, afterInclusive = false) => {
+      const querySub = db2.subscribeQuery({
+        [entity]: {
+          ...query3,
+          $: {
+            limit: pageSize,
+            after: startCursor,
+            afterInclusive,
+            where: query3.$?.where,
+            fields: query3.$?.fields,
+            order
+          }
+        }
+      }, (windowData) => {
+        if (windowData.error) {
+          return sendError(windowData.error);
+        }
+        const rows = windowData.data[entity];
+        const pageInfo = windowData.pageInfo[entity];
+        assert(rows && pageInfo, "Page info and rows");
+        setForwardChunk(startCursor, {
+          data: rows,
+          status: "bootstrapping",
+          hasMore: pageInfo.hasNextPage,
+          endCursor: pageInfo.endCursor,
+          afterInclusive
+        });
+      }, opts);
+      allUnsubs.set(chunkSubKey("forward", startCursor, afterInclusive), querySub);
+    };
+    const freezeForward = (startCursor, afterInclusive = false) => {
+      const key = makeChunkKey(startCursor, afterInclusive);
+      const currentSub = allUnsubs.get(chunkSubKey("forward", startCursor, afterInclusive));
+      currentSub?.();
+      const chunk = forwardChunks.get(key);
+      if (!chunk?.endCursor)
+        return;
+      const nextSub = db2.subscribeQuery({
+        [entity]: {
+          ...query3,
+          $: {
+            after: startCursor,
+            afterInclusive: chunk.afterInclusive,
+            before: chunk.endCursor,
+            beforeInclusive: true,
+            where: query3.$?.where,
+            fields: query3.$?.fields,
+            order
+          }
+        }
+      }, (frozenData) => {
+        if (frozenData.error) {
+          return sendError(frozenData.error);
+        }
+        const rows = frozenData.data[entity];
+        const pageInfo = frozenData.pageInfo[entity];
+        assert(rows && pageInfo, "Expected rows and pageInfo");
+        setForwardChunk(startCursor, {
+          data: rows,
+          status: "frozen",
+          hasMore: pageInfo.hasNextPage,
+          endCursor: pageInfo.endCursor,
+          afterInclusive: chunk.afterInclusive
+        });
+      }, opts);
+      allUnsubs.set(chunkSubKey("forward", startCursor, afterInclusive), nextSub);
+    };
+    const maybeAdvanceReverse = () => {
+      const tailEntry = Array.from(reverseChunks.entries()).at(-1);
+      if (!tailEntry)
+        return;
+      const [chunkKey, chunk] = tailEntry;
+      if (!chunk?.hasMore)
+        return;
+      if (!chunkHasEndCursor(chunk))
+        return;
+      const advanceKey = `${chunkKey}:${makeCursorKey(chunk.endCursor)}`;
+      if (advanceKey == lastReverseAdvancedChunkKey)
+        return;
+      lastReverseAdvancedChunkKey = advanceKey;
+      freezeReverse(chunkKey, chunk);
+      pushNewReverse(chunk.endCursor);
+    };
+    const loadNextPage = () => {
+      const tailEntry = Array.from(forwardChunks.entries()).at(-1);
+      if (!tailEntry)
+        return;
+      const [chunkKey, chunk] = tailEntry;
+      if (!chunk.endCursor)
+        return;
+      const { cursor: startCursor, afterInclusive } = parseChunkKey(chunkKey);
+      freezeForward(startCursor, afterInclusive);
+      pushNewForward(chunk.endCursor);
+    };
+    starterUnsub = db2.subscribeQuery({
+      [entity]: {
+        ...query3,
+        $: {
+          limit: pageSize,
+          where: query3.$?.where,
+          fields: query3.$?.fields,
+          order
+        }
+      }
+    }, async (starterData) => {
+      if (hasKickstarted)
+        return;
+      if (starterData.error) {
+        return sendError(starterData.error);
+      }
+      const pageInfo = starterData.pageInfo[entity];
+      const rows = starterData?.data?.[entity];
+      assert(rows && pageInfo, "Expected rows and pageInfo");
+      if (rows.length < pageSize) {
+        setForwardChunk(PRE_BOOTSTRAP_CURSOR, {
+          data: rows,
+          status: "pre-bootstrap"
+        });
+        return;
+      }
+      const initialForwardCursor = pageInfo.startCursor;
+      if (!initialForwardCursor) {
+        setForwardChunk(PRE_BOOTSTRAP_CURSOR, {
+          data: rows,
+          status: "pre-bootstrap"
+        });
+        return;
+      }
+      forwardChunks.delete(makeChunkKey(PRE_BOOTSTRAP_CURSOR));
+      pushNewForward(initialForwardCursor, true);
+      pushNewReverse(pageInfo.startCursor);
+      hasKickstarted = true;
+    }, opts);
+    const unsubscribe = () => {
+      if (!isActive)
+        return;
+      isActive = false;
+      starterUnsub?.();
+      starterUnsub = null;
+      for (const unsub of allUnsubs.values()) {
+        unsub?.();
+      }
+      allUnsubs.clear();
+    };
+    return {
+      unsubscribe,
+      loadNextPage
+    };
+  };
+  var splitAndValidateQuery = (fullQuery) => {
+    const entityNames = Object.keys(fullQuery);
+    if (entityNames.length !== 1) {
+      throw new QueryValidationError("subscribeInfiniteQuery expects exactly one entity");
+    }
+    const [entityName, entityQuery] = Object.entries(fullQuery)[0];
+    if (!entityName || !entityQuery) {
+      throw new QueryValidationError("No query provided for infinite query");
+    }
+    return { entityName, entityQuery };
+  };
+
+  // node_modules/@instantdb/core/dist/esm/index.js
+  var defaultConfig2 = {
+    apiURI: "https://api.instantdb.com",
+    websocketURI: "wss://api.instantdb.com/runtime/session"
+  };
+  function initSchemaHashStore() {
+    globalThis.__instantDbSchemaHashStore = globalThis.__instantDbSchemaHashStore ?? /* @__PURE__ */ new WeakMap();
+    return globalThis.__instantDbSchemaHashStore;
+  }
+  function initGlobalInstantCoreStore() {
+    globalThis.__instantDbStore = globalThis.__instantDbStore ?? {};
+    return globalThis.__instantDbStore;
+  }
+  function reactorKey(config) {
+    const adminToken = config.__adminToken;
+    const extraDedupeKey = config.__extraDedupeKey;
+    return config.appId + "_" + (config.websocketURI || "default_ws_uri") + "_" + (config.apiURI || "default_api_uri") + "_" + (adminToken || "client_only") + "_" + config.useDateObjects + "_" + (extraDedupeKey || "");
+  }
+  var globalInstantCoreStore = initGlobalInstantCoreStore();
+  var schemaHashStore = initSchemaHashStore();
+  var Auth = class {
+    constructor(db2) {
+      __publicField(this, "db");
+      /**
+       * Sends a magic code to the user's email address.
+       *
+       * Once you send the magic code, see {@link auth.signInWithMagicCode} to let the
+       * user verify.
+       *
+       * @see https://instantdb.com/docs/auth
+       * @example
+       *  db.auth.sendMagicCode({email: "example@gmail.com"})
+       *    .catch((err) => console.error(err.body?.message))
+       */
+      __publicField(this, "sendMagicCode", (params) => {
+        return this.db.sendMagicCode(params);
+      });
+      /**
+       * Verify a magic code that was sent to the user's email address.
+       *
+       * @see https://instantdb.com/docs/auth
+       *
+       * @example
+       *  db.auth.signInWithMagicCode({email: "example@gmail.com", code: "123456"})
+       *       .catch((err) => console.error(err.body?.message))
+       */
+      __publicField(this, "signInWithMagicCode", (params) => {
+        return this.db.signInWithMagicCode(params);
+      });
+      /**
+       * Sign in a user with a refresh token
+       *
+       * @see https://instantdb.com/docs/backend#frontend-auth-sign-in-with-token
+       *
+       * @example
+       *   // Get the token from your backend
+       *   const token = await fetch('/signin', ...);
+       *   //Sign in
+       *   db.auth.signInWithToken(token);
+       */
+      __publicField(this, "signInWithToken", (token) => {
+        return this.db.signInWithCustomToken(token);
+      });
+      /**
+       * Sign in as guest, creating a new user without email
+       *
+       * @see https://instantdb.com/docs/auth
+       *
+       * @example
+       *   db.auth.signInAsGuest();
+       */
+      __publicField(this, "signInAsGuest", (params) => {
+        return this.db.signInAsGuest(params);
+      });
+      /**
+       * Create an authorization url to sign in with an external provider.
+       *
+       * @see https://instantdb.com/docs/auth
+       *
+       * @example
+       *   // Get the authorization url from your backend
+       *   const url = db.auth.createAuthorizationUrl({
+       *     clientName: "google",
+       *     redirectURL: window.location.href,
+       *   });
+       *
+       *   // Put it in a sign in link
+       *   <a href={url}>Log in with Google</a>
+       */
+      __publicField(this, "createAuthorizationURL", (params) => {
+        return this.db.createAuthorizationURL(params);
+      });
+      /**
+       * Sign in with the id_token from an external provider like Google
+       *
+       * @see https://instantdb.com/docs/auth
+       * @example
+       *   db.auth
+       *  .signInWithIdToken({
+       *    // Token from external service
+       *    idToken: id_token,
+       *    // The name you gave the client when you registered it with Instant
+       *    clientName: "google",
+       *    // The nonce, if any, that you used when you initiated the auth flow
+       *    // with the external service.
+       *    nonce: your_nonce
+       *  })
+       *  .catch((err) => console.error(err.body?.message));
+       *
+       */
+      __publicField(this, "signInWithIdToken", (params) => {
+        return this.db.signInWithIdToken(params);
+      });
+      /**
+       * Sign in with the id_token from an external provider like Google
+       *
+       * @see https://instantdb.com/docs/auth
+       * @example
+       *   db.auth
+       *  .exchangeOAuthCode({
+       *    // code received in redirect from OAuth callback
+       *    code: code
+       *    // The PKCE code_verifier, if any, that you used when you
+       *    // initiated the auth flow
+       *    codeVerifier: your_code_verifier
+       *  })
+       *  .catch((err) => console.error(err.body?.message));
+       *
+       */
+      __publicField(this, "exchangeOAuthCode", (params) => {
+        return this.db.exchangeCodeForToken(params);
+      });
+      /**
+       * OpenID Discovery path for use with tools like
+       * expo-auth-session that use auto-discovery of
+       * OAuth parameters.
+       *
+       * @see https://instantdb.com/docs/auth
+       * @example
+       *   const discovery = useAutoDiscovery(
+       *     db.auth.issuerURI()
+       *   );
+       */
+      __publicField(this, "issuerURI", () => {
+        return this.db.issuerURI();
+      });
+      /**
+       * Sign out the current user
+       */
+      __publicField(this, "signOut", (opts = { invalidateToken: true }) => {
+        return this.db.signOut(opts);
+      });
+      this.db = db2;
+    }
+  };
+  var Storage = class {
+    constructor(db2) {
+      __publicField(this, "db");
+      /**
+       * Uploads file at the provided path.
+       *
+       * @see https://instantdb.com/docs/storage
+       * @example
+       *   const [file] = e.target.files; // result of file input
+       *   const data = await db.storage.uploadFile('photos/demo.png', file);
+       */
+      __publicField(this, "uploadFile", (path, file, opts = {}) => {
+        return this.db.uploadFile(path, file, opts);
+      });
+      /**
+       * Deletes a file by path name.
+       *
+       * @deprecated Use `db.transact` to delete files instead:
+       * @example
+       *   // Delete by id
+       *   db.transact(db.tx.$files[fileId].delete());
+       *
+       *   // Delete by path
+       *   db.transact(db.tx.$files[lookup('path', 'photos/demo.png')].delete());
+       *
+       *   // Delete multiple files
+       *   db.transact(fileIds.map(id => db.tx.$files[id].delete()));
+       *
+       * @see https://instantdb.com/docs/storage
+       */
+      __publicField(this, "delete", (pathname) => {
+        return this.db.deleteFile(pathname);
+      });
+      // Deprecated Storage API (Jan 2025)
+      // ---------------------------------
+      /**
+       * @deprecated. Use `db.storage.uploadFile` instead
+       * remove in the future.
+       */
+      __publicField(this, "upload", (pathname, file) => {
+        return this.db.upload(pathname, file);
+      });
+      /**
+       * @deprecated Use `db.storage.uploadFile` instead
+       */
+      __publicField(this, "put", this.upload);
+      /**
+       * @deprecated. getDownloadUrl will be removed in the future.
+       * Use `useQuery` instead to query and fetch for valid urls
+       *
+       * db.useQuery({
+       *   $files: {
+       *     $: {
+       *       where: {
+       *         path: "moop.png"
+       *       }
+       *     }
+       *   }
+       * })
+       */
+      __publicField(this, "getDownloadUrl", (pathname) => {
+        return this.db.getDownloadUrl(pathname);
+      });
+      this.db = db2;
+    }
+  };
+  var Streams = class {
+    constructor(db2) {
+      __publicField(this, "db");
+      /**
+       * Creates a new ReadableStream for the given clientId.
+       *
+       * @example
+       *   const stream = db.streams.createReadStream({clientId: clientId})
+       *   for await (const chunk of stream) {
+       *     console.log(chunk);
+       *   }
+       */
+      __publicField(this, "createReadStream", (opts) => {
+        return this.db.createReadStream(opts);
+      });
+      /**
+       * Creates a new WritableStream for the given clientId.
+       *
+       * @example
+       *   const writeStream = db.streams.createWriteStream({clientId: clientId})
+       *   const writer = writeStream.getWriter();
+       *   writer.write('Hello world');
+       *   writer.close();
+       */
+      __publicField(this, "createWriteStream", (opts) => {
+        return this.db.createWriteStream(opts);
+      });
+      this.db = db2;
+    }
+  };
+  var InstantCoreDatabase = class {
+    constructor(reactor) {
+      __publicField(this, "_reactor");
+      __publicField(this, "auth");
+      __publicField(this, "storage");
+      __publicField(this, "streams");
+      __publicField(this, "tx", txInit());
+      this._reactor = reactor;
+      this.auth = new Auth(this._reactor);
+      this.storage = new Storage(this._reactor);
+      this.streams = new Streams(this._reactor);
+    }
+    /**
+     * Use this to write data! You can create, update, delete, and link objects
+     *
+     * @see https://instantdb.com/docs/instaml
+     *
+     * @example
+     *   // Create a new object in the `goals` namespace
+     *   const goalId = id();
+     *   db.transact(db.tx.goals[goalId].update({title: "Get fit"}))
+     *
+     *   // Update the title
+     *   db.transact(db.tx.goals[goalId].update({title: "Get super fit"}))
+     *
+     *   // Delete it
+     *   db.transact(db.tx.goals[goalId].delete())
+     *
+     *   // Or create an association:
+     *   todoId = id();
+     *   db.transact([
+     *    db.tx.todos[todoId].update({ title: 'Go on a run' }),
+     *    db.tx.goals[goalId].link({todos: todoId}),
+     *  ])
+     */
+    transact(chunks) {
+      return this._reactor.pushTx(chunks);
+    }
+    getLocalId(name) {
+      return this._reactor.getLocalId(name);
+    }
+    /**
+     * Use this to query your data!
+     *
+     * @see https://instantdb.com/docs/instaql
+     *
+     * @example
+     *  // listen to all goals
+     *  db.subscribeQuery({ goals: {} }, (resp) => {
+     *    console.log(resp.data.goals)
+     *  })
+     *
+     *  // goals where the title is "Get Fit"
+     *  db.subscribeQuery(
+     *    { goals: { $: { where: { title: "Get Fit" } } } },
+     *    (resp) => {
+     *      console.log(resp.data.goals)
+     *    }
+     *  )
+     *
+     *  // all goals, _alongside_ their todos
+     *  db.subscribeQuery({ goals: { todos: {} } }, (resp) => {
+     *    console.log(resp.data.goals)
+     *  });
+     */
+    subscribeQuery(query3, cb, opts) {
+      return this._reactor.subscribeQuery(query3, cb, opts);
+    }
+    /**
+     * Subscribe to a query and incrementally load more items
+     *
+     * Only one top level namespace in the query is allowed.
+     * @example
+     * const { unsubscribe, loadNextPage } = db.subscribeInfiniteQuery({
+     *   posts: {
+     *     $: {
+     *       limit: 20,   // Load 20 posts at a time
+     *       order: {
+     *         createdAt: 'desc',
+     *       },
+     *     },
+     *   },
+     *   (resp) => {
+     *     console.log(resp.data.posts);
+     *   }
+     * });
+     */
+    subscribeInfiniteQuery(query3, cb, opts) {
+      return subscribeInfiniteQuery(this, query3, cb, opts);
+    }
+    /**
+     * Listen for the logged in state. This is useful
+     * for deciding when to show a login screen.
+     *
+     * @see https://instantdb.com/docs/auth
+     * @example
+     *   const unsub = db.subscribeAuth((auth) => {
+     *     if (auth.user) {
+     *     console.log('logged in as', auth.user.email)
+     *    } else {
+     *      console.log('logged out')
+     *    }
+     *  })
+     */
+    subscribeAuth(cb) {
+      return this._reactor.subscribeAuth(cb);
+    }
+    /**
+     * One time query for the logged in state. This is useful
+     * for scenarios where you want to know the current auth
+     * state without subscribing to changes.
+     *
+     * @see https://instantdb.com/docs/auth
+     * @example
+     *   const user = await db.getAuth();
+     *   console.log('logged in as', user.email)
+     */
+    getAuth() {
+      return this._reactor.getAuth();
+    }
+    /**
+     * Listen for connection status changes to Instant. This is useful
+     * for building things like connectivity indicators
+     *
+     * @see https://www.instantdb.com/docs/patterns#connection-status
+     * @example
+     *   const unsub = db.subscribeConnectionStatus((status) => {
+     *     const connectionState =
+     *       status === 'connecting' || status === 'opened'
+     *         ? 'authenticating'
+     *       : status === 'authenticated'
+     *         ? 'connected'
+     *       : status === 'closed'
+     *         ? 'closed'
+     *       : status === 'errored'
+     *         ? 'errored'
+     *       : 'unexpected state';
+     *
+     *     console.log('Connection status:', connectionState);
+     *   });
+     */
+    subscribeConnectionStatus(cb) {
+      return this._reactor.subscribeConnectionStatus(cb);
+    }
+    /**
+     * Observe the app's maintenance-mode state. While read-only, reads and
+     * live queries keep working but writes are rejected. The callback fires
+     * immediately with the current state and again on every change.
+     *
+     * @example
+     *   const unsub = db.subscribeAppStatus(({ isLoading, isReadOnly }) => {
+     *     if (isLoading) return;
+     *     if (isReadOnly) showMaintenanceBanner();
+     *   });
+     */
+    subscribeAppStatus(cb) {
+      return this._reactor.subscribeAppStatus(cb);
+    }
+    /**
+     * Join a room to publish and subscribe to topics and presence.
+     *
+     * @see https://instantdb.com/docs/presence-and-topics
+     * @example
+     * // init
+     * const db = init();
+     * const room = db.joinRoom(roomType, roomId);
+     * // usage
+     * const unsubscribeTopic = room.subscribeTopic("foo", console.log);
+     * const unsubscribePresence = room.subscribePresence({}, console.log);
+     * room.publishTopic("hello", { message: "hello world!" });
+     * room.publishPresence({ name: "joe" });
+     * // later
+     * unsubscribePresence();
+     * unsubscribeTopic();
+     * room.leaveRoom();
+     */
+    joinRoom(roomType = "_defaultRoomType", roomId = "_defaultRoomId", opts) {
+      const leaveRoom = this._reactor.joinRoom(roomType, roomId, opts?.initialPresence);
+      return {
+        leaveRoom,
+        subscribeTopic: (topic, onEvent) => this._reactor.subscribeTopic(roomType, roomId, topic, onEvent),
+        subscribePresence: (opts2, onChange) => this._reactor.subscribePresence(roomType, roomId, opts2, onChange),
+        publishTopic: (topic, data) => this._reactor.publishTopic({ roomType, roomId, topic, data }),
+        publishPresence: (data) => this._reactor.publishPresence(roomType, roomId, data),
+        getPresence: (opts2) => this._reactor.getPresence(roomType, roomId, opts2)
+      };
+    }
+    shutdown() {
+      delete globalInstantCoreStore[reactorKey(this._reactor.config)];
+      this._reactor.shutdown();
+    }
+    /**
+     * Use this for one-off queries.
+     * Returns local data if available, otherwise fetches from the server.
+     * Because we want to avoid stale data, this method will throw an error
+     * if the user is offline or there is no active connection to the server.
+     *
+     * @see https://instantdb.com/docs/instaql
+     *
+     * @example
+     *
+     *  const resp = await db.queryOnce({ goals: {} });
+     *  console.log(resp.data.goals)
+     */
+    queryOnce(query3, opts) {
+      return this._reactor.queryOnce(query3, opts);
+    }
+    /**
+     * @deprecated This is an experimental function that is not yet ready for production use.
+     * Use this function to sync an entire namespace.
+     * It has many limitations that will be removed in the future:
+     * 1. Must be used with an admin token
+     * 2. Does not support permissions
+     * 3. Does not support where clauses
+     * 4. Does not support links
+     * It also does not support multiple top-level namespaces. For example,
+     *  {posts: {}, users: {}} is invalid. Only `posts` or `users` is allowed, but not both.
+     */
+    _syncTableExperimental(query3, cb) {
+      return this._reactor.subscribeTable(query3, cb);
+    }
+  };
+  function schemaHash(schema) {
+    if (!schema) {
+      return "0";
+    }
+    const fromStore = schemaHashStore.get(schema);
+    if (fromStore) {
+      return fromStore;
+    }
+    const hash = weakHash(schema);
+    schemaHashStore.set(schema, hash);
+    return hash;
+  }
+  function schemaChanged(existingClient, newSchema) {
+    return schemaHash(existingClient._reactor.config.schema) !== schemaHash(newSchema);
+  }
+  function init(config, Store, NetworkListener, versions, EventSourceImpl) {
+    const configStrict = {
+      ...config,
+      appId: config.appId?.trim(),
+      useDateObjects: config.useDateObjects ?? false
+    };
+    const existingClient = globalInstantCoreStore[reactorKey(configStrict)];
+    if (existingClient) {
+      if (schemaChanged(existingClient, configStrict.schema)) {
+        existingClient._reactor.updateSchema(configStrict.schema);
+      }
+      return existingClient;
+    }
+    const reactor = new Reactor({
+      ...defaultConfig2,
+      ...configStrict,
+      cardinalityInference: configStrict.schema ? true : false
+    }, Store || IndexedDBStorage, NetworkListener || WindowNetworkListener, { ...versions || {}, "@instantdb/core": version_default }, EventSourceImpl);
+    const client = new InstantCoreDatabase(reactor);
+    globalInstantCoreStore[reactorKey(configStrict)] = client;
+    handleDevtool(configStrict.appId, configStrict.devtool);
+    return client;
+  }
+  function handleDevtool(appId, devtool) {
+    if (typeof window === "undefined" || typeof window.location === "undefined" || typeof document === "undefined") {
+      return;
+    }
+    if (typeof devtool === "boolean" && !devtool) {
+      return;
+    }
+    const config = {
+      position: "bottom-right",
+      allowedHosts: ["localhost"],
+      ...typeof devtool === "object" ? devtool : {}
+    };
+    if (!config.allowedHosts.includes(window.location.hostname)) {
+      return;
+    }
+    createDevtool(appId, config);
+  }
+
+  // client/db.js
+  var APP_ID = true ? "df74ab79-43cc-4fcf-ae3e-cbea87eee6da" : "";
+  var db = APP_ID.length > 0 ? init({ appId: APP_ID }) : null;
+  function hasInstant() {
+    return Boolean(db);
+  }
+
+  // client/storage.js
+  var STORAGE_KEY = "moral-letters-user";
+  var MERGE_KEY_PREFIX = "moral-letters-merged:";
+  var NOTE_APPEND_SEP = "\n\n---\n(From this device)\n---\n\n";
   function normalizePath(path) {
     if (!path) return "/";
     let p = path.split("?")[0].split("#")[0];
@@ -15,87 +9905,264 @@
     }
     return p;
   }
-
-  function load() {
+  function emptyData() {
+    return { bookmarks: [], notes: {} };
+  }
+  function normalizeData(raw) {
+    if (!raw || typeof raw !== "object") return emptyData();
+    const notesIn = raw.notes && typeof raw.notes === "object" && !Array.isArray(raw.notes) ? raw.notes : {};
+    const notes = {};
+    for (const [key, value] of Object.entries(notesIn)) {
+      if (typeof value === "string" && value.trim()) {
+        notes[normalizePath(key)] = value;
+      }
+    }
+    return {
+      bookmarks: Array.isArray(raw.bookmarks) ? [...new Set(raw.bookmarks.map(normalizePath))] : [],
+      notes
+    };
+  }
+  function loadLocal() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { bookmarks: [], notes: {} };
-      const data = JSON.parse(raw);
-      return {
-        bookmarks: Array.isArray(data.bookmarks) ? data.bookmarks.map(normalizePath) : [],
-        notes: data.notes && typeof data.notes === "object" ? data.notes : {},
-      };
+      if (!raw) return emptyData();
+      return normalizeData(JSON.parse(raw));
     } catch {
-      return { bookmarks: [], notes: {} };
+      return emptyData();
     }
   }
-
-  function save(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  function saveLocal(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeData(data)));
   }
-
-  function isBookmarked(data, path) {
-    return data.bookmarks.includes(path);
+  function mergeFlagKey(userId) {
+    return MERGE_KEY_PREFIX + userId;
   }
-
-  function toggleBookmark(path) {
-    const data = load();
-    const i = data.bookmarks.indexOf(path);
-    if (i >= 0) data.bookmarks.splice(i, 1);
-    else data.bookmarks.push(path);
-    save(data);
-    return isBookmarked(data, path);
+  function hasMerged(userId) {
+    try {
+      return localStorage.getItem(mergeFlagKey(userId)) === "1";
+    } catch {
+      return false;
+    }
   }
-
-  function setNote(path, text) {
-    const data = load();
-    if (!text || !text.trim()) delete data.notes[path];
-    else data.notes[path] = text;
-    save(data);
+  function setMerged(userId) {
+    try {
+      localStorage.setItem(mergeFlagKey(userId), "1");
+    } catch {
+    }
   }
-
+  function mergeBookmarks(localPaths, cloudPaths) {
+    return [.../* @__PURE__ */ new Set([...cloudPaths || [], ...localPaths || []])];
+  }
+  function mergeNotes(localNotes, cloudNotes) {
+    const keys = /* @__PURE__ */ new Set([
+      ...Object.keys(localNotes || {}),
+      ...Object.keys(cloudNotes || {})
+    ]);
+    const out = {};
+    for (const key of keys) {
+      const local = localNotes && localNotes[key] || "";
+      const cloud = cloudNotes && cloudNotes[key] || "";
+      const lt = local.trim();
+      const ct = cloud.trim();
+      if (!lt && !ct) continue;
+      if (!lt) out[key] = cloud;
+      else if (!ct) out[key] = local;
+      else if (lt === ct) out[key] = cloud;
+      else out[key] = cloud + NOTE_APPEND_SEP + local;
+    }
+    return out;
+  }
+  function mergeUserData(local, cloud) {
+    return normalizeData({
+      bookmarks: mergeBookmarks(local.bookmarks, cloud.bookmarks),
+      notes: mergeNotes(local.notes, cloud.notes)
+    });
+  }
   function debounce(fn, ms) {
     let t;
-    return function (...args) {
+    return function(...args) {
       clearTimeout(t);
       t = setTimeout(() => fn.apply(this, args), ms);
     };
   }
 
+  // client/user-data.js
+  var authUser = null;
+  var remoteData = null;
+  var unsubQuery = null;
+  var listeners = /* @__PURE__ */ new Set();
+  function getAuthUser() {
+    return authUser;
+  }
+  function getData() {
+    if (authUser && remoteData) return remoteData;
+    return loadLocal();
+  }
+  function onDataChange(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
+  function notify() {
+    for (const fn of listeners) {
+      try {
+        fn();
+      } catch {
+      }
+    }
+  }
+  async function writeRemote(data) {
+    if (!db || !authUser) return;
+    const next = normalizeData(data);
+    remoteData = next;
+    saveLocal(next);
+    await db.transact(
+      db.tx.userData[authUser.id].update({
+        bookmarks: next.bookmarks,
+        notes: next.notes
+      })
+    );
+  }
+  async function persist(data) {
+    const next = normalizeData(data);
+    if (authUser && db) {
+      await writeRemote(next);
+    } else {
+      saveLocal(next);
+    }
+    notify();
+  }
+  function isBookmarked(data, path) {
+    return data.bookmarks.includes(path);
+  }
+  async function toggleBookmark(path) {
+    const data = getData();
+    const i2 = data.bookmarks.indexOf(path);
+    if (i2 >= 0) data.bookmarks.splice(i2, 1);
+    else data.bookmarks.push(path);
+    await persist(data);
+    return isBookmarked(data, path);
+  }
+  async function setNote(path, text) {
+    const data = getData();
+    if (!text || !text.trim()) delete data.notes[path];
+    else data.notes[path] = text;
+    await persist(data);
+  }
+  function parseRemoteRow(row) {
+    if (!row) return emptyData();
+    return normalizeData({
+      bookmarks: row.bookmarks,
+      notes: row.notes
+    });
+  }
+  async function ensureMerged(user, cloudRow) {
+    const cloud = parseRemoteRow(cloudRow);
+    if (hasMerged(user.id)) {
+      remoteData = cloud;
+      saveLocal(cloud);
+      return;
+    }
+    const local = loadLocal();
+    const merged = mergeUserData(local, cloud);
+    remoteData = merged;
+    saveLocal(merged);
+    await db.transact(
+      db.tx.userData[user.id].update({
+        bookmarks: merged.bookmarks,
+        notes: merged.notes
+      })
+    );
+    setMerged(user.id);
+  }
+  function stopQuery() {
+    if (unsubQuery) {
+      unsubQuery();
+      unsubQuery = null;
+    }
+  }
+  function startQuery(user) {
+    stopQuery();
+    if (!db) return;
+    let first = true;
+    unsubQuery = db.subscribeQuery(
+      { userData: { $: { where: { id: user.id } } } },
+      async (resp) => {
+        if (resp.error) {
+          console.error("Instant query error", resp.error);
+          return;
+        }
+        const row = resp.data?.userData?.[0];
+        if (first) {
+          first = false;
+          try {
+            await ensureMerged(user, row);
+          } catch (err) {
+            console.error("Instant merge failed", err);
+            remoteData = parseRemoteRow(row);
+          }
+          notify();
+          return;
+        }
+        remoteData = parseRemoteRow(row);
+        saveLocal(remoteData);
+        notify();
+      }
+    );
+  }
+  function initAuth() {
+    if (!hasInstant() || !db) {
+      authUser = null;
+      remoteData = null;
+      notify();
+      return () => {
+      };
+    }
+    return db.subscribeAuth((auth) => {
+      authUser = auth.user || null;
+      if (!authUser) {
+        stopQuery();
+        remoteData = null;
+        notify();
+        return;
+      }
+      startQuery(authUser);
+    });
+  }
   function initLetterPage() {
     const btn = document.querySelector("[data-bookmark-toggle]");
     const notes = document.querySelector("[data-notes-input]");
     if (!btn && !notes) return;
-
     const path = normalizePath(window.location.pathname);
-    const data = load();
-
-    if (btn) {
-      const update = (on) => {
+    const render = () => {
+      const data = getData();
+      if (btn) {
+        const on = isBookmarked(data, path);
         btn.setAttribute("aria-pressed", on ? "true" : "false");
         btn.textContent = on ? "Bookmarked" : "Bookmark";
         btn.classList.toggle("is-active", on);
-      };
-      update(isBookmarked(data, path));
+      }
+      if (notes && document.activeElement !== notes) {
+        notes.value = data.notes[path] || "";
+      }
+    };
+    render();
+    onDataChange(render);
+    if (btn) {
       btn.addEventListener("click", () => {
-        update(toggleBookmark(path));
+        toggleBookmark(path);
       });
     }
-
     if (notes) {
-      notes.value = data.notes[path] || "";
       notes.addEventListener(
         "input",
         debounce(() => setNote(path, notes.value), 300)
       );
     }
   }
-
   function initBookmarksPage() {
     const listEl = document.querySelector("[data-bookmarks-list]");
     const emptyEl = document.querySelector("[data-bookmarks-empty]");
     if (!listEl || !emptyEl) return;
-
     const catalogEl = document.getElementById("letter-catalog");
     let catalog = [];
     try {
@@ -106,25 +10173,21 @@
     const byPath = Object.fromEntries(
       catalog.map((item) => [normalizePath(item.path), item])
     );
-
     function render() {
-      const data = load();
+      const data = getData();
       const paths = data.bookmarks.slice().sort((a, b) => {
         const na = byPath[a]?.num ?? 9999;
         const nb = byPath[b]?.num ?? 9999;
         return na - nb;
       });
-
       listEl.innerHTML = "";
       if (!paths.length) {
         emptyEl.hidden = false;
         listEl.hidden = true;
         return;
       }
-
       emptyEl.hidden = true;
       listEl.hidden = false;
-
       for (const path of paths) {
         const meta = byPath[path];
         const li = document.createElement("li");
@@ -138,7 +10201,6 @@
         title.textContent = meta ? meta.title : path;
         link.append(num, title);
         li.appendChild(link);
-
         const note = data.notes[path];
         if (note && note.trim()) {
           const preview = document.createElement("p");
@@ -146,20 +10208,17 @@
           preview.textContent = note.trim();
           li.appendChild(preview);
         }
-
         listEl.appendChild(li);
       }
     }
-
     render();
-
+    onDataChange(render);
     const exportBtn = document.querySelector("[data-export]");
     const importInput = document.querySelector("[data-import]");
-
     if (exportBtn) {
       exportBtn.addEventListener("click", () => {
-        const blob = new Blob([JSON.stringify(load(), null, 2)], {
-          type: "application/json",
+        const blob = new Blob([JSON.stringify(getData(), null, 2)], {
+          type: "application/json"
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -169,7 +10228,6 @@
         URL.revokeObjectURL(url);
       });
     }
-
     if (importInput) {
       importInput.addEventListener("change", async () => {
         const file = importInput.files && importInput.files[0];
@@ -177,16 +10235,7 @@
         try {
           const text = await file.text();
           const parsed = JSON.parse(text);
-          const next = {
-            bookmarks: Array.isArray(parsed.bookmarks)
-              ? parsed.bookmarks.map(normalizePath)
-              : [],
-            notes:
-              parsed.notes && typeof parsed.notes === "object"
-                ? parsed.notes
-                : {},
-          };
-          save(next);
+          await persist(normalizeData(parsed));
           render();
         } catch {
           alert("Could not import that file. Expect a JSON export from this site.");
@@ -195,29 +10244,149 @@
       });
     }
   }
-
   function initTocPage() {
     const toc = document.querySelector("[data-toc]");
     if (!toc) return;
-
-    const data = load();
-    const bookmarked = new Set(data.bookmarks);
-
-    toc.querySelectorAll("a[data-path]").forEach((link) => {
-      const path = normalizePath(link.getAttribute("data-path"));
-      const bookmark = link.querySelector(".toc-bookmark");
-      const note = link.querySelector(".toc-note");
-      if (bookmark) bookmark.hidden = !bookmarked.has(path);
-      if (note) {
-        const text = data.notes[path];
-        note.hidden = !(text && text.trim());
-      }
-    });
+    function render() {
+      const data = getData();
+      const bookmarked = new Set(data.bookmarks);
+      toc.querySelectorAll("a[data-path]").forEach((link) => {
+        const path = normalizePath(link.getAttribute("data-path"));
+        const bookmark = link.querySelector(".toc-bookmark");
+        const note = link.querySelector(".toc-note");
+        if (bookmark) bookmark.hidden = !bookmarked.has(path);
+        if (note) {
+          const text = data.notes[path];
+          note.hidden = !(text && text.trim());
+        }
+      });
+    }
+    render();
+    onDataChange(render);
   }
-
+  function initAccountPage() {
+    const root = document.querySelector("[data-account-root]");
+    if (!root) return;
+    const signedOut = root.querySelector("[data-account-signed-out]");
+    const signedIn = root.querySelector("[data-account-signed-in]");
+    const emailStep = root.querySelector("[data-account-email-step]");
+    const codeStep = root.querySelector("[data-account-code-step]");
+    const emailForm = root.querySelector("[data-account-email-form]");
+    const codeForm = root.querySelector("[data-account-code-form]");
+    const emailInput = root.querySelector("[data-account-email]");
+    const codeInput = root.querySelector("[data-account-code]");
+    const sentEmailEl = root.querySelector("[data-account-sent-email]");
+    const userEmailEl = root.querySelector("[data-account-user-email]");
+    const statusEl = root.querySelector("[data-account-status]");
+    const errorEl = root.querySelector("[data-account-error]");
+    const signOutBtn = root.querySelector("[data-account-sign-out]");
+    const backBtn = root.querySelector("[data-account-back]");
+    const unavailable = root.querySelector("[data-account-unavailable]");
+    let sentEmail = "";
+    function setError(msg) {
+      if (!errorEl) return;
+      errorEl.textContent = msg || "";
+      errorEl.hidden = !msg;
+    }
+    function setStatus(msg) {
+      if (!statusEl) return;
+      statusEl.textContent = msg || "";
+      statusEl.hidden = !msg;
+    }
+    function showSignedOut() {
+      if (signedOut) signedOut.hidden = false;
+      if (signedIn) signedIn.hidden = true;
+      if (emailStep) emailStep.hidden = Boolean(sentEmail);
+      if (codeStep) codeStep.hidden = !sentEmail;
+      if (sentEmailEl) sentEmailEl.textContent = sentEmail;
+    }
+    function showSignedIn(user) {
+      if (signedOut) signedOut.hidden = true;
+      if (signedIn) signedIn.hidden = false;
+      if (userEmailEl) userEmailEl.textContent = user.email || "Signed in";
+      sentEmail = "";
+      setError("");
+      setStatus("Your bookmarks and notes sync across devices while you\u2019re signed in.");
+    }
+    function render() {
+      if (!hasInstant()) {
+        if (unavailable) unavailable.hidden = false;
+        if (signedOut) signedOut.hidden = true;
+        if (signedIn) signedIn.hidden = true;
+        return;
+      }
+      if (unavailable) unavailable.hidden = true;
+      const user = getAuthUser();
+      if (user) showSignedIn(user);
+      else showSignedOut();
+    }
+    render();
+    onDataChange(render);
+    if (emailForm) {
+      emailForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setError("");
+        if (!db) return;
+        const email = (emailInput?.value || "").trim();
+        if (!email) return;
+        sentEmail = email;
+        showSignedOut();
+        setStatus("Sending code\u2026");
+        try {
+          await db.auth.sendMagicCode({ email });
+          setStatus("Check your email for a sign-in code.");
+        } catch (err) {
+          sentEmail = "";
+          showSignedOut();
+          setStatus("");
+          setError(err?.body?.message || err?.message || "Could not send code.");
+        }
+      });
+    }
+    if (codeForm) {
+      codeForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setError("");
+        if (!db) return;
+        const code = (codeInput?.value || "").trim();
+        if (!code || !sentEmail) return;
+        setStatus("Verifying\u2026");
+        try {
+          await db.auth.signInWithMagicCode({ email: sentEmail, code });
+          setStatus("");
+          if (codeInput) codeInput.value = "";
+        } catch (err) {
+          setStatus("");
+          setError(err?.body?.message || err?.message || "Invalid code.");
+          if (codeInput) codeInput.value = "";
+        }
+      });
+    }
+    if (backBtn) {
+      backBtn.addEventListener("click", () => {
+        sentEmail = "";
+        setError("");
+        setStatus("");
+        showSignedOut();
+      });
+    }
+    if (signOutBtn) {
+      signOutBtn.addEventListener("click", async () => {
+        setError("");
+        if (!db) return;
+        try {
+          await db.auth.signOut();
+        } catch (err) {
+          setError(err?.body?.message || err?.message || "Could not sign out.");
+        }
+      });
+    }
+  }
   document.addEventListener("DOMContentLoaded", () => {
+    initAuth();
     initLetterPage();
     initBookmarksPage();
     initTocPage();
+    initAccountPage();
   });
 })();

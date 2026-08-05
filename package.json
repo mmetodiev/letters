@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "Seneca's Moral Letters to Lucilius — modern English, for slow reading",
   "scripts": {
-    "build": "eleventy",
-    "serve": "eleventy --serve"
+    "bundle": "node scripts/bundle-client.mjs",
+    "build": "npm run bundle && eleventy",
+    "serve": "npm run bundle && eleventy --serve"
   },
   "license": "ISC",
   "dependencies": {
-    "@11ty/eleventy": "^3.1.2"
+    "@11ty/eleventy": "^3.1.2",
+    "@instantdb/core": "^1.0.60",
+    "esbuild": "^0.28.1"
   }
 }
