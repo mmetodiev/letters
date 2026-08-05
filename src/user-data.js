@@ -205,8 +205,13 @@
 
     toc.querySelectorAll("a[data-path]").forEach((link) => {
       const path = normalizePath(link.getAttribute("data-path"));
-      const mark = link.querySelector(".toc-bookmark");
-      if (mark) mark.hidden = !bookmarked.has(path);
+      const bookmark = link.querySelector(".toc-bookmark");
+      const note = link.querySelector(".toc-note");
+      if (bookmark) bookmark.hidden = !bookmarked.has(path);
+      if (note) {
+        const text = data.notes[path];
+        note.hidden = !(text && text.trim());
+      }
     });
   }
 

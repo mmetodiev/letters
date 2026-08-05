@@ -357,18 +357,23 @@ ol.toc .toc-title {
   flex: 1;
   min-width: 0;
 }
-ol.toc .toc-bookmark {
+ol.toc .toc-markers {
   margin-left: auto;
   flex-shrink: 0;
   align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   color: var(--accent);
   line-height: 0;
 }
-ol.toc .toc-bookmark:not([hidden]) {
+ol.toc .toc-bookmark:not([hidden]),
+ol.toc .toc-note:not([hidden]) {
   display: inline-flex;
   align-items: center;
 }
-ol.toc .toc-bookmark svg {
+ol.toc .toc-bookmark svg,
+ol.toc .toc-note svg {
   display: block;
 }
 
