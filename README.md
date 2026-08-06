@@ -1,6 +1,6 @@
 # Moral Letters to Lucilius
 
-Seneca’s *Moral Letters* in modern English — a static reading site with bookmarks and notes (local, or synced with an account).
+Seneca’s *Moral Letters* in modern English — a static reading site with saved letters and notes (local, or synced with an account).
 
 **Live:** [moral-letters.vercel.app](https://moral-letters.vercel.app) · custom domain: `letters.metodiev.com` (after DNS)
 
@@ -11,10 +11,12 @@ Seneca’s *Moral Letters* in modern English — a static reading site with book
 | `/` | Intro home |
 | `/letters/` | Table of contents |
 | `/letters/letter-NN/` | Individual letters |
-| `/bookmarks/` | Saved letters + note previews |
+| `/saved/` | Saved letters + note previews (newest first) |
 | `/account/` | Magic-code sign-in (InstantDB sync) |
 
-Guests store bookmarks/notes in `localStorage` (`moral-letters-user`). Signed-in users sync via InstantDB. Export/import JSON still works from the bookmarks page.
+`/bookmarks/` redirects to `/saved/`.
+
+Guests store saved letters and notes in `localStorage` (`moral-letters-user`). Signed-in users sync via InstantDB. Export/import JSON still works from the Saved page. Writing a note auto-saves the letter.
 
 ## InstantDB setup
 

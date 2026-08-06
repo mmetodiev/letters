@@ -1,67 +1,26 @@
 ---
 chapterNum: 17
-title: "XVII. On Philosophy and Riches"
+title: "Begin Now, With What You Have"
 ---
 
+You keep telling me you'll give yourself fully to this work once the finances are sorted, once there's enough set aside, once the income is stable enough that poverty won't be a worry. I understand the impulse. I want to tell you why it won't work.
 
-### **1. Philosophy must be applied, not just studied**
-Seneca tells Lucilius that philosophy isn’t something you merely read about — it’s something you *live*.  
-It should shape your actions, your habits, your reactions, and your character.  
-If philosophy doesn’t change how you behave, then it’s just decoration.
+Wealth doesn't arrive and then leave you free. It arrives and creates new obligations, new anxieties, new reasons to wait a little longer before the real work begins. The man with a great estate has more to protect, more to lose, more throngs of people dependent on his attention. The poor man, when the alarm sounds, only has to find the door. When the ship needs to be boarded, he walks on without a retinue. His stomach is easy to fill because it has learned not to demand much.
 
-### **2. Words mean nothing without transformation**
-Seneca warns against becoming someone who can talk brilliantly about virtue but doesn’t practice it.  
-It’s easy to sound wise; it’s hard to *be* wise.  
-The true test of progress is:
-- fewer outbursts  
-- fewer fears  
-- fewer desires  
-- more calmness and consistency  
+I'm not saying poverty is a good in itself. I'm saying it strips away the excuses. And you currently have excuses.
 
-If your life isn’t improving, your studies aren’t helping.
+Here is the thing about postponing: you are already living your life. The time you spend waiting to begin is the beginning. There is no version of yourself in the future who will be readier than you are now, whose conditions will be more favorable, whose ledger will be finally closed. That person doesn't exist. The question is only what you do with the life you actually have, right now, with the resources you actually have.
 
-### **3. Philosophy should make you better, not just smarter**
-The goal isn’t to become skilled in argument or clever in debate.  
-The goal is to:
-- reduce suffering  
-- eliminate unnecessary fears  
-- strengthen your judgment  
-- become more self‑controlled  
+Begin with philosophy. Not as a supplement, not as the last item on the list of things to acquire. First. If you have nothing, wisdom first — it costs nothing and requires nothing except your attention. If you have something, wisdom first — because you don't know whether what you have is already too much.
 
-Philosophy is medicine for the soul — not entertainment.
+**If anything forbids you to live nobly, nothing forbids you to die nobly.** Start from that, and work backward. The life worth living and the death worth dying are made of the same material.
 
-### **4. Don’t admire philosophy from a distance**
-Some people admire philosophy the way they admire a beautiful house — from the outside.  
-They like the idea of wisdom, but they don’t want to do the work.  
-Seneca urges Lucilius to move from admiration to practice.  
-Wisdom must be lived, not displayed.
+Today's thought, and I owe it to Epicurus:
 
-### **5. True progress is visible in your daily life**
-Seneca says you can measure your progress by asking:
-- Am I calmer than before?  
-- Do I get angry less often?  
-- Do I desire fewer things?  
-- Am I more independent of fortune?  
+> The acquisition of riches has been for many men, not an end, but a change, of troubles.
 
-If the answer is yes, you’re improving.  
-If not, you’re just collecting words.
+The fault is never in the money. It's in the mind that money finds when it arrives. If poverty was a burden to you, riches will be a burden too — a heavier one, more ornate, more surrounded by people with claims on it. You carry the sickness with you wherever you go. A sick man is no better off on a golden bed than a wooden one.
 
-### **6. Philosophy should make you self‑sufficient**
-The more you grow, the less you depend on:
-- luck  
-- possessions  
-- praise  
-- other people’s opinions  
+The cure is not a different bed. It's a different mind.
 
-The wise person stands on his own foundation.  
-He doesn’t collapse when circumstances change.
-
-### **7. Today’s idea: philosophy is a guide, not a performance**
-Seneca ends by reminding Lucilius that philosophy is not about sounding impressive.  
-It’s about becoming:
-- more just  
-- more courageous  
-- more disciplined  
-- more free  
-
-The goal is not to talk about virtue, but to *become* virtuous.
+Yours, beginning now,

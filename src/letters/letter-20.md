@@ -1,78 +1,29 @@
 ---
 chapterNum: 20
-title: "XX. On Practising what you Preach"
+title: "Deed and Word"
 ---
 
-### **1. Philosophy must show up in your actions**
-Seneca tells Lucilius that real progress isn’t measured by how well you talk or write about philosophy, but by:
-- a stronger, steadier heart  
-- fewer desires  
-- more self‑control  
 
-Words mean nothing unless your life backs them up.  
-**Prove your philosophy through behavior, not speeches.**
+Here's what I want from you, and I'll say it plainly: not more eloquent letters about progress, but evidence of it. The test isn't in writing. It isn't in how well you articulate the ideas we've been discussing. It's in the stoutness of heart you show when something you want is within reach and you let it go, or when something you fear arrives and you don't flinch.
 
-### **2. Philosophy is for living, not performing**
-Some people study philosophy to impress crowds or win debates.  
-Seneca says this is the opposite of what philosophy is for.  
-Its purpose is to:
-- align your actions with your values  
-- make your inner life consistent  
-- ensure you are the same person in public and in private  
+Philosophy teaches us to act, not to speak. Its highest requirement is that the inner life and the outer life be the same color — that you are the same person at home and in public, the same in comfort and in difficulty, the same when observed and when no one is looking. This is harder than it sounds, and almost nobody achieves it completely. But you can always travel the same path, even if the pace varies.
 
-The highest proof of wisdom is **harmony between word and deed**.
+Watch yourself for the obvious inconsistencies first: lavish for yourself and meager for others, or the reverse. Frugal at the table and extravagant in the architecture. Humble in private and swelling in public. These discordances are not small failures — they are evidence of a mind still unsettled, still performing rather than living.
 
-### **3. Choose one standard and live by it**
-Seneca warns against inconsistency:
-- living frugally at home but showing off in public  
-- eating simple meals but building luxurious houses  
-- preaching simplicity while chasing status  
+Here is the definition of wisdom I keep returning to, the one that cuts through all the elaborate formulations:
 
-This inconsistency comes from not knowing what you truly want — or from constantly changing your mind.  
-Wisdom means **wanting the same things consistently**, and wanting only what is right.
+> Always desiring the same things, and always refusing the same things.
 
-### **4. Most people don’t know what they want**
-Desires shift from day to day.  
-People commit to something, then abandon it, then return to it again.  
-Life becomes a game of constant switching.  
-Seneca urges Lucilius to stay on the path he has chosen — even if perfection is far away.
+You can omit the caveat that what you desire should be right — because nothing maintains its hold on a person consistently unless it actually is right. Pleasure, reputation, wealth: watch and you'll see how they change from day to day, how they call to you and then repel you, how the person organized around them is always adjusting, always negotiating, never settled. The person who has found what is genuinely good stops shifting.
 
-### **5. Don’t fear poverty — it reveals your true friends**
-Lucilius worries about supporting his large household if he simplifies his life.  
-Seneca replies:
-- if you stop supporting them, they’ll support themselves  
-- poverty teaches lessons wealth never can  
-- poverty reveals who truly loves you and who only loves your money  
+Today's thought, from Epicurus, and I give it to you directly:
 
-If only for that reason, poverty is worth embracing.
+> Your words will be more imposing if you sleep on a cot and wear rags. For in that case you will not be merely saying them; you will be demonstrating their truth.
 
-### **6. Be content with what comes from within**
-Seneca urges Lucilius to rely on himself for happiness, not on external goods.  
-Pray only for inner strength; leave everything else to the gods.  
-Lower yourself to simple conditions — the kind no one can take from you.
+I watched a man speak about poverty once, a man who owned nothing and asked for nothing, and his words had a weight that no comfortable philosopher's words ever had. He wasn't describing a position — he was witnessing to it. The demonstration was the argument.
 
-### **7. Today’s idea: live your philosophy, don’t just recite it**
-Seneca quotes Epicurus:  
-**“Your words carry more weight if you sleep on a simple bed and wear simple clothes.”**  
-People who live simply speak with authority.  
-Seneca admires the Cynic philosopher Demetrius because he *embodies* his teachings — he lives with almost nothing.
+I'm not asking you to sell everything and sleep on the floor. I'm asking you to practice. Reserve some days for it. Let the rehearsal make the possibility real. No man is born rich. Every man begins with milk and rags. And yet somehow kingdoms are too small for us.
 
-### **8. True greatness is being unspoiled by wealth**
-You don’t have to be poor to be wise.  
-You can live among riches and still be free from them — if you treat them lightly.  
-The real test is whether you can lose wealth without losing yourself.
+Come back to what's actually enough. It's closer than you think.
 
-### **9. Practice poverty to make it easy to endure**
-Seneca recommends occasionally living as if you were poor:
-- simple food  
-- simple clothes  
-- simple sleeping arrangements  
-
-Not because poverty is “better,” but because practicing it removes fear.  
-Once you’ve rehearsed hardship, you stop being intimidated by it.  
-And you remember how little nature actually requires.
-
-### **10. We are born with nothing — and need very little**
-Every human begins life with milk and rags.  
-Yet as adults, entire kingdoms feel too small for our desires.  
-Practicing simplicity brings us back to sanity.
+Yours, practicing what I preach,

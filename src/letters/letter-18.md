@@ -1,46 +1,28 @@
 ---
 chapterNum: 18
-title: "XVIII. On Festivals and Fasting"
+title: "Practice Being Poor"
 ---
 
+The whole city is in a fever of celebration, and I find myself thinking about whether to join in or hold apart — and then thinking that the question itself is the wrong one.
 
-### **1. Festivals and holidays shouldn’t derail your discipline**
-Seneca writes during the Saturnalia, a time of loud celebrations, drinking, and chaos.  
-He tells Lucilius that a wise person doesn’t need to hide from noise or disorder — inner calm should remain intact even when the world is rowdy.  
-If your peace depends on silence, it isn’t real peace.
+The right answer isn't to refuse the holiday. It's to participate without being swept away by it. There's more self-control in that than in conspicuous abstinence: to do what the crowd does, but differently — neither performing restraint nor losing yourself in excess. Keep the holiday. Just keep yourself too.
 
-### **2. You should be able to stay steady in any environment**
-Seneca argues that the mind should be strong enough to stay focused even in the middle of distractions.  
-If you can only think clearly in perfect conditions, you’re not truly trained.  
-Philosophy should make you resilient, not delicate.
+But here's the practice I actually want to recommend, and it has nothing to do with the festival: set aside some days — a few each month, more than you think — when you eat the simplest possible food, wear the plainest clothes, and strip the day of everything that isn't necessary. Then sit with the question: *is this the condition I feared?*
 
-### **3. Don’t imitate the crowd — but don’t isolate yourself either**
-During festivals, people tend to overindulge.  
-Seneca says you don’t need to join in the excess, but you also shouldn’t act superior or aloof.  
-Blend in without losing yourself.  
-Participate lightly, but keep your judgment and moderation.
+This is not asceticism for its own sake. It's training. The soldier digs earthworks in peacetime not because the earthworks are needed now but because the arms need to remember what they're for. When the crisis actually arrives — and it will arrive, in whatever form fortune chooses — the person who has rehearsed poverty will not flinch. The person who has only ever known comfort will.
 
-### **4. Freedom doesn’t mean chaos**
-Saturnalia temporarily made slaves “free,” but Seneca uses this as a metaphor:  
-Most people think freedom means doing whatever they want.  
-True freedom is the opposite — it’s self‑control.  
-A person ruled by desires, impulses, or habits is not free at all.
+Epicurus used to do this, and he was supposed to be the philosopher of pleasure. He tested himself on barley and water, not because he enjoyed it, but to discover how far he actually fell short of happiness when the comforts were removed. His report: not very far. The pleasure of needing little is quieter than the pleasure of having much, but it is steadier, and fortune cannot take it.
 
-### **5. Philosophy frees you from inner slavery**
-Seneca says the worst slavery is internal:
-- being ruled by fear  
-- being ruled by pleasure  
-- being ruled by other people’s opinions  
-- being ruled by cravings  
+> This is forestalling the spear-thrusts of fortune. Become intimate with poverty so it cannot catch you off guard.
 
-Philosophy teaches you to govern yourself.  
-Once you master your mind, no external condition can enslave you.
+When you find that a simple meal satisfies, and that the satisfaction is real — not forced, not pretended — you'll know something about yourself that no amount of comfortable living can teach you. You'll know where your actual floor is. And knowing that, you can walk anywhere without fear.
 
-### **6. Today’s idea: the wise person is free even in chains**
-Seneca ends with a powerful thought:  
-**Freedom is not about your external condition — it’s about your inner condition.**  
-A wise person can be physically bound yet spiritually free.  
-A foolish person can be surrounded by luxury yet enslaved by his own desires.
+One more thing before I close, because this letter needs a final thought and it arrived today from Epicurus:
 
-Freedom is a state of soul, not a social status.
+> Ungoverned anger begets madness.
 
+Watch where your anger actually starts. Not in the obvious provocations — those you expect and can prepare for. Watch for it in love, in jest, in the small daily frictions. The flame doesn't care how great it was; it cares what it falls upon. A tiny spark in dry wood is more dangerous than a great fire falling on stone.
+
+Tend the material, not just the flame.
+
+Yours, fasting occasionally and better for it,

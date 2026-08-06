@@ -25,13 +25,13 @@ permalink: /index.html
 
 <nav class="home-actions" aria-label="Primary">
   <a class="home-cta" href="/letters/">Read the letters</a>
-  <a class="home-cta home-cta-secondary" href="/bookmarks/">Your bookmarks</a>
+  <a class="home-cta home-cta-secondary" href="/saved/">Saved</a>
 </nav>
 
 <p class="home-start">
   Or begin with
   {% set first = collections.letters | letterByNum(1) %}
-  <a href="{{ first.url }}">{{ site.chapterLabel }} 1: {{ first.data.title }}</a>.
+  <a href="{{ first.url }}">{{ first.data.title }}</a>.
 </p>
 
 <p class="home-about">

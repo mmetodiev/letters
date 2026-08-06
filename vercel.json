@@ -1,5 +1,9 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "_site",
-  "framework": null
+  "framework": null,
+  "redirects": [
+    { "source": "/bookmarks", "destination": "/saved/", "permanent": true },
+    { "source": "/bookmarks/", "destination": "/saved/", "permanent": true }
+  ]
 }

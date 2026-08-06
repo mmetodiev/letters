@@ -24,7 +24,6 @@
 {% for item in collections.letters %}
   <li>
     <a href="{{ item.url }}" data-path="{{ item.url }}">
-      <span class="toc-num">{{ site.chapterLabel }} {{ item.data.chapterNum }}</span>
       <span class="toc-title">{{ item.data.title }}</span>
       <span class="toc-markers">
         <span class="toc-note" hidden title="Has notes" aria-label="Has notes">
@@ -32,7 +31,7 @@
             <path fill="currentColor" d="M6 2h9l5 5v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm8 1.5V8h4.5L14 3.5zM8 11h8v1.5H8V11zm0 3.5h8V16H8v-1.5zm0 3.5h5V19H8v-1.5z"/>
           </svg>
         </span>
-        <span class="toc-bookmark" hidden title="Bookmarked" aria-label="Bookmarked">
+        <span class="toc-saved" hidden title="Saved" aria-label="Saved">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
             <path fill="currentColor" d="M6 2h12a1 1 0 0 1 1 1v19l-7-4-7 4V3a1 1 0 0 1 1-1z"/>
           </svg>

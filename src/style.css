@@ -238,24 +238,24 @@ blockquote.epictetus footer {
   font-weight: 500;
 }
 
-/* ── Footer nav ── */
-nav.week-nav-bottom {
+/* ── Letter footer ── */
+nav.letter-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
   font-family: var(--font-sans);
   font-size: 0.85rem;
 }
-nav.week-nav-bottom a {
+nav.letter-footer a {
   color: var(--accent);
   text-decoration: none;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--accent);
   border-radius: 4px;
 }
-nav.week-nav-bottom a:hover {
+nav.letter-footer a:hover {
   background: var(--accent);
   color: #fff;
 }
@@ -324,7 +324,10 @@ nav.site-breadcrumbs a:hover {
 nav.site-breadcrumbs li[aria-current="page"] {
   color: var(--fg);
   font-weight: 500;
-  max-width: 100%;
+  max-width: min(100%, 22rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 ol.toc {
@@ -346,13 +349,6 @@ ol.toc li a {
 ol.toc li a:hover {
   background: var(--accent-lt);
 }
-ol.toc .toc-num {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--accent);
-  min-width: 3rem;
-}
 ol.toc .toc-title {
   font-size: 1.05rem;
   flex: 1;
@@ -368,12 +364,12 @@ ol.toc .toc-markers {
   color: var(--accent);
   line-height: 0;
 }
-ol.toc .toc-bookmark:not([hidden]),
+ol.toc .toc-saved:not([hidden]),
 ol.toc .toc-note:not([hidden]) {
   display: inline-flex;
   align-items: center;
 }
-ol.toc .toc-bookmark svg,
+ol.toc .toc-saved svg,
 ol.toc .toc-note svg {
   display: block;
 }
@@ -476,18 +472,22 @@ ol.toc-books .toc-desc {
   line-height: 1.7;
 }
 
-/* ── Letter toolbar + notes ── */
-.letter-toolbar {
+/* ── Letter header + notes ── */
+.letter-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 2rem;
 }
-.letter-toolbar .week-number {
+.letter-header h1 {
+  flex: 1;
+  min-width: 0;
   margin-bottom: 0;
 }
-.bookmark-btn {
+.save-btn {
+  flex-shrink: 0;
+  margin-top: 0.35rem;
   font-family: var(--font-sans);
   font-size: 0.8rem;
   font-weight: 600;
@@ -498,8 +498,8 @@ ol.toc-books .toc-desc {
   padding: 0.35rem 0.75rem;
   cursor: pointer;
 }
-.bookmark-btn:hover,
-.bookmark-btn.is-active {
+.save-btn:hover,
+.save-btn.is-active {
   background: var(--accent);
   color: #fff;
 }
@@ -526,34 +526,34 @@ ol.toc-books .toc-desc {
   outline-offset: 1px;
 }
 
-/* ── Bookmarks page ── */
-.bookmarks-empty {
+/* ── Saved page ── */
+.saved-empty {
   color: var(--muted);
   text-align: center;
   padding: 2rem 0;
 }
-.bookmarks-list {
+.saved-list {
   list-style: none;
   padding: 0;
   margin: 0 0 2.5rem;
 }
-.bookmarks-list li {
+.saved-list li {
   border-bottom: 1px solid var(--border);
   padding: 0.8rem 0.25rem 1rem;
 }
-.bookmarks-list li a {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
+.saved-list li a {
+  display: block;
   text-decoration: none;
   color: var(--fg);
 }
-.bookmarks-list li a:hover {
+.saved-list li a:hover {
   background: var(--accent-lt);
 }
-.bookmark-note-preview {
+.saved-list .toc-title {
+  font-size: 1.05rem;
+}
+.saved-note-preview {
   margin: 0.5rem 0 0 0;
-  padding-left: calc(3rem + 1rem);
   font-size: 0.9rem;
   color: var(--muted);
   font-style: italic;
@@ -598,7 +598,7 @@ ol.toc-books .toc-desc {
   background: var(--accent-lt);
 }
 
-/* ── Account link (home + bookmarks) ── */
+/* ── Account link (home + saved) ── */
 .account-link {
   position: absolute;
   top: 1.25rem;
@@ -692,8 +692,8 @@ ol.toc-books .toc-desc {
 /* ── Print ── */
 @media print {
   body { max-width: 100%; padding: 1cm; }
-  nav.week-nav, nav.week-nav-bottom,
-  .letter-toolbar, .letter-notes, .data-transfer,
+  nav.week-nav, nav.letter-footer,
+  .letter-header .save-btn, .letter-notes, .data-transfer,
   .account-link { display: none; }
   .practice { border-width: 1px; }
   blockquote.epictetus { background: #f5f5f5; }

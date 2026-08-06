@@ -9906,7 +9906,7 @@
     return p;
   }
   function emptyData() {
-    return { bookmarks: [], notes: {} };
+    return { bookmarks: {}, notes: {} };
   }
   function normalizeData(raw) {
     if (!raw || typeof raw !== "object") return emptyData();
@@ -9917,10 +9917,25 @@
         notes[normalizePath(key)] = value;
       }
     }
-    return {
-      bookmarks: Array.isArray(raw.bookmarks) ? [...new Set(raw.bookmarks.map(normalizePath))] : [],
-      notes
-    };
+    const bookmarks = {};
+    if (Array.isArray(raw.bookmarks)) {
+      const base = Date.now();
+      raw.bookmarks.forEach((path, i2) => {
+        bookmarks[normalizePath(path)] = base - i2;
+      });
+    } else if (raw.bookmarks && typeof raw.bookmarks === "object") {
+      for (const [key, value] of Object.entries(raw.bookmarks)) {
+        const path = normalizePath(key);
+        bookmarks[path] = typeof value === "number" && Number.isFinite(value) ? value : 0;
+      }
+    }
+    for (const path of Object.keys(notes)) {
+      if (bookmarks[path] == null) bookmarks[path] = 0;
+    }
+    return { bookmarks, notes };
+  }
+  function savedPathsNewestFirst(data) {
+    return Object.entries(data.bookmarks || {}).sort((a, b) => b[1] - a[1]).map(([path]) => path);
   }
   function loadLocal() {
     try {
@@ -9950,8 +9965,20 @@
     } catch {
     }
   }
-  function mergeBookmarks(localPaths, cloudPaths) {
-    return [.../* @__PURE__ */ new Set([...cloudPaths || [], ...localPaths || []])];
+  function mergeBookmarks(localMap, cloudMap) {
+    const keys = /* @__PURE__ */ new Set([
+      ...Object.keys(localMap || {}),
+      ...Object.keys(cloudMap || {})
+    ]);
+    const out = {};
+    for (const key of keys) {
+      const local = localMap?.[key];
+      const cloud = cloudMap?.[key];
+      if (local == null) out[key] = cloud;
+      else if (cloud == null) out[key] = local;
+      else out[key] = Math.max(local, cloud);
+    }
+    return out;
   }
   function mergeNotes(localNotes, cloudNotes) {
     const keys = /* @__PURE__ */ new Set([
@@ -10031,21 +10058,37 @@
     }
     notify();
   }
-  function isBookmarked(data, path) {
-    return data.bookmarks.includes(path);
+  function isSaved(data, path) {
+    return data.bookmarks[path] != null;
   }
-  async function toggleBookmark(path) {
+  async function toggleSave(path) {
     const data = getData();
-    const i2 = data.bookmarks.indexOf(path);
-    if (i2 >= 0) data.bookmarks.splice(i2, 1);
-    else data.bookmarks.push(path);
+    if (isSaved(data, path)) {
+      const note = data.notes[path];
+      if (note && note.trim()) {
+        const ok = window.confirm(
+          "Remove this letter from Saved? Your note will also be deleted."
+        );
+        if (!ok) return true;
+        delete data.notes[path];
+      }
+      delete data.bookmarks[path];
+    } else {
+      data.bookmarks[path] = Date.now();
+    }
     await persist(data);
-    return isBookmarked(data, path);
+    return isSaved(data, path);
   }
   async function setNote(path, text) {
     const data = getData();
-    if (!text || !text.trim()) delete data.notes[path];
-    else data.notes[path] = text;
+    if (!text || !text.trim()) {
+      delete data.notes[path];
+    } else {
+      data.notes[path] = text;
+      if (data.bookmarks[path] == null) {
+        data.bookmarks[path] = Date.now();
+      }
+    }
     await persist(data);
   }
   function parseRemoteRow(row) {
@@ -10129,16 +10172,16 @@
     });
   }
   function initLetterPage() {
-    const btn = document.querySelector("[data-bookmark-toggle]");
+    const btn = document.querySelector("[data-save-toggle]");
     const notes = document.querySelector("[data-notes-input]");
     if (!btn && !notes) return;
     const path = normalizePath(window.location.pathname);
     const render = () => {
       const data = getData();
       if (btn) {
-        const on = isBookmarked(data, path);
+        const on = isSaved(data, path);
         btn.setAttribute("aria-pressed", on ? "true" : "false");
-        btn.textContent = on ? "Bookmarked" : "Bookmark";
+        btn.textContent = on ? "Saved" : "Save";
         btn.classList.toggle("is-active", on);
       }
       if (notes && document.activeElement !== notes) {
@@ -10149,7 +10192,7 @@
     onDataChange(render);
     if (btn) {
       btn.addEventListener("click", () => {
-        toggleBookmark(path);
+        toggleSave(path);
       });
     }
     if (notes) {
@@ -10159,9 +10202,9 @@
       );
     }
   }
-  function initBookmarksPage() {
-    const listEl = document.querySelector("[data-bookmarks-list]");
-    const emptyEl = document.querySelector("[data-bookmarks-empty]");
+  function initSavedPage() {
+    const listEl = document.querySelector("[data-saved-list]");
+    const emptyEl = document.querySelector("[data-saved-empty]");
     if (!listEl || !emptyEl) return;
     const catalogEl = document.getElementById("letter-catalog");
     let catalog = [];
@@ -10175,11 +10218,7 @@
     );
     function render() {
       const data = getData();
-      const paths = data.bookmarks.slice().sort((a, b) => {
-        const na = byPath[a]?.num ?? 9999;
-        const nb = byPath[b]?.num ?? 9999;
-        return na - nb;
-      });
+      const paths = savedPathsNewestFirst(data);
       listEl.innerHTML = "";
       if (!paths.length) {
         emptyEl.hidden = false;
@@ -10193,18 +10232,15 @@
         const li = document.createElement("li");
         const link = document.createElement("a");
         link.href = path;
-        const num = document.createElement("span");
-        num.className = "toc-num";
-        num.textContent = meta ? `Letter ${meta.num}` : "Letter";
         const title = document.createElement("span");
         title.className = "toc-title";
         title.textContent = meta ? meta.title : path;
-        link.append(num, title);
+        link.append(title);
         li.appendChild(link);
         const note = data.notes[path];
         if (note && note.trim()) {
           const preview = document.createElement("p");
-          preview.className = "bookmark-note-preview";
+          preview.className = "saved-note-preview";
           preview.textContent = note.trim();
           li.appendChild(preview);
         }
@@ -10223,7 +10259,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "moral-letters-bookmarks.json";
+        a.download = "moral-letters-saved.json";
         a.click();
         URL.revokeObjectURL(url);
       });
@@ -10249,12 +10285,11 @@
     if (!toc) return;
     function render() {
       const data = getData();
-      const bookmarked = new Set(data.bookmarks);
       toc.querySelectorAll("a[data-path]").forEach((link) => {
         const path = normalizePath(link.getAttribute("data-path"));
-        const bookmark = link.querySelector(".toc-bookmark");
+        const saved = link.querySelector(".toc-saved");
         const note = link.querySelector(".toc-note");
-        if (bookmark) bookmark.hidden = !bookmarked.has(path);
+        if (saved) saved.hidden = !isSaved(data, path);
         if (note) {
           const text = data.notes[path];
           note.hidden = !(text && text.trim());
@@ -10306,7 +10341,7 @@
       if (userEmailEl) userEmailEl.textContent = user.email || "Signed in";
       sentEmail = "";
       setError("");
-      setStatus("Your bookmarks and notes sync across devices while you\u2019re signed in.");
+      setStatus("Your saved letters and notes sync across devices while you\u2019re signed in.");
     }
     function render() {
       if (!hasInstant()) {
@@ -10385,7 +10420,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     initAuth();
     initLetterPage();
-    initBookmarksPage();
+    initSavedPage();
     initTocPage();
     initAccountPage();
   });

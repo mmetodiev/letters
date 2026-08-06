@@ -19,11 +19,16 @@ export function normalizePath(path) {
 }
 
 export function emptyData() {
-  return { bookmarks: [], notes: {} };
+  return { bookmarks: {}, notes: {} };
 }
 
+/**
+ * bookmarks: Record<path, savedAtMs> — presence means Saved.
+ * Legacy array form is migrated; notes-only paths are promoted into Saved.
+ */
 export function normalizeData(raw) {
   if (!raw || typeof raw !== "object") return emptyData();
+
   const notesIn =
     raw.notes && typeof raw.notes === "object" && !Array.isArray(raw.notes)
       ? raw.notes
@@ -34,12 +39,32 @@ export function normalizeData(raw) {
       notes[normalizePath(key)] = value;
     }
   }
-  return {
-    bookmarks: Array.isArray(raw.bookmarks)
-      ? [...new Set(raw.bookmarks.map(normalizePath))]
-      : [],
-    notes,
-  };
+
+  /** @type {Record<string, number>} */
+  const bookmarks = {};
+  if (Array.isArray(raw.bookmarks)) {
+    const base = Date.now();
+    raw.bookmarks.forEach((path, i) => {
+      bookmarks[normalizePath(path)] = base - i;
+    });
+  } else if (raw.bookmarks && typeof raw.bookmarks === "object") {
+    for (const [key, value] of Object.entries(raw.bookmarks)) {
+      const path = normalizePath(key);
+      bookmarks[path] = typeof value === "number" && Number.isFinite(value) ? value : 0;
+    }
+  }
+
+  for (const path of Object.keys(notes)) {
+    if (bookmarks[path] == null) bookmarks[path] = 0;
+  }
+
+  return { bookmarks, notes };
+}
+
+export function savedPathsNewestFirst(data) {
+  return Object.entries(data.bookmarks || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([path]) => path);
 }
 
 export function loadLocal() {
@@ -76,8 +101,20 @@ export function setMerged(userId) {
   }
 }
 
-export function mergeBookmarks(localPaths, cloudPaths) {
-  return [...new Set([...(cloudPaths || []), ...(localPaths || [])])];
+export function mergeBookmarks(localMap, cloudMap) {
+  const keys = new Set([
+    ...Object.keys(localMap || {}),
+    ...Object.keys(cloudMap || {}),
+  ]);
+  const out = {};
+  for (const key of keys) {
+    const local = localMap?.[key];
+    const cloud = cloudMap?.[key];
+    if (local == null) out[key] = cloud;
+    else if (cloud == null) out[key] = local;
+    else out[key] = Math.max(local, cloud);
+  }
+  return out;
 }
 
 export function mergeNotes(localNotes, cloudNotes) {

@@ -1,50 +1,30 @@
 ---
 chapterNum: 19
-title: "XIX. On Worldliness and Retirement"
+title: "Come In from the High Seas"
 ---
 
+I want you to withdraw. Not completely, not dramatically, not in a way that announces itself as philosophy in action — just gradually, steadily, back toward yourself.
 
-### **1. Don’t let your mood depend on the crowd**
-Seneca tells Lucilius not to let the behavior of others dictate his own emotional state.  
-Crowds can be noisy, chaotic, or foolish — but a wise person stays steady.  
-Your peace should come from within, not from the environment around you.
+I know what you'll say: how do I leave? I'll tell you how: the same way you entered. You ventured a great deal for money, endured a great deal for position, took on considerable risk for the sake of a title. Do you imagine leisure requires less courage than ambition? The question is only whether you dare something to gain freedom, or whether you wait until the succession of responsibilities hands you to the next one, which will demand the same and then yield more of the same.
 
-### **2. Avoid people who make you worse**
-Seneca warns that the wrong company can corrupt even strong characters.  
-We unconsciously imitate the habits, speech, and attitudes of those around us.  
-If you spend time with people who complain, gossip, brag, or indulge, you’ll start doing the same.  
-Choose companions who elevate you, not those who drag you down.
+There is a pattern here worth seeing clearly. One desire ends where another begins. You will not reach a point where everything has been acquired and you are finally free to rest. That point doesn't exist. The person who waits for it is waiting for something that will never come, and the waiting is itself a life being spent.
 
-### **3. Solitude is useful — but only if you use it well**
-Being alone isn’t enough; you must *do something worthwhile* with your solitude.  
-Some people are miserable when alone because they can’t stand their own thoughts.  
-Philosophy trains you to be your own good company — to think clearly, reflect, and grow.
+Consider what you would actually be leaving. The morning callers? They are not there for you — they are there for what you can give them. A lonely old man changes his will and the visitors transfer to the next door by evening. The friendships formed around your position are friendships with the position. What remains if you step down from it?
 
-### **4. The mind needs training just like the body**
-Seneca compares mental training to physical training:  
-- the body grows strong through repeated effort  
-- the mind grows strong through repeated reflection  
+What remains is you. And you haven't spent much time with that recently.
 
-If you don’t practice good thinking, your mind becomes weak and easily swayed.
+**Would you rather be poor and sated, or rich and hungry?** Prosperity is not only greedy itself — it exposes you to everyone else's greed as well. And as long as nothing satisfies you, you cannot satisfy anyone.
 
-### **5. Don’t drift through life — steer it**
-Most people live reactively, pushed around by circumstances.  
-The wise person lives intentionally, choosing:
-- what to think  
-- what to value  
-- what to avoid  
-- what to pursue  
+In retirement, everything will be on a smaller scale. But you will be enough for yourself. And that is more than you currently have.
 
-Philosophy gives you a compass so you don’t wander aimlessly.
+Here's today's thought, from Epicurus, and it is the real argument for what I'm recommending:
 
-### **6. Today’s idea: choose your influences carefully**
-Seneca ends with a powerful reminder:  
-**You become like the people you spend time with.**  
-If you surround yourself with the ambitious, you’ll become restless.  
-If you surround yourself with the fearful, you’ll become anxious.  
-If you surround yourself with the wise, you’ll grow wiser.
+> You must reflect carefully beforehand with whom you are to eat and drink, rather than what you are to eat and drink. For a dinner of meats without the company of a friend is like the life of a lion or a wolf.
 
-Your environment shapes you — so choose it deliberately.
+You cannot choose your companions while your door is open to everyone with a claim on your attention. The friend worth having is not the one selected from the morning crowd by your secretary. That kind of friend, the more they owe you, the more they will eventually resent you — a small debt makes a man grateful, a large one makes him an enemy.
 
+Come in from the high seas. Let us, in old age at least, die in harbour.
 
+Begin by calling your mind your own again. Everything else will follow from that.
 
+Yours, already in harbour,

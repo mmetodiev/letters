@@ -8,12 +8,13 @@ import {
   normalizeData,
   normalizePath,
   saveLocal,
+  savedPathsNewestFirst,
   setMerged,
 } from "./storage.js";
 
 /** @type {import("@instantdb/core").User | null} */
 let authUser = null;
-/** @type {{ bookmarks: string[], notes: Record<string, string> } | null} */
+/** @type {{ bookmarks: Record<string, number>, notes: Record<string, string> } | null} */
 let remoteData = null;
 let unsubQuery = null;
 /** @type {Set<() => void>} */
@@ -66,23 +67,39 @@ export async function persist(data) {
   notify();
 }
 
-export function isBookmarked(data, path) {
-  return data.bookmarks.includes(path);
+export function isSaved(data, path) {
+  return data.bookmarks[path] != null;
 }
 
-export async function toggleBookmark(path) {
+export async function toggleSave(path) {
   const data = getData();
-  const i = data.bookmarks.indexOf(path);
-  if (i >= 0) data.bookmarks.splice(i, 1);
-  else data.bookmarks.push(path);
+  if (isSaved(data, path)) {
+    const note = data.notes[path];
+    if (note && note.trim()) {
+      const ok = window.confirm(
+        "Remove this letter from Saved? Your note will also be deleted."
+      );
+      if (!ok) return true;
+      delete data.notes[path];
+    }
+    delete data.bookmarks[path];
+  } else {
+    data.bookmarks[path] = Date.now();
+  }
   await persist(data);
-  return isBookmarked(data, path);
+  return isSaved(data, path);
 }
 
 export async function setNote(path, text) {
   const data = getData();
-  if (!text || !text.trim()) delete data.notes[path];
-  else data.notes[path] = text;
+  if (!text || !text.trim()) {
+    delete data.notes[path];
+  } else {
+    data.notes[path] = text;
+    if (data.bookmarks[path] == null) {
+      data.bookmarks[path] = Date.now();
+    }
+  }
   await persist(data);
 }
 
@@ -173,7 +190,7 @@ export function initAuth() {
 }
 
 export function initLetterPage() {
-  const btn = document.querySelector("[data-bookmark-toggle]");
+  const btn = document.querySelector("[data-save-toggle]");
   const notes = document.querySelector("[data-notes-input]");
   if (!btn && !notes) return;
 
@@ -182,9 +199,9 @@ export function initLetterPage() {
   const render = () => {
     const data = getData();
     if (btn) {
-      const on = isBookmarked(data, path);
+      const on = isSaved(data, path);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
-      btn.textContent = on ? "Bookmarked" : "Bookmark";
+      btn.textContent = on ? "Saved" : "Save";
       btn.classList.toggle("is-active", on);
     }
     if (notes && document.activeElement !== notes) {
@@ -197,7 +214,7 @@ export function initLetterPage() {
 
   if (btn) {
     btn.addEventListener("click", () => {
-      toggleBookmark(path);
+      toggleSave(path);
     });
   }
 
@@ -209,9 +226,9 @@ export function initLetterPage() {
   }
 }
 
-export function initBookmarksPage() {
-  const listEl = document.querySelector("[data-bookmarks-list]");
-  const emptyEl = document.querySelector("[data-bookmarks-empty]");
+export function initSavedPage() {
+  const listEl = document.querySelector("[data-saved-list]");
+  const emptyEl = document.querySelector("[data-saved-empty]");
   if (!listEl || !emptyEl) return;
 
   const catalogEl = document.getElementById("letter-catalog");
@@ -227,11 +244,7 @@ export function initBookmarksPage() {
 
   function render() {
     const data = getData();
-    const paths = data.bookmarks.slice().sort((a, b) => {
-      const na = byPath[a]?.num ?? 9999;
-      const nb = byPath[b]?.num ?? 9999;
-      return na - nb;
-    });
+    const paths = savedPathsNewestFirst(data);
 
     listEl.innerHTML = "";
     if (!paths.length) {
@@ -248,19 +261,16 @@ export function initBookmarksPage() {
       const li = document.createElement("li");
       const link = document.createElement("a");
       link.href = path;
-      const num = document.createElement("span");
-      num.className = "toc-num";
-      num.textContent = meta ? `Letter ${meta.num}` : "Letter";
       const title = document.createElement("span");
       title.className = "toc-title";
       title.textContent = meta ? meta.title : path;
-      link.append(num, title);
+      link.append(title);
       li.appendChild(link);
 
       const note = data.notes[path];
       if (note && note.trim()) {
         const preview = document.createElement("p");
-        preview.className = "bookmark-note-preview";
+        preview.className = "saved-note-preview";
         preview.textContent = note.trim();
         li.appendChild(preview);
       }
@@ -283,7 +293,7 @@ export function initBookmarksPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "moral-letters-bookmarks.json";
+      a.download = "moral-letters-saved.json";
       a.click();
       URL.revokeObjectURL(url);
     });
@@ -312,13 +322,12 @@ export function initTocPage() {
 
   function render() {
     const data = getData();
-    const bookmarked = new Set(data.bookmarks);
 
     toc.querySelectorAll("a[data-path]").forEach((link) => {
       const path = normalizePath(link.getAttribute("data-path"));
-      const bookmark = link.querySelector(".toc-bookmark");
+      const saved = link.querySelector(".toc-saved");
       const note = link.querySelector(".toc-note");
-      if (bookmark) bookmark.hidden = !bookmarked.has(path);
+      if (saved) saved.hidden = !isSaved(data, path);
       if (note) {
         const text = data.notes[path];
         note.hidden = !(text && text.trim());
@@ -378,7 +387,7 @@ export function initAccountPage() {
     if (userEmailEl) userEmailEl.textContent = user.email || "Signed in";
     sentEmail = "";
     setError("");
-    setStatus("Your bookmarks and notes sync across devices while you’re signed in.");
+    setStatus("Your saved letters and notes sync across devices while you’re signed in.");
   }
 
   function render() {
@@ -464,7 +473,7 @@ export function initAccountPage() {
 document.addEventListener("DOMContentLoaded", () => {
   initAuth();
   initLetterPage();
-  initBookmarksPage();
+  initSavedPage();
   initTocPage();
   initAccountPage();
 });
