@@ -4,6 +4,7 @@
   "description": "Seneca's Moral Letters to Lucilius — modern English, for slow reading",
   "scripts": {
     "bundle": "node scripts/bundle-client.mjs",
+    "icons": "node scripts/generate-icons.mjs",
     "build": "npm run bundle && eleventy",
     "serve": "npm run bundle && eleventy --serve"
   },

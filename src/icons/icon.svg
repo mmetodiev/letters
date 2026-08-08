@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Moral Letters">
+  <rect width="512" height="512" fill="#faf8f4"/>
+  <rect x="56" y="56" width="400" height="400" rx="72" fill="#5b7a5e"/>
+  <!-- Open letter / folded note mark -->
+  <path fill="#faf8f4" d="M156 178h200c14 0 26 12 26 26v104c0 14-12 26-26 26H156c-14 0-26-12-26-26V204c0-14 12-26 26-26z"/>
+  <path fill="#5b7a5e" d="M130 204l126 78 126-78v-10c0-8-4-14-10-18L256 254 140 176c-6 4-10 10-10 18v10z" opacity="0.35"/>
+  <path fill="none" stroke="#faf8f4" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" d="M148 198l108 72 108-72"/>
+</svg>
