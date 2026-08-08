@@ -1,26 +1,22 @@
 ---
 chapterNum: 17
-title: "Begin Now, With What You Have"
+title: "Rich Enough Already"
 ---
 
-You keep telling me you'll give yourself fully to this work once the finances are sorted, once there's enough set aside, once the income is stable enough that poverty won't be a worry. I understand the impulse. I want to tell you why it won't work.
+Cut it loose — whatever's holding you back from actually starting. You keep saying you're almost ready, that once things are settled you'll finally give your mind the attention it deserves. I don't think you know what you're postponing.
 
-Wealth doesn't arrive and then leave you free. It arrives and creates new obligations, new anxieties, new reasons to wait a little longer before the real work begins. The man with a great estate has more to protect, more to lose, more throngs of people dependent on his attention. The poor man, when the alarm sounds, only has to find the door. When the ship needs to be boarded, he walks on without a retinue. His stomach is easy to fill because it has learned not to demand much.
+> Poverty isn't the threat you think it is. Comfort might be.
 
-I'm not saying poverty is a good in itself. I'm saying it strips away the excuses. And you currently have excuses.
+The person with less doesn't flinch when the market drops, doesn't lie awake managing what could go wrong with money he doesn't have. A full life doesn't require much — hunger is cheap to satisfy, it's appetite that bankrupts you. You're treating "enough" like a number you haven't hit yet. It was never a number.
 
-Here is the thing about postponing: you are already living your life. The time you spend waiting to begin is the beginning. There is no version of yourself in the future who will be readier than you are now, whose conditions will be more favorable, whose ledger will be finally closed. That person doesn't exist. The question is only what you do with the life you actually have, right now, with the resources you actually have.
+Stop telling yourself you'll live properly once you've secured the future. That's backwards. Whatever's stopping you from living well doesn't stop you from living honestly, right now, with exactly what you have. If you're gathering resources, fine — but do the inner work while you gather, don't stack it at the end like a reward you're saving up for.
 
-Begin with philosophy. Not as a supplement, not as the last item on the list of things to acquire. First. If you have nothing, wisdom first — it costs nothing and requires nothing except your attention. If you have something, wisdom first — because you don't know whether what you have is already too much.
+> Why postpone the actual life for the imagined one? You could be rich today, on your own terms, instead of waiting for someone else's number to clear.
 
-**If anything forbids you to live nobly, nothing forbids you to die nobly.** Start from that, and work backward. The life worth living and the death worth dying are made of the same material.
+People have gone hungry for causes far smaller than their own freedom — sieges, wars, campaigns for a kingdom that wouldn't even be theirs when it was won. You're not being asked for that. You're being asked to risk mild inconvenience for a mind that finally belongs to you.
 
-Today's thought, and I owe it to Epicurus:
+And if you think the fix is on the other side of wealth — it isn't. Money doesn't cure what's wrong with a person; it just gives it more room to move. A restless mind is restless on a good mattress or a bad one. The sickness travels with you regardless of what you're lying on.
 
-> The acquisition of riches has been for many men, not an end, but a change, of troubles.
+Start now. You have enough.
 
-The fault is never in the money. It's in the mind that money finds when it arrives. If poverty was a burden to you, riches will be a burden too — a heavier one, more ornate, more surrounded by people with claims on it. You carry the sickness with you wherever you go. A sick man is no better off on a golden bed than a wooden one.
-
-The cure is not a different bed. It's a different mind.
-
-Yours, beginning now,
+With love, no waiting required

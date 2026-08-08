@@ -1,71 +1,18 @@
 ---
 chapterNum: 27
-title: "XXVII. On the Good which Abides"
+title: "You Can't Hire This Out"
 ---
 
-### **1. Seneca isn’t preaching from a pedestal — he’s treating a shared illness**
-Seneca anticipates the objection:  
-“Why give advice when you still have your own faults?”  
-He answers honestly:  
-He’s not a doctor lecturing the healthy — he’s a patient sharing remedies with another patient.  
-He’s letting Lucilius overhear the conversations he has with himself.
+You're going to ask if I've earned the right to say any of this — whether I've fixed myself before turning around to fix you. I haven't. I'm not well enough to go around curing anyone. What I'm doing is talking through something we're both sick with, like two people in the same hospital room comparing notes. Listen the way you'd listen if I were talking to myself, because I am. You're just my excuse for saying it out loud.
 
-### **2. Let your faults die before you do**
-Seneca urges himself — and Lucilius — to look at their age and feel ashamed of still chasing childish pleasures.  
-He warns that:
-- fleeting pleasures leave lasting regret  
-- even past pleasures can harm us  
-- guilty pleasures linger like unpunished crimes  
+Here's what I keep telling myself: count the years. Notice that you're still chasing the same things you wanted as a kid, and let that embarrass you a little. Before you die, get your faults to die first. The pleasures that cost you afterward — the ones you regret even when nobody ever found out — those weren't free just because you didn't get caught. Nothing fleeting is trustworthy, even the good parts.
 
-So he tells himself:  
-**Seek a good that lasts — not pleasures that vanish.**
+> Chase something that doesn't run out. The only thing like that is what you build inside yourself — everything else is weather.
 
-### **3. Only inner virtue provides lasting joy**
-External pleasures are:
-- unreliable  
-- short-lived  
-- shallow  
+There's no shortcut here, and no assistant you can hire for this particular job. I think of a guy I used to know — money without end, and a memory like a sieve. He'd blank on the most obvious names in conversation, so instead of learning anything himself, he bought people who knew things. One who'd memorized this book, one who'd memorized that one — a whole staff of borrowed knowledge standing behind his chair so he could sound smart at dinner and still forget his lines halfway through the sentence. Someone finally told him, gently, that he could've just bought the books instead of the people. He didn't get it. He genuinely believed that whatever his staff knew, he knew — as if understanding could sit in someone else's head on your behalf.
 
-True, enduring joy comes only from within:
-- a virtuous mind  
-- a clean conscience  
-- a soul that stands on its own  
+> Nobody has ever managed to buy themselves a working mind. If it were for sale, half the people with money would still walk past it.
 
-Virtue is like the sun: clouds may pass in front of it, but they never defeat it.
+This is the part of you nobody can do the work of but you. Not me, not anyone you pay, not anyone you love. So I'll leave you with the one line I keep going back to, in whatever form it takes: real wealth isn't more — it's wanting exactly what you need, no more, no less. You've heard some version of it from me before. Doesn't matter. Some things you don't get to hear only once.
 
-### **4. You must hurry — the work is yours alone**
-Seneca tells Lucilius he’s not lazy, but he must move faster.  
-Moral reform requires:
-- every waking hour  
-- personal effort  
-- no delegation  
-
-You can hire help for writing or research — but not for becoming good.
-
-### **5. A story about a rich man who tried to buy learning**
-Seneca tells a humorous story about Calvisius Sabinus, a wealthy man with a terrible memory who wanted to seem educated.  
-He bought extremely expensive slaves who had memorized:
-- Homer  
-- Hesiod  
-- the nine lyric poets  
-
-He kept them by his couch so he could “recite” poetry — and still botched the lines.  
-A flatterer joked he should also buy scholars to “pick up the pieces” when he forgot the words.
-
-Sabinus believed that whatever his slaves knew, *he* knew.  
-Seneca mocks this:  
-**You can buy slaves, but you can’t buy a sound mind.**
-
-### **6. Minds can’t be purchased — and most people wouldn’t buy one anyway**
-Seneca says even if wisdom were for sale, few would buy it.  
-People buy corrupt minds every day — but not healthy ones.  
-Moral reform requires effort, not money.
-
-### **7. Today’s idea: true wealth is needing little**
-Seneca ends with an Epicurean maxim:  
-**“Real wealth is poverty adjusted to the law of Nature.”**  
-Meaning:  
-If you desire only what nature requires — food, shelter, basic comfort — you are rich.  
-If you desire more, you are poor, no matter how much you own.
-
-Some people need this truth gently prescribed; others need it forced down like bitter medicine.
+Take care of yourself.

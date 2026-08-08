@@ -1,90 +1,28 @@
 ---
 chapterNum: 23
-title: "XXIII. On the True Joy which Comes from Philosophy"
+title: "Learn How to Feel Joy"
 ---
 
+I'm not going to write you about the weather — how mild the winter's been, how strange this cold spring is turning out. That's what people write when they've run out of anything real to say. I want to give you something that actually helps, so here it is: figure out what you find joy in, and stop putting your happiness anywhere it can be taken from you.
 
-### **1. Skip the small talk — let’s talk about real well‑being**
-Seneca refuses to waste time on weather updates or trivial chatter.  
-Instead, he wants to give Lucilius something that strengthens the mind.  
-And the foundation of a healthy mind is simple:  
-**Don’t place your joy in useless or external things.**
+That sounds like a small thing to build a life on. It isn't. It's the whole thing. Anyone chasing something — even something close, even something they're likely to get — is anxious the whole way there. Wanting something you don't have yet is its own kind of unrest, no matter how sure the outcome looks.
 
-This isn’t just the foundation — it’s the highest achievement.
+I'm not trying to take your pleasures away from you. I'm trying to make sure you have one that can't be taken. I want you to have joy in your own house — and it will be, if it's actually inside you. Everything else just smooths your forehead for a minute. It's not the same as being happy. Laughing isn't the same as joy. Your whole self has to be steady for that, lifted clear of whatever's happening around you.
 
-### **2. Real joy comes from within, not from circumstances**
-If your happiness depends on hope, luck, or external outcomes, you’ll always be anxious.  
-Even if the thing you want is close at hand, hope keeps you restless.  
-True joy is internal — it doesn’t depend on fortune, timing, or other people.
+> Real joy isn't light. It's serious enough to look straight at death and not flinch.
 
-Seneca wants Lucilius to learn how to *feel joy*, not just chase pleasant moments.
+Can you face losing everything without your face changing? Hold your appetites on a short leash and mean it? Sit with pain without performing your way out of it? Whoever can do that has found something in himself worth having — it won't look breezy, but it will be real, and it won't run out on him.
 
-### **3. Joy is not the same as cheerfulness**
-Seneca makes a sharp distinction:
-- Laughter, excitement, and pleasure are surface‑level  
-- True joy is deep, steady, and serious  
+The best of it isn't on the surface. Cheap joy sits close to the top, easy to find, thin as paint. The kind that lasts runs deep, and the deeper you go the more of it you find. So do the one thing that will actually make you happy: stop reaching for what glitters, what someone else can hand you or take back. Look instead at what's actually yours — not your body, not your circumstances, but the best part of you, the part no one else has access to.
 
-Real joy is the kind that allows you to:
-- face death calmly  
-- accept poverty  
-- restrain your pleasures  
-- endure pain with dignity  
+Your body matters. It's not nothing. But treat it as necessary, not important — because the pleasures it chases are short, regretted almost as soon as they're had, and if you don't rein them in they flip into their opposite. Pleasure without a limit doesn't stay pleasure. It runs straight downhill into grief.
 
-This joy is not bubbly — it’s strong.
+> The real good is safe to want as much as you want. That's how you know it's real.
 
-### **4. Shallow pleasures are thin; true joy is deep**
-Superficial pleasures are like mines with gold dust on the surface — they look rich but yield little.  
-True joy is like a deep vein of gold: the more you dig, the richer it becomes.
+It comes from a clean conscience, honest intentions, right action, indifference to whatever luck hands you, a life that holds one steady line instead of jumping between a dozen. Most people don't walk their own path — they get carried down it, the way debris moves down a river: some drift slow in the shallows, some get slammed downstream by the current, some catch on the bank and stop, some get swept out to open water and disappear. None of it chosen. All of it just — happening to them.
 
-Surface pleasures:
-- are temporary  
-- depend on circumstances  
-- fade quickly  
+Decide what you actually want. Then stay decided.
 
-Inner joy:
-- grows with reflection  
-- strengthens with practice  
-- becomes more solid the deeper you go  
+It's exhausting, always starting over. People who keep restarting their lives never get to the point of having lived one — there's always another beginning, which means there's never an ending they were ready for. You have to be able to say, at some point, *I've lived long enough now* — not out of despair, but because the life actually got lived instead of endlessly prepared for.
 
-### **5. Reject glittering externals — choose the good that comes from within**
-Seneca urges Lucilius to trample underfoot anything that shines only on the outside.  
-Real good comes from:
-- your conscience  
-- your intentions  
-- your actions  
-- your calm, steady way of living  
-
-The body is necessary, but not important.  
-Its pleasures are short-lived and often turn into regret if not controlled.
-
-### **6. The real good is safe to desire**
-Pleasure is dangerous because once you call it “good,” you want more and more.  
-But the true good — virtue, integrity, inner peace — can be desired without risk.  
-It never turns into its opposite.
-
-### **7. Most people drift through life without direction**
-Seneca compares people to objects floating in a river:
-- some drift slowly  
-- some are swept violently  
-- some get stuck on the bank  
-- some are carried out to sea  
-
-Only a few steer themselves with purpose.  
-To have lasting joy, you must decide what you want — and stick to it.
-
-### **8. Today’s idea: people live badly because they’re always starting life over**
-Seneca quotes Epicurus:  
-**“They live badly who are always beginning to live.”**
-
-Why?  
-Because if you’re always planning to live later, you never actually live.  
-You can’t be ready for death if you’ve only just begun to think about life.
-
-Most people:
-- start living when it’s time to stop  
-- or stop living before they’ve ever begun  
-
-### **9. A complete life is one you can leave at any moment**
-Seneca’s final message:  
-Live in such a way that you feel you’ve already lived enough — even if death comes tomorrow.  
-Length of life is not in your control; nobility of life is.
+Most people aren't short on time. They're just always about to start. Some don't begin living until it's already time to stop. And some — this is the part that should actually stop you — never begin at all.

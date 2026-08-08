@@ -1,70 +1,24 @@
 ---
 chapterNum: 29
-title: "XXIX. On the Critical Condition of Marcellinus"
+title: "The Man Who Laughs at Everything"
 ---
 
-### **1. You can’t help someone who refuses to listen**
-Lucilius asks about their friend Marcellinus.  
-Seneca explains that Marcellinus avoids him because he doesn’t want to hear the truth.  
-And Seneca refuses to lecture someone who has closed his ears.  
-This is why he doubts the Cynics’ habit of giving advice to everyone indiscriminately —  
-**you can’t cure the deaf.**
+You asked about Marcellinus, and the answer is: not well, but not yet hopeless. He avoids me because he knows I'll tell him the truth, and the truth is the one thing his considerable intelligence has been organized to deflect.
 
-### **2. Advice shouldn’t be scattered randomly**
-Some say: “Why not give advice freely? It costs nothing. Someone might benefit.”  
-Seneca disagrees.  
-Wisdom is an art, not a lottery.  
-A good archer doesn’t hope to hit the target by chance — he aims.  
-Likewise, a wise person chooses whom to help, without giving up too quickly, but also without wasting effort on the hopeless.
+This is his method: before you can say anything, he says it first, but as a joke. He'll mock himself, then mock you, then mock the entire philosophical tradition — he has a file of hypocritical philosophers ready for deployment, men caught in adultery or haunting cafes or philosophizing from their carriages. The laughter comes quickly and covers everything. It's a kind of genius, actually, and a kind of ruin.
 
-### **3. Marcellinus is not hopeless — but he’s close**
-Seneca still believes Marcellinus can be saved, but only if helped soon.  
-He has strong natural character, but it’s drifting toward vice.  
-Seneca is willing to risk being mocked to help him.
+I've decided to approach him anyway. He'll laugh at me. I may laugh at him. But I know something about this particular kind of merriment: it doesn't last. Watch such men carefully and you'll see the pattern — laughter in excess, and then, very soon after, rage in excess. The wit is a thin roof over real weather.
 
-### **4. Marcellinus will joke, deflect, and attack philosophy**
-Seneca knows exactly what will happen:
-- Marcellinus will joke about his own faults  
-- then joke about Seneca  
-- then mock philosophers as hypocrites  
-- then list examples of philosophers caught in scandals  
+What I'm aiming for isn't a cure. That may not be available. I'm aiming for a pause — habits of stopping, which with time can become the stopping itself. To men seriously stricken, relief is a substitute for health, and relief is not nothing.
 
-He’ll bring up men like Aristo, who lectured from his carriage, or others who behaved like showmen rather than sages.
+While I prepare myself for that conversation, let me turn to you, who are in a different situation entirely — who have come some distance and know both where you've been and how far you have yet to go. Stand firm. Don't count the number of things that threaten you; count only those that can actually reach you, and you'll find the number smaller than it appeared.
 
-Seneca is ready for this.  
-He’ll endure the jokes — even laugh — if it helps Marcellinus eventually cry for the right reasons.
+And here's today's thought, which I've been pressing into service from Epicurus across many letters: *I have never wished to cater to the crowd; for what I know, they do not approve, and what they approve, I do not know.*
 
-### **5. Even temporary improvement is valuable**
-Seneca doesn’t expect to cure Marcellinus completely.  
-But if he can:
-- slow his vices  
-- interrupt them  
-- create pauses in his bad habits  
+Every serious philosophical tradition has said something like this, in its own terms. The favor of people who haven't done the work can only be won by not doing the work — by making yourself recognizable to them, which means becoming what they are.
 
-…that’s already progress.  
-For the seriously ill, **relief** is a form of health.
+> What you think of yourself is much more to the point than what others think of you.
 
-### **6. Meanwhile, Lucilius must strengthen himself**
-Seneca turns back to Lucilius:  
-You know where you came from and where you’re going — so keep improving.  
-Stand firm against fears.  
-Don’t be intimidated by the number of threats around you.  
-Only one person can kill you, just as only one person gave you life.
+If I saw you applauded by crowds, praised by everyone, cheered at your entrance — I would pity you. I know what road leads there. Philosophy will make you prefer to please yourself rather than the populace, will make you weigh judgments rather than count them, will make you live without fear. But it will not make you popular. That's not a side effect. It's part of the promise.
 
-### **7. Today’s idea: don’t seek the crowd’s approval**
-Seneca ends with an Epicurean line:  
-**“I have never wished to cater to the crowd; what I know, they do not approve, and what they approve, I do not know.”**
-
-Every philosophical school agrees:  
-Virtue never pleases the masses.  
-To win popular applause, you must become like the crowd — and that is always ignoble.
-
-### **8. Philosophy teaches you to please yourself, not the mob**
-The true benefit of philosophy is that it teaches you to:
-- value your own judgment  
-- ignore the crowd  
-- live without fear of gods or men  
-- overcome evils or end them  
-
-If the whole city cheers for you, Seneca says, he pities you —  
-because he knows what kind of compromises win that kind of applause.
+Yours, preparing for a difficult conversation,

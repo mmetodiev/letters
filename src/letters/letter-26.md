@@ -1,65 +1,22 @@
 ---
 chapterNum: 26
-title: "XXVI. On Old Age and Death"
+title: "Proof"
 ---
 
-### **1. Seneca feels he has moved beyond old age into decline**
-Seneca tells Lucilius that he no longer feels merely “old” — he feels worn out.  
-Old age is supposed to be weary; he feels *crushed*.  
-But he’s grateful that while his body weakens, his mind remains strong.
+I told you not long ago that old age was in sight. I was wrong. It's behind me now — I've walked past it without noticing, and some other word applies to what I am these days, at least to this body. Old age is tired. What I have is closer to worn through.
 
-### **2. The mind can bloom even as the body fades**
-Seneca says his vices have grown old, but his mind has grown sharper.  
-It feels lighter, freer, less tied to the body.  
-He wants to examine how much of his inner peace comes from wisdom and how much from age.  
-He reminds himself:  
-**It’s not a loss when abilities fade that we shouldn’t be using anyway.**
+Still, I want to thank myself out loud, with you as the witness. My mind hasn't aged. My constitution has, my old weaknesses have, but something in me stayed sharp, and it's lighter now, having dropped most of what it used to carry. It actually argues with me that this is its best season. I'm inclined to let it have the point and see what it can do with it.
 
-### **3. A gradual death is not a misfortune**
-People complain that aging is like melting away — losing strength bit by bit.  
-Seneca disagrees.  
-Isn’t it better to drift gently into the harbor of death than to be smashed against it suddenly?  
-A slow departure is easier than a violent one.
+Here's the question I keep sitting with: how much of this calm is wisdom, and how much is just that I've run out of the energy certain vices require. I try to be honest about the difference — what I've truly outgrown, versus what simply stopped being available to me. There's no shame in losing capacities that were never going to last. The complaint is optional.
 
-### **4. Death will reveal whether our philosophy is real**
-Seneca prepares himself for the final test:  
-When death comes, he’ll see whether his bold words were genuine or just performance.  
-Anyone can talk bravely — even cowards.  
-Only the final moment shows whether a person truly lived according to their principles.
+> Everything I've said or done up to now proves nothing. It's a rehearsal, not the performance.
 
-### **5. Don’t rely on reputation or learning — death judges the soul**
-The world’s opinion is unreliable.  
-Even your own intellectual achievements prove nothing.  
-Your last breath will reveal:
-- whether you feared death  
-- whether you lived with integrity  
-- whether your philosophy was real or theatrical  
+I've started treating each day like a hearing where the verdict's still open — not to torture myself, but because I want to know if I actually believe what I've spent my life saying, or if I've just gotten good at saying it. Talk is cheap; even cowards give brave speeches. What I've done matters. What I do at the very end will be the only evidence that counts, and I've stopped being afraid of that trial. I want it, actually. I'm done performing courage — I want to find out if I have it.
 
-Seneca accepts this test without fear.
+I say all this to myself, but I mean it for you too. You're younger, and it doesn't matter — there's no schedule for this. You don't get to know where or when, so the only sane move is to be ready everywhere, always.
 
-### **6. Youth is no protection — death can come anytime**
-Seneca reminds Lucilius:  
-You’re younger, but that means nothing.  
-Death has no schedule.  
-Be ready everywhere, at every moment.
+> Learning how to die is really just learning how to stop being owned.
 
-### **7. Today’s idea: “Think on death” means “Think on freedom”**
-Seneca borrows from Epicurus:  
-**“Think on death.”**  
-Not morbidly — but as a path to freedom.  
-The person who has learned how to die cannot be enslaved.  
-Prisons, chains, threats — none of these matter if you’re not afraid of death.
+Think about it — not morbidly, just steadily, the way you'd rehearse anything that only gets one real take. Someone who's made peace with dying can't be threatened anymore. Bars, deadlines, diagnoses, other people's power over your days — none of it lands the same way. There's only one leash left on any of us, and it's how much we love being alive. You don't have to cut it. Just wear it thin enough that when the moment comes, it doesn't hold you back from doing what you were always going to have to do anyway.
 
-The only chain that binds us is the *love of life*.  
-We don’t need to break it, only weaken it, so that when the time comes, we can let go without fear.
-
-### **8. Death is the one thing we must always be learning**
-We only get to die once — which is exactly why we must practice mentally for it.  
-We can’t test our readiness ahead of time, so we must rehearse constantly.
-
-### **9. Death is not the enemy — fear is**
-Seneca reframes death:
-- If death frees us, we keep the better part of ourselves.  
-- If death ends us, then nothing remains to suffer.  
-
-Either way, there’s nothing to fear.
+Be well.

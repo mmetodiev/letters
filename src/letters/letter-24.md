@@ -1,100 +1,28 @@
 ---
 chapterNum: 24
-title: "XXIV. On Despising Death"
+title: "Strip Off the Mask"
 ---
 
+You told me what you're afraid of — the fight that's coming, the person who wants to hurt you over it, the way it could go badly. And you're waiting for me to tell you it'll be fine, to hand you some hope to lean on. I won't do that. Why summon the trouble early? You'll have to live through it soon enough if it actually comes. Being miserable now, over what might happen later, is just doubling the misery for nothing.
 
-### **1. Don’t ruin the present by fearing the future**
-Lucilius is anxious about a lawsuit, expecting Seneca to offer comforting optimism.  
-Instead, Seneca tells him:  
-**Stop fearing what might happen. Assume it *will* happen — and you’ll see it’s not as terrible as you think.**  
-Fear makes us suffer twice: once in imagination, once in reality.
+Here's a better way through it. Instead of hoping, do the opposite — assume the worst version is coming, no matter what. Then actually measure it. Look right at the size of the thing you're afraid of. Nine times out of ten, once you hold it up to the light, it's either smaller than you thought or it doesn't last as long as you thought. Fear is always a bigger shape in the dark than in the light.
 
-### **2. Measure your fear — most of it is exaggerated**
-Seneca suggests mentally walking through the worst‑case scenario.  
-When you do, you realize:
-- the suffering is either small  
-- or short  
-- or survivable  
+> Strip the mask off the thing and look at what's actually underneath it.
 
-History is full of people who endured far worse with courage.
+You know how a kid can be terrified of someone they love and play with every day, the second that person puts on a mask. It's the same face. Nothing's changed except the covering. We do the same thing as adults — we let dread wear a costume and then run from the costume. Take it off. Look at what's actually there. It's smaller than the outfit.
 
-### **3. Many have faced death and exile with calm — even joy**
-Seneca lists examples:
-- Rutilius accepted unjust conviction with dignity  
-- Metellus endured exile bravely  
-- Socrates refused to flee prison, freeing humanity from fear of death  
-- Mucius burned his own hand without flinching  
-- Cato calmly read Plato before taking his life for freedom’s sake  
-- Scipio, cornered by enemies, killed himself saying, “All is well with the commander”  
+Whatever you're bracing for — losing the case, losing the job, losing face — take away the noise around it, the imagined humiliation, the audience you're picturing watching you lose. What's left, underneath all that, is rarely unbearable. It's just change, dressed up to look like catastrophe.
 
-These stories aren’t for entertainment — they’re proof that death can be faced without terror.
+You were born into a life where this kind of thing was always possible. This isn't the first threat you've faced, and treating it like some unprecedented emergency only wears you down before it's even here. Save your strength. Don't drain it on the rehearsal.
 
-### **4. Death is feared only because we look at its mask**
-Seneca says we’re like children frightened by masks worn by people they know.  
-Strip away the mask and you see:
-- death is natural  
-- pain is bearable or brief  
-- fear is the real enemy  
+And remember — you're not as unguarded as you feel. You've survived versions of this before. The body you're so worried about protecting is fragile in a hundred ways already, most of them with nothing to do with this fight. Pain finds people through pleasure as often as through misfortune. None of us is as safe right now as we imagine ourselves to be, and none of us is as exposed as we fear.
 
-When you remove the dramatic “show” around death — the swords, flames, executioners — you realize it’s just a moment, nothing more.
+You're not dying all at once at the end. You're dying a little every day — losing a year, a version of yourself, a stretch of time you'll never get back — long before anything dramatic happens to you. The end doesn't do the killing. It just finishes what's already been happening quietly the whole way through. Which means the thing you're afraid of isn't waiting for you in some future moment. It's already underway, and you're already surviving it.
 
-### **5. Pain is also less frightening when seen clearly**
-Pain looks terrifying when surrounded by screams and torture devices.  
-But in reality:
-- the sick endure pain daily  
-- the glutton endures pain from indulgence  
-- women endure childbirth  
-- the gout‑ridden endure agony  
+> It's not one death that comes for us. What arrives at the end is only the last of many.
 
-Pain is either bearable or short.  
-If you can endure it, it’s small; if you can’t, it ends quickly.
+There's a strange trap on both sides of this. Some people get so afraid of losing everything that they stop living in the meantime — they spend their fear like currency, buying nothing with it. And some people get so tired of holding on that they start wanting the fall, just to be done with the waiting. Neither one is bravery. Don't run toward the worst case to end the suspense, and don't burn yourself out defending against something that hasn't happened yet. Just stand where you are, steady, and let it come if it's coming.
 
-### **6. Philosophy must be lived, not just spoken**
-Seneca challenges Lucilius:  
-You’ve heard these ideas before — now prove them in action.  
-Death, exile, grief — these are not surprises.  
-We were born into a world where these things are guaranteed.
+Whatever this turns into, you'll still be the one deciding how you meet it.
 
-### **7. Step back from your personal fear — see the human condition**
-Everyone is mortal.  
-Pain and misfortune come from many sources, not just enemies.  
-Even pleasures bring suffering:  
-banquets cause indigestion, indulgence causes illness, excess weakens the body.
-
-### **8. The worst that can happen is nothing new**
-Seneca reframes every fear:
-- Poverty? Many live in it.  
-- Exile? You simply live somewhere else.  
-- Chains? The body itself is a chain.  
-- Death? It ends all risks — including the risk of death.  
-
-Death either frees us or ends us.  
-Either way, nothing terrible remains.
-
-### **9. We die a little every day**
-Seneca quotes Lucilius’s own poetry:  
-**“Not single is the death which comes; the death which takes us off is but the last of all.”**  
-We lose childhood, youth, and time itself.  
-Death is not a sudden event — it’s the final step in a long process.
-
-### **10. Today’s idea: don’t run toward death or flee from it**
-Seneca quotes Epicurus:
-- It’s absurd to seek death because life is painful — your way of living caused the pain.  
-- It’s absurd to fear death so much that you ruin your life.  
-- Some people kill themselves *because* they fear death — madness.  
-
-We must be prepared for both life and death:
-- not clinging to life  
-- not rushing toward death  
-- exiting life calmly when the time comes  
-
-### **11. The real danger is boredom with life**
-Some people don’t hate life — they’re just tired of repetition:
-- waking and sleeping  
-- hunger and fullness  
-- heat and cold  
-- seasons cycling endlessly  
-
-They feel life is not painful, but pointless.  
-Philosophy must guard against this weariness too.
+*Steady, whatever comes —*

@@ -1,66 +1,24 @@
 ---
 chapterNum: 28
-title: "XXVIII. On Travel as a Cure for Discontent"
+title: "You Take Yourself With You"
 ---
 
-### **1. Changing places won’t help if you don’t change yourself**
-Seneca tells Lucilius that he shouldn’t be surprised that travel hasn’t cured his gloom.  
-People imagine that new scenery will fix their mood, but the real problem travels with them.  
-**You don’t need a change of climate — you need a change of soul.**
+I know that restlessness in you — the one that thinks the next place, the next reset, the next clean start will finally be the one that sticks. I've felt it too. You don't need a change of scenery. You need a change of soul, and you keep buying the wrong ticket.
 
-Wherever you go, your mind goes too.
+> You need a change of soul, not a change of climate.
 
-### **2. You can’t escape yourself by running away**
-Socrates said the same thing:  
-Why expect travel to help when *you* are the one causing your own unrest?  
-You flee from place to place, but the reason you fled follows you.
+The trouble with fleeing is that you're both the one running and the thing being run from — you arrive, and there you are, waiting for yourself at the gate.
 
-Until you put down the burdens of your mind, no place will feel right.
+Watch what happens on a ship when cargo is lashed down versus when it's loose. Steady weight, steady ship. Weight that keeps shifting from side to side is what makes a boat heel over in a storm. You are the cargo. Motion doesn't settle you — it just finds new ways to throw you off balance.
 
-### **3. Restlessness makes the burden heavier**
-Seneca compares Lucilius to a ship whose cargo shifts around.  
-Cargo that stays still is harmless; cargo that slides from side to side can sink the ship.  
-Likewise, a restless mind makes its own troubles worse.
+Once the actual trouble is dealt with, anywhere will do. Drop you in the harshest, most unfamiliar corner of the world and you'll find a way to be at home in it, because home was never the variable.
 
-You’re shaking up a sick man — yourself.
+> I am not built for one corner of the world — the whole thing is mine, if I'll let it be.
 
-### **4. Once the inner trouble is cured, any place becomes pleasant**
-If your soul is healthy, even the ends of the earth can feel like home.  
-The place matters far less than the person.  
-Seneca urges Lucilius to adopt this belief:  
-**“I am not born for one corner of the world; the whole world is my country.”**
+You're not moving toward anything. You're being dragged from one fresh start to the next by the same unresolved thing, calling it progress. What you're actually looking for — a life that feels like yours — doesn't require a departure. It's available exactly where you're standing right now.
 
-### **5. You’re not traveling — you’re drifting**
-If you understood that the good life is available everywhere, you wouldn’t keep roaming.  
-You’re not journeying with purpose; you’re being blown around by dissatisfaction.  
-You’re changing places instead of changing yourself.
+Be hard on yourself about this, but only briefly, and only enough to see it clearly. *Knowing you've gotten something wrong is the first real step toward getting it right.*
 
-### **6. Even the busiest, noisiest place can be endured**
-Seneca says that even the Forum — chaotic, crowded, stressful — can be endured with a calm mind.  
-But he admits that some places are unhealthy for a mind still recovering.  
-Just as sick bodies avoid foul air, sick minds should avoid toxic environments.
+Come home to yourself when you're ready. Or don't — but stop pretending the outside world is the problem.
 
-### **7. The wise person doesn’t seek storms**
-Some people deliberately throw themselves into turmoil to “toughen up.”  
-Seneca disagrees.  
-The wise person can endure storms but doesn’t choose them.  
-It’s pointless to conquer your own faults only to be tormented by the faults of others.
-
-### **8. Freedom doesn’t depend on how many tyrants you face**
-People boast that Socrates stood firm against thirty tyrants.  
-Seneca replies:  
-What does it matter whether you have one master or thirty?  
-**Slavery has no plural.**  
-If you’ve learned to scorn it, you’re free.
-
-### **9. Today’s idea: recognizing your faults is the beginning of salvation**
-Seneca ends with an Epicurean maxim:  
-**“The knowledge of sin is the beginning of salvation.”**  
-You can’t improve if you don’t admit what’s wrong.  
-So Seneca urges Lucilius to:
-- accuse himself  
-- judge himself  
-- pardon himself  
-- and sometimes be harsh with himself  
-
-Self‑examination is the first step toward freedom.
+With love, always in your corner
